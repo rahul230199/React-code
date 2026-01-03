@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OEM Requirements</title>
+</head>
+<body>
+
+<h2>OEM Requirements</h2>
+
+<form id="oemForm">
+  <label>
+    Company Name
+    <input type="text" name="companyName" required />
+  </label><br><br>
+
+  <label>
+    Contact Person
+    <input type="text" name="contactPerson" required />
+  </label><br><br>
+
+  <label>
+    Contact Email
+    <input type="email" name="email" required />
+  </label><br><br>
+
+  <label>
+    Company Website
+    <input type="text" name="website" />
+  </label><br><br>
+
+  <label>
+    Program Context
+    <textarea name="programContext" required></textarea>
+  </label><br><br>
+
+  <label>
+    Components Needed
+    <textarea name="componentsNeeded" required></textarea>
+  </label><br><br>
+
+  <label>
+    Estimated Volume
+    <input type="text" name="volume" />
+  </label><br><br>
+
+  <label>
+    Target Regions
+    <input type="text" name="regions" />
+  </label><br><br>
+
+  <button type="submit">Submit OEM Requirements</button>
+</form>
+
+<script>
+document.getElementById("oemForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  try {
+    const res = await fetch("/api/oem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) throw new Error("API error");
+
+    const result = await res.json();
+    alert(result.message || "OEM requirements submitted successfully");
+    form.reset();
+  } catch (err) {
+    alert("Error submitting OEM requirements. Please try again.");
+    console.error(err);
+  }
+});
+</script>
+
+</body>
+</html>
+

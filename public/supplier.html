@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supplier Registration</title>
+</head>
+<body>
+
+<h2>Supplier Registration</h2>
+
+<form id="supplierForm">
+  <label>
+    Company Name
+    <input type="text" name="companyName" required />
+  </label><br><br>
+
+  <label>
+    Contact Person
+    <input type="text" name="contactPerson" required />
+  </label><br><br>
+
+  <label>
+    Email
+    <input type="email" name="email" required />
+  </label><br><br>
+
+  <label>
+    Factory Location
+    <input type="text" name="location" />
+  </label><br><br>
+
+  <label>
+    Components / Infrastructure
+    <textarea name="components"></textarea>
+  </label><br><br>
+
+  <button type="submit">Submit supplier profile</button>
+</form>
+
+<script>
+document.getElementById("supplierForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  try {
+    const res = await fetch("/api/supplier", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) {
+      throw new Error("API returned " + res.status);
+    }
+
+    const result = await res.json();
+    alert(result.message || "Supplier profile submitted successfully");
+    form.reset();
+  } catch (err) {
+    console.error("Supplier submit error:", err);
+    alert("Error submitting supplier profile. Please try again.");
+  }
+});
+</script>
+
+</body>
+</html>
+

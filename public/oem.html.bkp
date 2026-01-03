@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OEM Requirements</title>
+</head>
+<body>
+  <h1>OEM Requirements</h1>
+
+  <form id="oemForm">
+    <label>Company Name <input name="companyName" required></label><br>
+    <label>Contact Person <input name="contactPerson" required></label><br>
+    <label>Contact Email <input name="contactEmail" type="email" required></label><br>
+    <label>Company Website <input name="companyWebsite"></label><br>
+    <label>Program Context <textarea name="programContext" required></textarea></label><br>
+    <label>Component Types Needed <textarea name="componentTypesNeeded" required></textarea></label><br>
+    <label>Estimated Volume <input name="estimatedVolume"></label><br>
+    <label>Target Regions <input name="targetRegions"></label><br>
+    <label>Quality Expectations <textarea name="qualityExpectations"></textarea></label><br>
+    <label>Special Requirements <textarea name="specialRequirements"></textarea></label><br>
+    <button type="submit">Submit OEM requirements</button>
+    <div id="status"></div>
+  </form>
+
+  <script>
+    const form = document.getElementById('oemForm');
+    const statusEl = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'Submitting...';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      try {
+        const res = await fetch('/api/oem-requirements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+          statusEl.textContent = 'Error from API: ' + res.status;
+          return;
+        }
+
+        statusEl.textContent = 'OEM requirements submitted!';
+        form.reset();
+      } catch (err) {
+        statusEl.textContent = 'Network/server error submitting form.';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
+

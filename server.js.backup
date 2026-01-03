@@ -1,0 +1,180 @@
+// server.js
+// Run with: node server.js
+// Or with pm2: pm2 start server.js --name axo-api
+
+const express = require('express');
+const cors = require('cors');
+const mysql = require('mysql2/promise');
+
+const app = express();
+const PORT = 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '2mb' }));
+
+// ---------- MySQL CONFIG ----------
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'axoapp',
+  password: 'Axo@1234',
+  database: 'axo',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// Connection helper
+async function withConn(handler, res) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    await handler(conn);
+    conn.release();
+  } catch (err) {
+    if (conn) conn.release();
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// ---------- Health check ----------
+app.get('/api/test', async (req, res) => {
+  await withConn(async (conn) => {
+    await conn.ping();
+    res.json({ status: 'ok', db: 'connected' });
+  }, res);
+});
+
+// ========== SUPPLIERS ==========
+app.post('/api/suppliers', async (req, res) => {
+  const d = req.body;
+  console.log('SUPPLIER FORM DATA:', d);
+
+  await withConn(async (conn) => {
+    await conn.execute(
+      `INSERT INTO suppliers (
+        user_email,
+        company_name,
+        factory_location,
+        company_description,
+        website_url,
+        capabilities,
+        machinery_equipment,
+        materials,
+        production_capacity,
+        certifications,
+        past_clients
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        d.userEmail || null,
+        d.companyName || null,
+        d.location || null,
+        d.description || null,
+        d.websiteUrl || null,
+        d.capabilities || null,
+        d.machineryEquipment || null,
+        d.materials || null,
+        d.productionCapacity || null,
+        d.certifications || null,
+        d.pastClients || null
+      ]
+    );
+    res.json({ success: true });
+  }, res);
+});
+
+// ========== OEM REQUIREMENTS ==========
+app.post('/api/oem-requirements', async (req, res) => {
+  const d = req.body;
+  console.log('OEM FORM DATA:', d);
+
+  await withConn(async (conn) => {
+    await conn.execute(
+      `INSERT INTO oems (
+        user_email,
+        company_name,
+        contact_person,
+        contact_email,
+        company_website,
+        program_context,
+        component_types_needed,
+        estimated_volume,
+        target_regions,
+        quality_expectations,
+        special_requirements
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        d.userEmail || null,
+        d.companyName || null,
+        d.contactPerson || null,
+        d.contactEmail || null,
+        d.companyWebsite || null,
+        d.programContext || null,
+        d.componentTypesNeeded || null,
+        d.estimatedVolume || null,
+        d.targetRegions || null,
+        d.qualityExpectations || null,
+        d.specialRequirements || null
+      ]
+    );
+    res.json({ success: true });
+  }, res);
+});
+
+// ========== FINANCE PARTNERS ==========
+app.post('/api/finance-partners', async (req, res) => {
+  const d = req.body;
+  console.log('FINANCE FORM DATA:', d);
+
+  await withConn(async (conn) => {
+    await conn.execute(
+      `INSERT INTO finance_partners (
+        user_email,
+        institution_name,
+        contact_person,
+        contact_email,
+        website,
+        current_products,
+        ticket_sizes,
+        current_signals,
+        desired_signals,
+        other_notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        d.userEmail || null,
+        d.institutionName || null,
+        d.contactPerson || null,
+        d.contactEmail || null,
+        d.website || null,
+        d.currentProducts || null,
+        d.ticketSizes || null,
+        d.currentSignals || null,
+        d.desiredSignals || null,
+        d.otherNotes || null
+      ]
+    );
+    res.json({ success: true });
+  }, res);
+});
+
+// ---------- Debug endpoint ----------
+app.get('/api/debug/:table', async (req, res) => {
+  const table = req.params.table;
+  if (!['suppliers', 'oems', 'finance_partners'].includes(table)) {
+    return res.status(400).json({ error: 'Invalid table' });
+  }
+
+  await withConn(async (conn) => {
+    const [rows] = await conn.execute(
+      `SELECT * FROM ${table} ORDER BY created_at DESC LIMIT 20`
+    );
+    res.json(rows);
+  }, res);
+});
+
+// ---------- Start server ----------
+app.listen(PORT, () => {
+  console.log(`API listening on http://localhost:${PORT}`);
+});
+

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Finance Partners</title>
+</head>
+<body>
+  <h1>Finance Partners</h1>
+
+  <form id="financeForm">
+    <label>Institution Name <input name="institutionName" required></label><br>
+    <label>Contact Person <input name="contactPerson" required></label><br>
+    <label>Contact Email <input name="contactEmail" type="email" required></label><br>
+    <label>Website <input name="website"></label><br>
+    <label>Current Products <textarea name="currentProducts" required></textarea></label><br>
+    <label>Ticket Sizes <textarea name="ticketSizes"></textarea></label><br>
+    <label>Current Signals <textarea name="currentSignals"></textarea></label><br>
+    <label>Desired Signals <textarea name="desiredSignals"></textarea></label><br>
+    <label>Other Notes <textarea name="otherNotes"></textarea></label><br>
+    <button type="submit">Submit finance profile</button>
+    <div id="status"></div>
+  </form>
+
+  <script>
+    const form = document.getElementById('financeForm');
+    const statusEl = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'Submitting...';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      try {
+        const res = await fetch('/api/finance-partners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+          statusEl.textContent = 'Error from API: ' + res.status;
+          return;
+        }
+
+        statusEl.textContent = 'Finance partner info submitted!';
+        form.reset();
+      } catch (err) {
+        statusEl.textContent = 'Network/server error submitting form.';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supplier Onboarding</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background:#020617; color:#e5e7eb; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 1.8rem 2rem 3rem; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; }
+    nav { margin-bottom: 1.5rem; }
+    nav a { margin-right: 1.5rem; text-decoration: none; color: #e5e7eb; font-size: 0.9rem; }
+
+    .hero-copy { max-width: 640px; margin-bottom: 1.8rem; }
+    .hero-kicker {
+      font-size: 0.8rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color:#9ca3af; margin-bottom: 0.8rem;
+    }
+    .hero-sub {
+      font-size: 0.98rem; color:#9ca3af;
+      margin-top: 0.7rem; line-height: 1.6;
+    }
+
+    form {
+      display: grid; gap: 1rem; margin-top: 1.8rem;
+      background:#020617; padding:1.6rem 1.9rem 2.2rem;
+      border-radius:18px;
+      box-shadow:0 24px 60px rgba(0,0,0,0.9);
+      border:1px solid rgba(148,163,184,0.35);
+    }
+    label { display: grid; gap: 0.28rem; font-size: 0.95rem; }
+    input, textarea {
+      padding: 0.65rem 0.8rem; border-radius: 8px;
+      border: 1px solid #4b5563; background:#020617;
+      color:#e5e7eb; font: inherit; width: 100%;
+      box-sizing: border-box;
+    }
+    input::placeholder, textarea::placeholder { color:#6b7280; }
+    textarea { min-height: 80px; resize: vertical; }
+
+    .btn-primary {
+      padding: 0.85rem 1.9rem; border-radius: 999px;
+      border: none; background: #22c55e; color: #020617;
+      cursor: pointer; justify-self: flex-start; font-weight: 600;
+    }
+
+    .status {
+      margin-top: 1rem; font-size: 0.9rem;
+    }
+    .status.ok { color:#22c55e; }
+    .status.err { color:#f97373; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container" style="padding-bottom:0;">
+      <a href="/index.html">Home</a>
+      <a href="/supplier.html">Supplier Onboarding</a>
+      <a href="/oem.html">OEM Onboarding</a>
+      <a href="/finance.html">Finance Partners</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="hero-copy">
+      <div class="hero-kicker">For suppliers</div>
+      <h1 class="serif">Show the industry what you can actually build.</h1>
+      <p class="hero-sub">
+        Use this onboarding form to present your manufacturing reality clearly and honestly:
+        capabilities, capacity and the work you are proud of.
+      </p>
+    </div>
+
+    <form id="supplierForm">
+      <h2 class="serif">Company profile</h2>
+
+      <label>
+        Company Name
+        <input name="companyName" required />
+      </label>
+
+      <label>
+        Factory Location
+        <input name="location" required placeholder="City, State" />
+      </label>
+
+      <label>
+        Company Description
+        <textarea name="description"
+          placeholder="What do you actually build? What makes you different?"
+          required></textarea>
+      </label>
+
+      <label>
+        Website URL
+        <input name="websiteUrl" placeholder="https://example.com" />
+      </label>
+
+      <h2 class="serif">Manufacturing capabilities</h2>
+
+      <label>
+        Primary manufacturing capabilities
+        <input name="capabilities"
+               placeholder="e.g., CNC machining, injection molding, sheet metal fabrication"
+               required />
+      </label>
+
+      <label>
+        Key machines & infrastructure
+        <textarea name="machineryEquipment"
+          placeholder="e.g., 5‑axis CNC mills, hydraulic press machines, SMT lines"
+          required></textarea>
+      </label>
+
+      <label>
+        Materials you work with
+        <input name="materials"
+               placeholder="Aluminum, steel, composites, lithium‑ion cells, copper"
+               required />
+      </label>
+
+      <label>
+        Typical production capacity
+        <input name="productionCapacity"
+               placeholder="e.g., 10,000 units per month, 2 shifts, 6 days/week"
+               required />
+      </label>
+
+      <h2 class="serif">Quality & experience</h2>
+
+      <label>
+        Certifications
+        <input name="certifications"
+               placeholder="ISO 9001, IATF 16949, ISO 14001, others"
+               required />
+      </label>
+
+      <label>
+        Reference parts / customers (optional)
+        <textarea name="pastClients"
+          placeholder="List a few reference parts, programs or customers you are comfortable sharing."></textarea>
+      </label>
+
+      <button type="submit" class="btn-primary">
+        Submit supplier profile
+      </button>
+
+      <div id="status" class="status"></div>
+    </form>
+  </main>
+
+  <script>
+    const supplierForm = document.getElementById("supplierForm");
+    const statusEl = document.getElementById("status");
+
+    supplierForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "Submitting…";
+      statusEl.className = "status";
+
+      const formData = new FormData(supplierForm);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const res = await fetch("/api/suppliers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        const text = await res.text();
+        let payload;
+        try { payload = JSON.parse(text); } catch { payload = text; }
+
+        if (!res.ok) {
+          console.error("API error:", res.status, payload);
+          statusEl.textContent = "Error from API: " + res.status;
+          statusEl.className = "status err";
+          return;
+        }
+
+        console.log("API ok:", payload);
+        statusEl.textContent = "Supplier application submitted!";
+        statusEl.className = "status ok";
+        supplierForm.reset();
+      } catch (err) {
+        console.error("Network/JS error:", err);
+        statusEl.textContent = "Error submitting application (network or server down).";
+        statusEl.className = "status err";
+      }
+    });
+  </script>
+</body>
+</html>
+

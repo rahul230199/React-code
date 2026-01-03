@@ -1,0 +1,80 @@
+const express = require('express');
+const mysql = require('mysql2');
+const path = require('path');
+const app = express();
+const port = 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public'))); // Optional: serve static files
+
+// Database connection
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'axoapp',
+    password: 'Axo@1234',  // Update with your actual password
+    database: 'axo'
+});
+
+db.connect((err) => {
+    if (err) {
+        console.error('Database connection failed:', err);
+        process.exit(1);
+    }
+    console.log('Connected to MariaDB');
+});
+
+// Existing supplier form endpoint
+app.post('/api/suppliers', (req, res) => {
+    const supplierData = req.body;
+    
+    const query = `
+        INSERT INTO suppliers (
+            user_email, company_name, factory_location, 
+            reliability_score, components_sold, certificates
+        ) VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    
+    db.query(query, [
+        supplierData.user_email,
+        supplierData.company_name,
+        supplierData.factory_location,
+        supplierData.reliability_score || 0.00,
+        supplierData.components_sold || '',
+        supplierData.certificates || ''
+    ], (err, result) => {
+        if (err) {
+            console.error('Supplier insert error:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ 
+            success: true, 
+            id: result.insertId,
+            message: 'Supplier registered successfully' 
+        });
+    });
+});
+
+// NEW: Get all suppliers endpoint for discovery page
+app.get('/api/suppliers', (req, res) => {
+    db.query(`
+        SELECT id, user_email, company_name, factory_location, 
+               reliability_score, components_sold, certificates, created_at
+        FROM suppliers 
+        ORDER BY id DESC
+    `, (err, results) => {
+        if (err) {
+            console.error('Suppliers fetch error:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(results);
+    });
+});
+
+// Your other existing endpoints go here (customers, etc.)
+// ...
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+

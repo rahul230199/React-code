@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EV Sourcing Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg-page: #020617;
+      --bg-light: #f9fafb;
+      --bg-muted: #111827;
+      --bg-dark: #020617;
+      --accent-strong: #ffffff;
+      --text-main: #111111;
+      --text-soft: #4b5563;
+      --text-on-dark: #f9f9f9;
+      --border-subtle: #d1d5db;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    section {
+      scroll-snap-align: start;
+      display: grid;
+      grid-template-columns: minmax(0, 1180px);
+      justify-content: center;
+    }
+
+    .serif { font-family: "Georgia", "Times New Roman", serif; letter-spacing: 0.02em; }
+    h1, h2, h3 { font-weight: 500; }
+
+    .container {
+      width: 100%;
+      padding: 0 2rem;
+      margin: 0 auto;
+    }
+    @media (max-width: 768px) {
+      .container { padding: 0 1.25rem; }
+    }
+
+    /* Header */
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: #020617;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(148,163,184,0.4);
+      opacity: 0;
+      transform: translateY(-12px);
+      animation: headerFade 0.7s ease-out forwards;
+      animation-delay: 0.15s;
+    }
+    @keyframes headerFade {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .nav {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      color: #e5e7eb;
+    }
+
+    .logo-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      border: 2px solid #60a5fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15,23,42,0.95);
+      box-shadow: 0 0 0 1px rgba(15,23,42,1);
+      animation: logoPulse 2.4s ease-in-out infinite;
+    }
+    .logo-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      background: #bfdbfe;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.4);
+      animation: logoDotGlow 2.4s ease-in-out infinite;
+    }
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.35); transform: scale(1); }
+      50%      { box-shadow: 0 0 0 8px rgba(37,99,235,0);   transform: scale(1.04); }
+    }
+    @keyframes logoDotGlow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.2); opacity: 0.9; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.8rem;
+      font-size: 0.9rem;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: #e5e7eb;
+    }
+    .nav-links a:hover { color: #ffffff; }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+    }
+
+    /* Buttons */
+
+    .btn {
+      padding: 0.9rem 1.9rem;
+      font-size: 0.95rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease, color 150ms ease;
+      white-space: nowrap;
+    }
+    .btn-primary { background: #ffffff; color: #020617; }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+    }
+    .btn-outline {
+      background: transparent;
+      color: #ffffff;
+      border-color: #ffffff;
+    }
+    .btn-outline:hover {
+      background: #ffffff;
+      color: #020617;
+    }
+    .btn-light {
+      background: #ffffff;
+      color: #05070a;
+      border-radius: 999px;
+      padding: 0.95rem 2.1rem;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .btn-light-outline {
+      background: transparent;
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 0.95rem 2.1rem;
+      border: 1px solid #ffffff;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    /* HERO */
+
+    .hero {
+      min-height: 100vh;
+      align-items:center;
+      background: radial-gradient(circle at top left,#111827,#020617 55%,#020617 100%);
+      color:#f9fafb;
+    }
+    .hero-inner {
+      padding: 3.2rem 0;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 3rem;
+      align-items: center;
+    }
+    .hero-kicker {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .hero-kicker::before {
+      content: "";
+      width: 40px;
+      height: 1px;
+      background: rgba(148,163,184,0.6);
+    }
+    .hero-title {
+      font-size: clamp(2.8rem, 5vw, 3.8rem);
+      line-height: 1.05;
+      margin-bottom: 1.4rem;
+    }
+    .hero-sub {
+      padding-left: 1.4rem;
+      border-left: 1px solid rgba(148,163,184,0.7);
+      color: #e5e7eb;
+      max-width: 520px;
+      font-size: 1rem;
+    }
+    .hero-ctas {
+      margin-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .hero-media { position: relative; }
+    .hero-main-img {
+      width: 100%;
+      border-radius: 1.4rem;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+      background: #0f172a url("https://images.pexels.com/photos/4489749/pexels-photo-4489749.jpeg?auto=compress&cs=tinysrgb&w=1200") center/cover no-repeat;
+      aspect-ratio: 4/3;
+    }
+    .hero-overlay-img {
+      position: absolute;
+      right: -14%;
+      bottom: -12%;
+      width: 58%;
+      border-radius: 1.1rem;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+      background: #020617 url("https://images.pexels.com/photos/1209774/pexels-photo-1209774.jpeg?auto=compress&cs=tinysrgb&w=1200") center/cover no-repeat;
+      aspect-ratio: 4/3;
+    }
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: minmax(0, 1fr); }
+      .hero-media { order: -1; }
+      .hero-overlay-img {
+        right: 6%;
+        bottom: -12%;
+        width: 62%;
+      }
+      .hero-inner {
+        padding: 2.4rem 0;
+      }
+    }
+
+    /* PURPOSE */
+
+    .vision {
+      min-height: 100vh;
+      align-items:center;
+      background:#f9fafb;
+    }
+    .vision-inner {
+      padding:3.2rem 0;
+    }
+    .vision-grid {
+      display:grid;
+      grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);
+      gap:2.5rem;
+      align-items:center;
+    }
+    .vision-body {
+      font-size:1.02rem;
+      color:#4b5563;
+      max-width:44rem;
+    }
+
+    /* MISSION */
+
+    .mission {
+      min-height:100vh;
+      align-items:center;
+      background:#f3f4f6;
+    }
+    .mission-inner {
+      padding:3.2rem 0;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(17,24,39,0.12);
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 1.4rem;
+      color: #4b5563;
+      background:#ffffff;
+    }
+    .chip-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(17,24,39,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+    .section-title-xl {
+      font-size: clamp(2.2rem, 3.3vw, 2.7rem);
+      line-height: 1.1;
+      margin-bottom: 1.1rem;
+    }
+    .section-body {
+      font-size: 0.98rem;
+      color: #4b5563;
+      max-width: 520px;
+    }
+    .feature-list {
+      margin-top: 1.6rem;
+      display: grid;
+      gap: 0.7rem;
+      color: var(--text-main);
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      font-size: 0.95rem;
+    }
+    .feature-bullet {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(107,114,128,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+
+    /* OEMs */
+
+    .band-dark {
+      min-height:100vh;
+      align-items:center;
+      background:#020617;
+      color:#e5e7eb;
+    }
+    .band-inner {
+      padding:3rem 0;
+    }
+    .band-inner .chip {
+      border-color: rgba(148,163,184,0.5);
+      color: #e5e7eb;
+      background:transparent;
+    }
+    .band-inner .chip-icon {
+      border-color: rgba(148,163,184,0.7);
+    }
+    .band-inner .section-title-xl {
+      color:#f9fafb;
+    }
+    .band-inner .section-body,
+    .band-inner .feature-list {
+      color:#e5e7eb;
+    }
+    .band-inner .feature-bullet {
+      border-color: rgba(148,163,184,0.7);
+    }
+    .band-cta {
+      margin-top: 1.9rem;
+      font-size: 0.9rem;
+    }
+    .band-cta a {
+      color:#f9fafb;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(249,250,251,0.7);
+      padding-bottom: 2px;
+    }
+    .band-cta a:hover { border-color:#ffffff; }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+      gap: 3.2rem;
+      align-items: center;
+    }
+    .band-img {
+      width: 100%;
+      border-radius: 1.4rem;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      background: #222 url("images/oem.png") center/cover no-repeat;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.7);
+    }
+
+    /* Suppliers */
+
+    .supplier-showcase {
+      min-height:100vh;
+      align-items:center;
+      background:#020617;
+      color:#f9fafb;
+    }
+    .supplier-inner {
+      padding:3rem 0;
+    }
+    .supplier-grid {
+      display:grid;
+      grid-template-columns:minmax(0,1.15fr) minmax(0,1.1fr);
+      gap:3.5rem;
+      align-items:center;
+    }
+    .supplier-img-wrap { position:relative; }
+    .supplier-main-img {
+      width:100%;
+      border-radius:1.2rem;
+      overflow:hidden;
+      background:#111827 url("images/supplier-main.png") center/cover no-repeat;
+      aspect-ratio:4/3;
+      box-shadow:0 22px 50px rgba(15,23,42,0.8);
+    }
+    .supplier-quote {
+      position:absolute;
+      right:6%;
+      bottom:-10%;
+      background:#020617;
+      padding:1.1rem 1.4rem;
+      border-radius:0.9rem;
+      box-shadow:0 18px 40px rgba(0,0,0,0.9);
+      max-width:260px;
+      font-size:0.9rem;
+    }
+    .supplier-quote span {
+      font-family:Georgia,serif;
+      font-style:italic;
+    }
+
+    .supplier-kicker {
+      display:inline-flex;
+      align-items:center;
+      gap:0.5rem;
+      padding:0.35rem 0.9rem;
+      border-radius:999px;
+      border:1px solid #374151;
+      font-size:0.7rem;
+      letter-spacing:0.18em;
+      text-transform:uppercase;
+      margin-bottom:1.4rem;
+      color:#9ca3af;
+    }
+    .supplier-kicker-icon {
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      border:1px solid #4b5563;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:0.7rem;
+    }
+    .supplier-title {
+      font-size:2.6rem;
+      margin-bottom:1.1rem;
+    }
+    .supplier-copy {
+      font-size:0.98rem;
+      color:#e5e7eb;
+      max-width:32rem;
+      margin-bottom:1.6rem;
+    }
+
+    .supplier-points {
+      display:grid;
+      gap:0.9rem;
+      margin-bottom:2rem;
+      font-size:0.95rem;
+      color:#e5e7eb;
+    }
+    .supplier-point {
+      display:flex;
+      align-items:flex-start;
+      gap:0.6rem;
+    }
+    .supplier-point-icon {
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      border:1px solid #f9fafb;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:0.85rem;
+      margin-top:0.1rem;
+    }
+
+    .supplier-link-row {
+      margin-top:0.3rem;
+      font-size:0.95rem;
+    }
+    .supplier-link-row a {
+      color:#f9fafb;
+      text-decoration:none;
+      border-bottom:1px solid #f9fafb;
+      padding-bottom:2px;
+    }
+
+    /* Finance */
+
+    .band-finance {
+      min-height:100vh;
+      align-items:center;
+      background:#020617;
+      color:#e5e7eb;
+    }
+    .finance-inner {
+      padding:3rem 0;
+    }
+    .finance-grid {
+      display:grid;
+      grid-template-columns:minmax(0,1.2fr) minmax(0,1.1fr);
+      gap:3rem;
+      align-items:center;
+    }
+    .finance-img {
+      width:100%;
+      border-radius:1.4rem;
+      aspect-ratio:16/9;
+      background:#111827 url("https://images.pexels.com/photos/6693661/pexels-photo-6693661.jpeg?auto=compress&cs=tinysrgb&w=1400") center/cover no-repeat;
+      box-shadow:0 18px 40px rgba(0,0,0,0.8);
+    }
+
+    /* Evolution */
+
+    .evolution {
+      min-height:100vh;
+      align-items:center;
+      background:#f9fafb;
+    }
+    .evolution-inner {
+      padding:3rem 0;
+    }
+    .evolution-title {
+      font-size:2.6rem;
+      text-align:center;
+      margin-bottom:0.6rem;
+    }
+    .evolution-sub {
+      text-align:center;
+      font-size:0.98rem;
+      color:#6b7280;
+      margin-bottom:2.4rem;
+    }
+    .evolution-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:2.5rem;
+      align-items:flex-start;
+      text-align:center;
+    }
+    .evo-card-label {
+      width:96px;
+      height:96px;
+      border-radius:4px;
+      margin:0 auto 1.2rem;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1.2rem;
+      letter-spacing:0.18em;
+      text-transform:uppercase;
+    }
+    .evo-card-title {
+      font-family:Georgia,serif;
+      font-size:1.2rem;
+      margin-bottom:0.6rem;
+    }
+    .evo-card-body {
+      font-size:0.92rem;
+      color:#4b5563;
+      max-width:18rem;
+      margin:0 auto;
+    }
+    .evo-label-light {
+      background:#f7f5f1;
+      color:#9ca3af;
+    }
+    .evo-label-dark {
+      background:#111111;
+      color:#f9fafb;
+      box-shadow:0 16px 36px rgba(15,23,42,0.35);
+    }
+
+    /* Not a marketplace */
+
+    .not-market {
+      min-height:100vh;
+      align-items:center;
+      background:#ffffff;
+    }
+    .not-market-inner {
+      padding:3rem 0;
+      text-align:center;
+    }
+
+    @media(max-width:900px){
+      .finance-grid{grid-template-columns:minmax(0,1fr);}
+      .vision-grid{grid-template-columns:minmax(0,1fr);}
+      .split{grid-template-columns:minmax(0,1fr);}
+      .evolution-grid{grid-template-columns:minmax(0,1fr);}
+      .supplier-grid{grid-template-columns:minmax(0,1fr);}
+      .supplier-quote{position:static;margin-top:1rem;right:auto;bottom:auto;}
+    }
+
+    /* Final CTA */
+
+    .final-cta {
+      min-height:100vh;
+      align-items:center;
+      background: radial-gradient(circle at top,#1f2937,#020617 55%,#020617 100%);
+      color:#f9fafb;
+    }
+    .final-cta-inner {
+      padding:3rem 0;
+      text-align:center;
+    }
+    .final-cta h2 {
+      font-size: 2.4rem;
+      line-height: 1.16;
+      margin-bottom: 2.1rem;
+    }
+    .final-cta-buttons {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.1rem;
+    }
+
+    /* Footer */
+
+    footer {
+      background: #020617;
+      color: #d5d5d5;
+      padding: 1.8rem 0 1.8rem;
+      font-size: 0.86rem;
+    }
+    .footer-grid {
+      max-width:1180px;
+      margin:0 auto;
+      padding:0 2rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 2.4rem;
+    }
+    .footer-logo-line {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.4rem;
+    }
+    .footer-heading { font-weight: 600; margin-bottom: 0.8rem; }
+    .footer-links { list-style: none; }
+    .footer-links li + li { margin-top: 0.4rem; }
+    .footer-links a {
+      text-decoration: none;
+      color: #c9c9c9;
+    }
+    .footer-links a:hover { color: #ffffff; }
+    @media (max-width: 900px) {
+      .footer-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    /* Scroll-in animation */
+
+    .fade-section {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+    .fade-section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="nav">
+      <div class="nav-left">
+        <div class="logo-box"><div class="logo-dot"></div></div>
+        <span>AXO — AuroXOrigin</span>
+      </div>
+      <nav class="nav-links">
+        <a href="/index.html">Home</a>
+        <a href="/suppliers-discovery.html">Supplier Discovery</a>
+        <a href="/supplier.html">Supplier Onboarding</a>
+        <a href="/oem.html">OEM Onboarding</a>
+        <a href="/finance.html">Finance Partners</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section id="hero" class="hero fade-section">
+    <div class="hero-inner">
+      <div class="container hero-grid">
+        <div>
+          <div class="hero-kicker">VISION — THE EV ECOSYSTEM</div>
+          <h1 class="hero-title serif">
+            Building the Trust Layer<br />
+            for India’s Next‑Gen EV Manufacturing
+          </h1>
+          <p class="hero-sub">
+            AXO – AuroXOrigin bridges visionary OEMs, capable suppliers and financial partners, so capacity, capital and certainty flow across India’s EV manufacturing ecosystem.
+          </p>
+          <div class="hero-ctas">
+            <button class="btn btn-primary" onclick="location.href='/supplier.html'">Explore Suppliers</button>
+            <button class="btn btn-outline" onclick="location.href='/oem.html'">For OEMs</button>
+          </div>
+        </div>
+
+        <div class="hero-media">
+          <div class="hero-main-img" aria-hidden="true"></div>
+          <div class="hero-overlay-img" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Purpose -->
+  <section class="vision fade-section">
+    <div class="vision-inner">
+      <div class="container vision-grid">
+        <div>
+          <h2 class="serif"
+              style="font-size:2.4rem; letter-spacing:0.18em; text-transform:uppercase; margin-bottom:1.1rem;">
+            OUR PURPOSE
+          </h2>
+          <h3 class="vision-title serif"
+              style="font-size:2.2rem; line-height:1.1; margin-bottom:1.1rem; font-weight:500;">
+            From fragmented discovery to unified infrastructure
+          </h3>
+          <p class="vision-body"
+             style="font-size:1.05rem; line-height:1.65;">
+            India’s EV revolution is accelerating, but manufacturers, OEMs and capital still discover
+            each other through fragmented, trust‑heavy processes. AXO creates a transparent, verified
+            layer where capabilities, demand and capital meet in one shared infrastructure.
+          </p>
+        </div>
+        <div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mission -->
+  <section class="mission fade-section">
+    <div class="mission-inner">
+      <div class="container">
+        <div class="chip">
+          <span class="chip-icon">◎</span>
+          <span>OUR MISSION</span>
+        </div>
+
+        <h2 class="section-title-xl serif" style="color:#111111;margin-bottom:1.1rem;">
+          Our Mission
+        </h2>
+        <p class="section-body" style="max-width:none;color:#4b5563;">
+          Bridging the gap between ambition and execution in India’s electric mobility sector.
+        </p>
+
+        <div class="feature-list" style="margin-top:1.6rem;">
+          <div class="feature-item">
+            <div class="feature-bullet">✓</div>
+            <div>Clarity & transparency – bring transparency and truth to how OEMs, manufacturers and capital discover each other.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet">✓</div>
+            <div>Reliability through data – turn manufacturing capability into measurable, trackable reliability.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet">✓</div>
+            <div>Access to capital & growth – unlock faster access to orders, capital and growth for capable manufacturers.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-bullet">✓</div>
+            <div>Scale without compromise – help Indian manufacturers reach global standards without losing speed or soul.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OEMs -->
+  <section id="oems" class="band-dark fade-section">
+    <div class="band-inner">
+      <div class="container split">
+        <div>
+          <div class="chip">
+            <span class="chip-icon">◎</span>
+            <span>FOR OEMs</span>
+          </div>
+          <h2 class="section-title-xl serif">Source with Confidence</h2>
+          <p class="section-body">
+            Build faster, with certainty. Discover verified Indian manufacturers with deep capability data and a transparent view of reliability.
+          </p>
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="feature-bullet">✓</div>
+              <div>Bring clarity and transparency to how OEMs, manufacturers and capital discover each other.</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-bullet">✓</div>
+              <div>Track capabilities, certifications and production progress instead of relying on word‑of‑mouth.</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-bullet">✓</div>
+              <div>Reduce supplier risk with a calmer, cleaner way to build vehicles.</div>
+            </div>
+          </div>
+          <p class="band-cta">
+            <a href="/oem.html">Join as OEM →</a>
+          </p>
+        </div>
+
+        <div class="band-img" aria-hidden="true"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Suppliers -->
+  <section id="suppliers" class="supplier-showcase fade-section">
+    <div class="supplier-inner">
+      <div class="container supplier-grid">
+        <div class="supplier-img-wrap">
+          <div class="supplier-main-img" aria-hidden="true"></div>
+          <div class="supplier-quote">
+            <span>"Visibility is the new currency."</span>
+          </div>
+        </div>
+        <div>
+          <div class="supplier-kicker">
+            <div class="supplier-kicker-icon">◎</div>
+            <span>FOR SUPPLIERS</span>
+          </div>
+          <h2 class="supplier-title serif">Showcase Your Excellence</h2>
+          <p class="supplier-copy">
+            Do not let your capabilities remain a secret. Get verified, build credibility, and connect directly with OEMs who are actively looking for what you build.
+          </p>
+
+          <div class="supplier-points">
+            <div class="supplier-point">
+              <div class="supplier-point-icon">✓</div>
+              <div>Create a comprehensive digital capability profile.</div>
+            </div>
+            <div class="supplier-point">
+              <div class="supplier-point-icon">✓</div>
+              <div>Earn the ‘Verified Supplier’ badge for trust.</div>
+            </div>
+            <div class="supplier-point">
+              <div class="supplier-point-icon">✓</div>
+              <div>Receive targeted enquiries matching your machinery and strengths.</div>
+            </div>
+          </div>
+
+          <div class="supplier-link-row">
+            <a href="/supplier.html">Join as Supplier →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Finance -->
+  <section id="finance" class="band-finance fade-section">
+    <div class="finance-inner">
+      <div class="container finance-grid">
+        <div>
+          <div class="chip">
+            <span class="chip-icon">◎</span>
+            <span>FOR FINANCIAL PARTNERS</span>
+          </div>
+          <h2 class="section-title-xl serif">Underwrite With Confidence</h2>
+          <p class="section-body" style="color:#e5e7eb;">
+            Access a live view of verified manufacturers, real delivery performance and forward demand from serious OEMs. Build capital products on top of trusted industrial infrastructure, not guesswork.
+          </p>
+          <div class="feature-list" style="color:#e5e7eb;">
+            <div class="feature-item">
+              <div class="feature-bullet">✓</div>
+              <div>Standardised, comparable data on manufacturing capability and reliability.</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-bullet">✓</div>
+              <div>Risk signals built from real orders, not only balance‑sheet snapshots.</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-bullet">✓</div>
+              <div>Pipeline visibility into India’s EV manufacturing growth story.</div>
+            </div>
+          </div>
+          <p class="band-cta" style="margin-top:1.9rem;">
+            <a href="#contact">Talk to us →</a>
+          </p>
+        </div>
+        <div class="finance-img" aria-hidden="true"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Evolution -->
+  <section class="evolution fade-section">
+    <div class="evolution-inner">
+      <div class="container" style="max-width:1040px;">
+        <h2 class="evolution-title serif">The Evolution of Sourcing</h2>
+        <p class="evolution-sub">From fragmentation to a unified ecosystem.</p>
+
+        <div class="evolution-grid">
+          <div>
+            <div class="evo-card-label evo-label-light serif">01</div>
+            <div class="evo-card-title serif">The Old Way</div>
+            <p class="evo-card-body">
+              Fragmented discovery. Reliance on word‑of‑mouth. Lengthy verification cycles. Opaque capabilities.
+            </p>
+          </div>
+
+          <div>
+            <div class="evo-card-label evo-label-dark">
+              <span style="font-size:1.6rem;color:#f97316;">⚡</span>
+            </div>
+            <div class="evo-card-title serif">The Catalyst</div>
+            <p class="evo-card-body">
+              AXO digitises the vetting process, standardising data and creating a common language for quality, reliability and growth.
+            </p>
+          </div>
+
+          <div>
+            <div class="evo-card-label evo-label-light serif">03</div>
+            <div class="evo-card-title serif">The Future</div>
+            <p class="evo-card-body">
+              A fluid, responsive ecosystem where capacity, capital and demand meet in real time. Less friction. More trust.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Not a marketplace -->
+  <section class="not-market fade-section">
+    <div class="not-market-inner">
+      <div class="container">
+        <div style="text-align:center;">
+          <p class="serif" style="font-size:2rem;margin-bottom:1.2rem;position:relative;display:inline-block;">
+            <span style="position:relative;display:inline-block;">
+              <span style="position:relative;z-index:1;">This is not a marketplace.</span>
+              <span style="position:absolute;left:0;right:0;top:52%;border-top:2px solid #c24141;z-index:0;"></span>
+            </span>
+          </p>
+          <br />
+          <p class="serif" style="font-size:2rem;margin-bottom:1.2rem;position:relative;display:inline-block;">
+            <span style="position:relative;display:inline-block;">
+              <span style="position:relative;z-index:1;">This is not a broker.</span>
+              <span style="position:absolute;left:0;right:0;top:52%;border-top:2px solid #c24141;z-index:0;"></span>
+            </span>
+          </p>
+          <br />
+          <p class="serif" style="font-size:2rem;position:relative;display:inline-block;">
+            <span style="position:relative;display:inline-block;">
+              <span style="position:relative;z-index:1;">This is not a directory.</span>
+              <span style="position:absolute;left:0;right:0;top:52%;border-top:2px solid #c24141;z-index:0;"></span>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta fade-section">
+    <div class="final-cta-inner">
+      <div class="container">
+        <h2 class="serif">
+          Ready to Build<br />
+          The Future?
+        </h2>
+        <div class="final-cta-buttons">
+          <button class="btn-light" onclick="location.href='/supplier.html'">Join as Supplier</button>
+          <button class="btn-light-outline" onclick="location.href='/oem.html'">Join as OEM</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo-line">
+          <div class="logo-box"><div class="logo-dot"></div></div>
+          <span>AXO — AuroXOrigin</span>
+        </div>
+        <p>Connecting India’s electric vehicle supply chain ecosystem.</p>
+      </div>
+      <div>
+        <div class="footer-heading">Quick Links</div>
+        <ul class="footer-links">
+          <li><a href="/supplier.html">Supplier Onboarding</a></li>
+          <li><a href="/oem.html">OEM Onboarding</a></li>
+          <li><a href="#finance">Finance Partners</a></li>
+          <li><a href="#hero">Home</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Contact</div>
+        <form id="contactForm" style="display:grid;gap:0.6rem;max-width:360px;">
+          <input name="name" placeholder="Your name" required
+                 style="padding:0.6rem 0.75rem;border-radius:6px;border:1px solid #4b5563;" />
+          <input name="email" type="email" placeholder="Email" required
+                 style="padding:0.6rem 0.75rem;border-radius:6px;border:1px solid #4b5563;" />
+          <textarea name="message" placeholder="Tell us about your requirements"
+                    style="padding:0.6rem 0.75rem;border-radius:6px;border:1px solid #4b5563;min-height:80px;"></textarea>
+          <button type="submit" class="btn-light-outline">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const faders = document.querySelectorAll(".fade-section");
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          obs.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.25 }
+    );
+    faders.forEach((el) => observer.observe(el));
+
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+      contactForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(contactForm).entries());
+        const subject = encodeURIComponent("AXO contact from website");
+        const body = encodeURIComponent(
+          `Name: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message || ""}`
+        );
+        window.location.href = `mailto:hello@example.com?subject=${subject}&body=${body}`;
+      });
+    }
+  </script>
+</body>
+</html>
+
