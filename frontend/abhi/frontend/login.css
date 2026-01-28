@@ -1,0 +1,275 @@
+:root {
+  --primary: #1E3A8A;
+  --primary-light: #3B82F6;
+  --foreground: #111827;
+  --background: #ffffff;
+  --error: #dc2626;
+  --radius: 14px;
+  --transition: all 0.35s ease;
+}
+
+/* ================= BASE ================= */
+* {
+  box-sizing: border-box;
+  font-family: 'Nunito Sans', sans-serif;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow-x: hidden;
+  background: #f5f7fb;
+}
+
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ================= LOGIN CARD ================= */
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--radius);
+
+  /* 🔮 GLASS EFFECT */
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow: 0 25px 60px rgba(0,0,0,.15);
+  overflow: hidden;
+
+  /* ✨ entrance animation */
+  animation: cardIn 0.6s ease forwards;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-content {
+  position: relative;
+  z-index: 2;
+  padding: 40px;
+}
+
+/* ================= ANIMATED BACKGROUND ================= */
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://static.wixstatic.com/media/3d4c2a_2f337be5b7da445db58a7946af6d1fe4~mv2.jpg');
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+  opacity: 0.15;
+  animation: bgScroll 15s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes bgScroll {
+  from { background-position-x: 0; }
+  to { background-position-x: 1000px; }
+}
+
+/* ================= HEADER ================= */
+.logo {
+  height: 40px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  color: var(--foreground);
+}
+
+p {
+  color: #6b7280;
+  margin-bottom: 25px;
+}
+
+/* ================= FORM ================= */
+.form-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  transition: var(--transition);
+}
+
+input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+/* ================= PASSWORD ================= */
+.password-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.password-wrapper button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 15px;
+  color: #6b7280;
+  transition: var(--transition);
+}
+
+.password-wrapper button:hover {
+  transform: scale(1.15);
+}
+
+/* ================= SUBMIT BUTTON ================= */
+button[type="submit"] {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+button[type="submit"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(30,58,138,.35);
+}
+
+button[disabled] {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* ================= ERRORS ================= */
+.error {
+  font-size: 13px;
+  color: var(--error);
+  min-height: 16px;
+}
+
+.center {
+  text-align: center;
+}
+
+/* ================= FOOTER ================= */
+footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+/* 🔥 Forgot password hover effect */
+footer a {
+  color: var(--primary-light);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+footer a:hover {
+  font-size: 15px;          /* 👈 grows */
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* 📱 Mobile */
+@media (max-width: 480px) {
+  .login-content {
+    padding: 28px 22px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  button[type="submit"] {
+    padding: 13px;
+  }
+}
+
+/* 📱 Tablet */
+@media (min-width: 481px) and (max-width: 900px) {
+  .login-card {
+    max-width: 460px;
+  }
+}
+
+/* 💻 Desktop */
+@media (min-width: 1200px) {
+  .login-card {
+    max-width: 460px;
+  }
+}
+/* ================= NETWORK BACKGROUND ================= */
+/* ================= NETWORK BACKGROUND ================= */
+
+.network-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #f5f7fb;
+}
+
+#networkCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* keep login card above */
+.auth-wrapper {
+  position: relative;
+  z-index: 2;
+}
+/* ===== NETWORK VISIBILITY BOOST ===== */
+#networkCanvas {
+  filter: contrast(115%) brightness(90%);
+}
+/* ===== MOBILE FIT FIX ===== */
+@media (max-width: 480px) {
+  .auth-wrapper {
+    min-height: auto;     /* remove forced height */
+    padding: 12px;        /* tighter padding */
+    align-items: flex-start;
+  }
+
+  .login-card {
+    margin-top: 16px;     /* small, controlled spacing */
+  }
+}
+/* ===== CARD CLARITY BOOST ===== */
+.login-card {
+  box-shadow:
+    0 35px 80px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(255,255,255,0.7);
+}

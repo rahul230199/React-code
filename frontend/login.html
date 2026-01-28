@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - AXO Networks</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1E3A8A;
+      --primary-light: #3B82F6;
+      --primary-dark: #1E40AF;
+      --foreground: #111827;
+      --foreground-light: #374151;
+      --background: #FFFFFF;
+      --light-grey: #F9FAFB;
+      --grey: #E5E7EB;
+      --dark-grey: #6B7280;
+      --error: #DC2626;
+      --success: #059669;
+      --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--foreground);
+      background-color: var(--background);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 1rem 0;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 100rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #111827 0%, #1E3A8A 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #374151;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .back-button:hover {
+      color: var(--primary);
+    }
+
+    /* Login Page Container */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 1.5rem 3rem;
+      position: relative;
+      background-color: #FFFFFF;
+      overflow: hidden;
+    }
+
+    /* Background image */
+    .login-background {
+      position: absolute;
+      inset: 0;
+      background-image: url('https://static.wixstatic.com/media/3d4c2a_2f337be5b7da445db58a7946af6d1fe4~mv2.jpg');
+      background-size: auto 100%;
+      background-position: center;
+      background-repeat: repeat-x;
+      background-attachment: fixed;
+      opacity: 0.15;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .ev-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(0deg, rgba(30, 58, 138, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 58, 138, 0.03) 1px, transparent 1px);
+      background-size: 80px 80px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Login Card */
+    .login-card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 1.5rem;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--grey);
+      backdrop-filter: blur(10px);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .login-logo h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #111827 0%, #1E3A8A 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .login-logo p {
+      font-size: 1.05rem;
+      color: var(--dark-grey);
+      font-weight: 500;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.6rem;
+      font-weight: 700;
+      color: var(--foreground);
+      font-size: 0.9rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.95rem 1.2rem;
+      border: 1px solid #D1D5DB;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: 'Nunito Sans', sans-serif;
+      transition: var(--transition);
+      background: white;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.08);
+    }
+
+    /* Button */
+    .btn {
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Nunito Sans', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #111827 0%, #1E3A8A 100%);
+      color: white;
+      width: 100%;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: scale(1.02);
+      background: linear-gradient(135deg, #0f172a 0%, #172e6e 100%);
+      box-shadow: 0 10px 25px rgba(30, 58, 138, 0.25);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Messages */
+    #status {
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    #status.error {
+      background-color: #FEE2E2;
+      color: var(--error);
+      border: 1px solid #FCA5A5;
+      display: block;
+    }
+
+    #status.success {
+      background-color: #D1FAE5;
+      color: var(--success);
+      border: 1px solid #A7F3D0;
+      display: block;
+    }
+
+    #status.info {
+      background-color: #E0F2FE;
+      color: #0369A1;
+      border: 1px solid #7DD3FC;
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Loading spinner */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 1.2rem;
+      height: 1.2rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* Password Reset Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--grey);
+    }
+
+    .modal-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--foreground);
+      margin: 0;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--dark-grey);
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .close-modal:hover {
+      background: var(--light-grey);
+      color: var(--foreground);
+    }
+
+    .password-rules {
+      background: #F0F9FF;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #0369A1;
+    }
+
+    .password-rules ul {
+      margin: 0.5rem 0 0 1.5rem;
+      padding: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .login-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .login-logo h1 {
+        font-size: 2rem;
+      }
+
+      .header-content {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .modal-content {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="/" class="logo">AXO Networks</a>
+      <a href="/" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        Back to Home
+      </a>
+    </div>
+  </header>
+
+  <!-- Login Page -->
+  <div class="login-page">
+    <div class="login-background"></div>
+    <div class="ev-grid"></div>
+
+    <div class="login-card">
+      <div class="login-logo">
+        <h1>AXO Networks</h1>
+        <p>Sign in to your account</p>
+      </div>
+
+      <!-- Status Message -->
+      <div id="status"></div>
+
+      <!-- Login Form -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="form-input"
+            placeholder="admin@axonetworks.com"
+            required
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+          <span id="loginBtnText">Sign In</span>
+        </button>
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <p style="color: var(--dark-grey); font-size: 0.9rem;">
+            First time user? Use the temporary password provided by admin
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Password Reset Modal -->
+  <div id="passwordResetModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔐 Reset Your Password</h2>
+        <button class="close-modal" onclick="closePasswordResetModal()">&times;</button>
+      </div>
+
+      <div id="passwordResetBody">
+        <!-- Content will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // COMPLETE LOGIN SYSTEM WITH PASSWORD RESET
+    // ============================================
+
+    const API_BASE_URL = '/api';
+    let currentUser = null;
+    let tempCredentials = null;
+
+    // Check if already logged in on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        checkExistingLogin();
+    });
+
+    // Check if user is already authenticated
+    function checkExistingLogin() {
+        const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        const userInfo = localStorage.getItem('userInfo') || localStorage.getItem('user');
+
+        if (token && userInfo) {
+            try {
+                currentUser = JSON.parse(userInfo);
+                console.log('✅ Already logged in as:', currentUser.email);
+                
+                // Check if password reset is still required
+                if (currentUser.forcePasswordReset) {
+                    console.log('⚠️ Password reset still required');
+                    showPasswordResetModal(currentUser);
+                } else {
+                    // Redirect to appropriate dashboard
+                    redirectToDashboard(currentUser);
+                }
+            } catch (e) {
+                console.error('Error parsing user info:', e);
+                clearAuthData();
+            }
+        }
+    }
+
+    // Redirect user to appropriate dashboard based on user type
+    function redirectToDashboard(user) {
+        if (!user) return;
+
+        let redirectUrl = '/';
+
+        if (user.userType === 'admin' || user.role === 'admin') {
+            redirectUrl = '/admin-dashboard.html';
+        } else if (user.userType === 'oem') {
+            redirectUrl = '/oem-dashboard.html';
+        } else if (user.userType === 'supplier') {
+            redirectUrl = '/supplier-dashboard.html';
+        } else if (user.userType === 'buyer' || user.userType === 'both') {
+            redirectUrl = '/dashboard.html';
+        } else {
+            // Default to dashboard
+            redirectUrl = '/dashboard.html';
+        }
+
+        console.log('🔄 Redirecting to:', redirectUrl);
+        window.location.href = redirectUrl;
+    }
+
+    // Utility functions
+    function showMessage(message, type = 'error') {
+        const status = document.getElementById('status');
+        status.textContent = message;
+        status.className = type;
+        status.style.display = 'block';
+
+        // Scroll to message
+        status.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function clearMessage() {
+        const status = document.getElementById('status');
+        status.style.display = 'none';
+        status.textContent = '';
+    }
+
+    function setLoading(isLoading) {
+        const btn = document.getElementById('loginBtn');
+        const btnText = document.getElementById('loginBtnText');
+
+        if (isLoading) {
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span> Signing in...';
+        } else {
+            btn.disabled = false;
+            btnText.textContent = 'Sign In';
+        }
+    }
+
+    // Validate email format
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    // Store authentication data properly
+    function storeAuthData(token, userData) {
+        // Store token with both key names for compatibility
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('token', token);
+
+        // Create comprehensive user info object
+        const userInfo = {
+            _id: userData._id || userData.userId || userData.id,
+            username: userData.username || userData.email.split('@')[0],
+            email: userData.email,
+            name: userData.name || userData.username || 'User',
+            company: userData.company || '',
+            userType: userData.userType || 'supplier',
+            role: userData.role || 'user',
+            forcePasswordReset: userData.forcePasswordReset || false,
+            createdAt: userData.createdAt || new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+        };
+
+        // Store user info with both key names for compatibility
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        localStorage.setItem('user', JSON.stringify(userInfo));
+
+        console.log('✅ Auth data stored for:', userInfo.email);
+        return userInfo;
+    }
+
+    // Clear all authentication data
+    function clearAuthData() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('tempUserId');
+        console.log('✅ All auth data cleared');
+    }
+
+    // Show password reset modal for first-time users
+    function showPasswordResetModal(loginData) {
+        document.getElementById('passwordResetBody').innerHTML = `
+            <div style="margin-bottom: 1.5rem;">
+                <p><strong>Welcome to AXO Networks!</strong> As a first-time user, you must create a new password.</p>
+                <p style="font-size: 0.9rem; color: var(--dark-grey); margin-top: 0.5rem;">Password must be at least 6 characters long.</p>
+            </div>
+
+            <form id="resetPasswordForm">
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input
+                        type="password"
+                        id="newPassword"
+                        name="newPassword"
+                        class="form-input"
+                        placeholder="Enter new password"
+                        required
+                        minlength="6"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        class="form-input"
+                        placeholder="Confirm new password"
+                        required
+                        minlength="6"
+                    >
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;" id="resetBtn">
+                        Reset Password
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closePasswordResetModal()" style="flex: 1;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        `;
+
+        document.getElementById('passwordResetModal').style.display = 'flex';
+
+        // Add form submission handler
+        document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await handlePasswordReset(loginData);
+        });
+    }
+
+    // Handle password reset form submission - SIMPLIFIED VERSION
+    async function handlePasswordReset(loginData) {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const resetBtn = document.getElementById('resetBtn');
+
+        if (newPassword !== confirmPassword) {
+            alert('❌ Passwords do not match!');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            alert('❌ Password must be at least 6 characters long!');
+            return;
+        }
+
+        // Show loading
+        resetBtn.disabled = true;
+        resetBtn.innerHTML = '<span class="spinner"></span> Resetting...';
+
+        try {
+            console.log('🔄 Resetting password for:', loginData.email);
+            
+            // METHOD 1: Use the force-reset-password endpoint (recommended)
+            const response = await fetch('/api/auth/force-reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: loginData.email,
+                    newPassword: newPassword
+                })
+            });
+
+            const result = await response.json();
+            console.log('📥 Password reset response:', result);
+
+            if (result.success && result.token) {
+                // ✅ Password reset successful
+                storeAuthData(result.token, result.user);
+                currentUser = result.user;
+                
+                showMessage('✅ Password reset successful! Redirecting to dashboard...', 'success');
+                closePasswordResetModal();
+                
+                // Redirect after delay
+                setTimeout(() => {
+                    redirectToDashboard(result.user);
+                }, 1500);
+            } else {
+                // METHOD 2: Try the login endpoint with newPassword parameter
+                console.log('🔄 Trying alternative method...');
+                const loginResponse = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: loginData.email,
+                        password: loginData.password,
+                        newPassword: newPassword
+                    })
+                });
+                
+                const loginResult = await loginResponse.json();
+                
+                if (loginResult.success && loginResult.token) {
+                    storeAuthData(loginResult.token, loginResult.user);
+                    currentUser = loginResult.user;
+                    
+                    showMessage('✅ Password reset successful! Redirecting to dashboard...', 'success');
+                    closePasswordResetModal();
+                    
+                    setTimeout(() => {
+                        redirectToDashboard(loginResult.user);
+                    }, 1500);
+                } else {
+                    throw new Error(loginResult.message || 'Password reset failed');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Password reset error:', error);
+            alert('Password reset failed. Please try again or contact support.');
+            resetBtn.disabled = false;
+            resetBtn.textContent = 'Reset Password';
+        }
+    }
+
+    // Close password reset modal
+    function closePasswordResetModal() {
+        document.getElementById('passwordResetModal').style.display = 'none';
+        clearAuthData(); // Clear any stored data since user canceled
+    }
+
+    // Main login handler - SIMPLIFIED
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Get form data
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        // Clear previous messages
+        clearMessage();
+
+        // Validate email
+        if (!validateEmail(email)) {
+            showMessage('Please enter a valid email address', 'error');
+            return;
+        }
+
+        if (!password) {
+            showMessage('Please enter your password', 'error');
+            return;
+        }
+
+        // Show loading
+        setLoading(true);
+
+        try {
+            console.log('📤 Attempting login for:', email);
+
+            // Make API call to login
+            const response = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+            // Parse response
+            const result = await response.json();
+            console.log('📥 Login response:', result);
+
+            if (result.success) {
+                // Check if password reset is required
+                if (result.forcePasswordReset || result.user?.forcePasswordReset || result.message?.includes('reset')) {
+                    // ✅ Login successful but password reset required
+                    console.log('🔄 Password reset required');
+                    
+                    // Store credentials for password reset
+                    tempCredentials = {
+                        email: email,
+                        password: password
+                    };
+                    
+                    // Show password reset modal
+                    showPasswordResetModal({
+                        email: email,
+                        password: password
+                    });
+                    
+                    showMessage('First login detected. Please reset your password.', 'info');
+                    setLoading(false);
+                    
+                } else if (result.token) {
+                    // ✅ Regular login successful
+                    const userInfo = storeAuthData(result.token, result.user);
+                    currentUser = userInfo;
+                    
+                    showMessage('Login successful! Redirecting to dashboard...', 'success');
+                    
+                    // Redirect to appropriate dashboard
+                    setTimeout(() => {
+                        redirectToDashboard(result.user);
+                    }, 1500);
+                    
+                } else {
+                    // ❌ No token received
+                    showMessage('Login failed. No authentication token received.', 'error');
+                    setLoading(false);
+                }
+                
+            } else {
+                // ❌ Login failed
+                showMessage(result.message || 'Login failed. Please check your credentials.', 'error');
+                setLoading(false);
+            }
+
+        } catch (error) {
+            // ❌ Network or server error
+            console.error('❌ Login error:', error);
+
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                showMessage('Network error. Please check your connection.', 'error');
+            } else {
+                showMessage('Server error. Please try again.', 'error');
+            }
+
+            setLoading(false);
+        }
+    });
+
+    // Add debugging helpers
+    console.log('🔧 Login page loaded');
+    console.log('🌐 Current URL:', window.location.href);
+    console.log('🔐 API endpoint:', '/api/auth/login');
+
+    // Test API connectivity
+    window.testApi = async function() {
+        try {
+            const response = await fetch('/api/_health');
+            const data = await response.json();
+            console.log('✅ API Health Check:', data);
+            return data.status === 'up';
+        } catch (error) {
+            console.error('❌ API Health Check failed:', error);
+            return false;
+        }
+    };
+
+    // Run health check on load
+    setTimeout(() => {
+        window.testApi().then(isUp => {
+            if (!isUp) {
+                console.warn('⚠️ API server may not be running');
+                showMessage('API server connection issue. Please ensure server is running.', 'error');
+            }
+        });
+    }, 1000);
+
+    // Debug function to clear all auth data
+    window.clearAuthData = function() {
+        if (confirm('Clear all authentication data and logout?')) {
+            clearAuthData();
+            alert('✅ All authentication data cleared. Please login again.');
+            window.location.reload();
+        }
+    };
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('passwordResetModal');
+        if (event.target === modal) {
+            closePasswordResetModal();
+        }
+    };
+
+    // Handle Enter key in password fields
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            if (document.getElementById('passwordResetModal').style.display === 'flex') {
+                const resetForm = document.getElementById('resetPasswordForm');
+                if (resetForm) {
+                    const submitButton = resetForm.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.click();
+                    }
+                }
+            }
+        }
+    });
+  </script>
+</body>
+</html>

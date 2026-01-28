@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXO Networks Blog - Insights from the Operating Layer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+    <link rel="icon" href="assests/1000055723.jpg" type="image/png">
+    <link href="../styles/blog.css" rel="stylesheet"/>
+    <style>
+        /* ========== FIX FOR HERO SECTION CONTAINMENT ========== */
+        .blog-hero-inner {
+            position: relative;
+            z-index: 20;
+            width: 100%;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blog-hero-content {
+            position: relative;
+            z-index: 20;
+            max-width: 90rem;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            text-align: center;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- ========== HEADER ========== -->
+    <header class="header" id="mainHeader">
+        <div class="header-content">
+            <a href="/" class="logo">AXO Networks</a>
+            <div class="nav-links">
+                <a href="/network-access" class="nav-link">Network Access</a>
+                <a href="/part-discovery" class="nav-link">Part Discovery</a>
+                <a href="/financial-partners" class="nav-link">Financial Partners</a>
+                <a href="/about" class="nav-link">About</a>
+                <a href="/blog" class="nav-link">Blog</a>
+                <a href="/careers" class="nav-link">Careers</a>
+                <a href="/portal-login" class="cta-button" style="margin-left: 1rem;">Login</a>
+            </div>
+            <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="/network-access" class="dropdown-item">Network Access</a>
+                <a href="/part-discovery" class="dropdown-item">Part Discovery</a>
+                <a href="/financial-partners" class="dropdown-item">Financial Partners</a>
+                <a href="/about" class="dropdown-item">About</a>
+                <a href="/blog" class="dropdown-item">Blog</a>
+                <a href="/careers" class="dropdown-item">Careers</a>
+                <a href="/portal-login" class="dropdown-item" style="color: var(--primary); font-weight: 800;">Login</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== HERO SECTION ========== -->
+    <section class="blog-hero" id="home">
+        <!-- Subtle Background Image Layer -->
+        <div class="blog-hero-background"></div>
+
+        <!-- Blueprint Grid -->
+        <svg class="blueprint-grid" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="0.5" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+        </svg>
+
+        <!-- Parallax Background Layer -->
+        <div class="parallax-layer" id="parallaxLayer">
+            <div class="hero-circle-1"></div>
+            <div class="hero-circle-2"></div>
+            <div class="hero-circle-3"></div>
+            <div class="hero-circle-4"></div>
+
+            <!-- Abstract Schematic Lines -->
+            <svg class="hero-svg" viewBox="0 0 1600 900" preserveAspectRatio="none">
+                <path d="M0,100 Q400,150 800,100 T1600,100" fill="none" stroke="#1E3A8A" stroke-width="1" />
+                <path d="M0,800 L1600,200" fill="none" stroke="#1E3A8A" stroke-width="0.5" stroke-dasharray="10 10" />
+                <path d="M400,300 L1200,600" fill="none" stroke="#1E3A8A" stroke-width="0.3" stroke-dasharray="5 5" />
+            </svg>
+        </div>
+
+        <!-- FIX: Added blog-hero-inner wrapper -->
+        <div class="blog-hero-inner">
+            <div class="blog-hero-content">
+                <div class="animate-reveal">
+                    <h1 class="blog-hero-title">
+                        <span style="display: block;">Insights from the</span>
+                        <span style="display: block; color: var(--primary);">Operating Layer</span>
+                    </h1>
+                </div>
+
+                <div class="animate-reveal" style="transition-delay: 200ms">
+                    <p class="blog-hero-subtitle">
+                        Thoughtful perspectives on EV manufacturing, execution, policy, and scale.
+                    </p>
+                </div>
+
+                <div class="animate-reveal" style="transition-delay: 400ms">
+                    <div style="display: flex; justify-content: center;">
+                        <a href="#blog-posts" class="cta-button-large" >
+                            <span>Read Articles <i class="fas fa-arrow-right"></i></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== BLOG POSTS SECTION ========== -->
+    <section id="blog-posts" class="blog-posts-section">
+        <div class="section-container">
+            <!-- Featured Post -->
+            <div class="featured-post animate-reveal">
+               <a href="blog-post.html?article=1" class="featured-post-link">
+                    <div class="featured-grid">
+                        <!-- Content -->
+                        <div class="featured-content">
+                            <span class="featured-badge">
+                                Featured
+                            </span>
+                            <h2 class="featured-title">
+                                The Future of EV Manufacturing in India
+                            </h2>
+                            <p class="featured-excerpt">
+                                Exploring how structured workflows and transparent information are reshaping India's EV manufacturing landscape.
+                            </p>
+                            <div class="post-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar meta-icon"></i>
+                                    January 15, 2024
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-user meta-icon"></i>
+                                    AXO Networks
+                                </div>
+                            </div>
+                            <div class="read-more-link">
+                                Read Article <i class="fas fa-arrow-right" style="font-size: 0.875rem;"></i>
+                            </div>
+                        </div>
+
+                        <!-- Image Placeholder -->
+                        <div class="featured-image">
+                            <div class="image-placeholder">
+                                <div class="placeholder-icon">
+                                    ??
+                                </div>
+                                <p class="placeholder-text">Featured Article</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Blog Posts Grid -->
+            <div class="latest-articles">
+                <div class="animate-reveal" style="margin-bottom: 4rem;">
+                    <h2 class="section-title">Latest Articles</h2>
+                </div>
+
+                <div class="articles-grid">
+                    <!-- Article 1 -->
+                    <div class="animate-reveal" style="transition-delay: 0ms">
+                        <a href="blog-post.html?article=2" class="article-card">
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="article-category">
+                                    Operations
+                                </span>
+                                <h3 class="article-title">
+                                    Building Trust Through Transparency
+                                </h3>
+                            </div>
+
+                            <p class="article-excerpt">
+                                How verified information and clear workflows reduce uncertainty across the EV supply chain.
+                            </p>
+
+                            <div class="article-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar meta-icon"></i>
+                                    January 10, 2024
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-user meta-icon"></i>
+                                    AXO Networks
+                                </div>
+                            </div>
+
+                            <div class="article-read-more">
+                                Read More <i class="fas fa-arrow-right" style="font-size: 0.875rem;"></i>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Article 2 -->
+                    <div class="animate-reveal" style="transition-delay: 100ms">
+                        <a href="blog-post.html?article=3" class="article-card">
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="article-category">
+                                    Scale
+                                </span>
+                                <h3 class="article-title">
+                                    Scaling Manufacturing with Precision
+                                </h3>
+                            </div>
+
+                            <p class="article-excerpt">
+                                Understanding the role of infrastructure in enabling sustainable growth for EV manufacturers.
+                            </p>
+
+                            <div class="article-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar meta-icon"></i>
+                                    January 5, 2024
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-user meta-icon"></i>
+                                    AXO Networks
+                                </div>
+                            </div>
+
+                            <div class="article-read-more">
+                                Read More <i class="fas fa-arrow-right" style="font-size: 0.875rem;"></i>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== NEWSLETTER SECTION ========== -->
+    <section class="newsletter-section">
+        <div class="newsletter-container">
+            <div class="animate-reveal">
+                <div class="newsletter-card">
+                    <h2 class="newsletter-title">
+                        Stay Updated
+                    </h2>
+                    <p class="newsletter-description">
+                        Get insights on EV manufacturing, operations, and scale delivered to your inbox.
+                    </p>
+                    <!-- Updated Newsletter Form with email functionality -->
+                    <form id="newsletterForm" class="newsletter-form">
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            class="newsletter-input"
+                            required
+                        />
+                        <button type="submit" class="newsletter-button">
+                            Subscribe
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER NOTE ========== -->
+    <section class="footer-note">
+        <div class="section-container">
+            <div class="animate-reveal">
+                <p>
+                    AXO Networks builds the operating layer for India's EV manufacturing ecosystem.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h3>AXO Networks</h3>
+                    <p>The operating layer for India's EV manufacturing ecosystem.</p>
+                </div>
+                <div>
+                    <h4>Quick links</h4>
+                    <a href="/network-access">Network Access</a>
+                    <a href="/part-discovery">Part Discovery</a>
+                    <a href="/financial-partners">Financial Partners</a>
+                </div>
+                <div>
+                    <h4>Company</h4>
+                    <a href="/about">About</a>
+                    <a href="/blog">Blog</a>
+                    <a href="/careers">Careers</a>
+                    <a href="/contact">Contact Us</a>
+                </div>
+                <div>
+                    <h4>Legal</h4>
+                    <a href="#terms">Terms of Service</a>
+                    <a href="#privacy">Privacy Policy</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="currentYear"></span> AXO Networks. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const yearElement = document.getElementById("currentYear");
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            const menuToggle = document.getElementById('menuToggle');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const header = document.getElementById('mainHeader');
+            const progressBar = document.getElementById('progressBar');
+            const parallaxLayer = document.getElementById('parallaxLayer');
+          
+            let lastScrollTop = 0;
+
+            // 1. UNIFIED SCROLL SYSTEM (Progress, Header, Parallax)
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                
+                // Progress Bar
+                const scrolled = (scrollTop / height) * 100;
+                if (progressBar) progressBar.style.width = scrolled + '%';
+
+                // Header Effects
+                if (scrollTop > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+
+                // Hide/Show Header on scroll direction
+                if (scrollTop > lastScrollTop && scrollTop > 200) {
+                    header.classList.add('hidden');
+                } else {
+                    header.classList.remove('hidden');
+                }
+                lastScrollTop = scrollTop;
+
+                // Hero Parallax (Desktop Only)
+                if (window.innerWidth >= 1024 && parallaxLayer) {
+                    parallaxLayer.style.transform = `translateY(${scrollTop * 0.4}px)`;
+                }
+            }, { passive: true });
+
+            // 2. MOBILE MENU LOGIC
+            const body = document.body;
+
+        if (menuToggle && dropdownMenu) {
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isActive = dropdownMenu.classList.contains('active');
+                const icon = menuToggle.querySelector('i');
+                
+                if (isActive) {
+                    // Close menu
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    icon.className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                } else {
+                    // Open menu
+                    dropdownMenu.classList.add('active');
+                    menuToggle.style.transform = 'rotate(90deg)';
+                    icon.className = 'fas fa-times';
+                    body.classList.add('no-scroll');
+                }
+            });
+
+            // Close menu when clicking on a link
+            dropdownMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    menuToggle.querySelector('i').className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    menuToggle.querySelector('i').className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                }
+            });
+
+            // Close menu on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && dropdownMenu.classList.contains('active')) {
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    menuToggle.querySelector('i').className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                }
+            });
+
+            // Prevent menu from closing when clicking inside it
+            dropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+            // 3. ANIMATION OBSERVER
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        
+                        // Stagger child cards if the grid becomes visible
+                        if (entry.target.classList.contains('articles-grid')) {
+                            entry.target.querySelectorAll('.article-card').forEach((card, i) => {
+                                card.style.transitionDelay = `${i * 0.1}s`;
+                            });
+                        }
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+            document.querySelectorAll('.animate-reveal').forEach(el => observer.observe(el));
+
+            // 4. NEWSLETTER & HOVER FIXES
+            const newsletterForm = document.getElementById('newsletterForm');
+            if (newsletterForm) {
+                newsletterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = this.querySelector('.newsletter-input').value;
+                    if (email) {
+                        const subject = encodeURIComponent("Newsletter Subscription");
+                        const body = encodeURIComponent(`New subscriber: ${email}`);
+                        window.location.href = `mailto:auroxorigin@gmail.com?subject=${subject}&body=${body}`;
+                        alert('Success! Opening your email client to confirm.');
+                    }
+                });
+            }
+
+            if (yearElement) {
+                yearElement.textContent = new Date().getFullYear();
+            }
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    e.preventDefault();
+                    const target = document.querySelector(targetId);
+                    if (target) {
+                        window.scrollTo({
+                            top: target.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
