@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <link rel="icon" href="assests/1000055723.jpg" type="image/png" />
-    <link href="../styles/about.css" rel="stylesheet" />
+    <link href="../frontend/styles/about.css" rel="stylesheet" />
     
   </head>
   <body>
@@ -348,8 +348,7 @@
     document.addEventListener("DOMContentLoaded", function () {
     const header = document.getElementById("mainHeader");
     const progressBar = document.getElementById("progressBar");
-    const menuToggle = document.getElementById("menuToggle");
-    const dropdownMenu = document.getElementById("dropdownMenu");
+
     const parallaxLayer = document.getElementById("parallaxLayer");
     const yearElement = document.getElementById("currentYear");
     let lastScrollTop = 0;
@@ -400,7 +399,9 @@
             yearElement.textContent = new Date().getFullYear();
         }
      
-        const body = document.body;
+        const menuToggle = document.getElementById('menuToggle');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const body = document.body;
 
         if (menuToggle && dropdownMenu) {
             menuToggle.addEventListener('click', function(e) {
@@ -460,6 +461,7 @@
                 e.stopPropagation();
             });
         }
+
     // --- 3. Intersection Observer (Reveal Animations) ---
     const revealOptions = {
         threshold: 0.15,

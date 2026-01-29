@@ -6,7 +6,7 @@
     <title>Blog Post | AXO Networks</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@200;300;400;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="../styles/blog-post.css" rel="stylesheet"/>
+    <link href="../frontend/styles/blog-post.css" rel="stylesheet"/>
 </head>
 <body>
     <!-- Scroll Progress Indicator -->
@@ -251,8 +251,7 @@ Scaling with precision isn't about moving faster. It's about building the system
 
 const yearElement = document.getElementById("currentYear");
 document.addEventListener('DOMContentLoaded', function() {
-    const menuToggle = document.getElementById('menuToggle');
-    const dropdownMenu = document.getElementById('dropdownMenu');
+   
     const header = document.getElementById('mainHeader');
     const scrollProgress = document.getElementById('scrollProgress');
     
@@ -278,7 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('#articleContent .animate-reveal').forEach(el => observer.observe(el));
     }
 
-   const body = document.body;
+   const menuToggle = document.getElementById('menuToggle');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const body = document.body;
 
         if (menuToggle && dropdownMenu) {
             menuToggle.addEventListener('click', function(e) {
@@ -339,7 +340,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-    
     if (yearElement) {
             yearElement.textContent = new Date().getFullYear();
         }
