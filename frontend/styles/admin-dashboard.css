@@ -321,3 +321,46 @@ thead th {
     min-height: 40px;
   }
 }
+/* ===============================
+   STATUS CONFIRM MODAL
+================================ */
+.status-modal {
+  max-width: 420px;
+  padding: 24px;
+}
+
+.status-modal h3 {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+#statusComment {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--grey);
+  padding: 12px;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+}
+
+#statusComment:focus {
+  border-color: var(--primary);
+}
+
+.status-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.status-actions button {
+  flex: 1;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .status-modal {
+    width: calc(100% - 24px);
+  }
+}
