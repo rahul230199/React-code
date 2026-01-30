@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Dashboard CSS -->
-    <link rel="stylesheet" href="/styles/admin-dashboard.css">
+    <link rel="stylesheet" href="../frontend/styles/admin-dashboard.css">
 </head>
 
 <body>
@@ -18,7 +18,11 @@
 
     <!-- HEADER -->
     <div class="header">
-        <div class="logo">AXO Networks - Admin Dashboard</div>
+        <div class="logo">
+            <span class="brand">AXO Networks</span>
+            <span class="divider">/</span>
+            <span class="page">Admin Dashboard</span>
+        </div>
 
         <div class="header-actions">
             <div class="user-info">
@@ -46,52 +50,62 @@
     <!-- STATS -->
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value" id="totalSubmissions">0</div>
             <div class="stat-label">Total</div>
+            <div class="stat-value" id="totalSubmissions">0</div>
         </div>
+
         <div class="stat-card">
-            <div class="stat-value" id="pendingCount">0</div>
             <div class="stat-label">Pending</div>
+            <div class="stat-value" id="pendingCount">0</div>
         </div>
+
         <div class="stat-card">
-            <div class="stat-value" id="approvedCount">0</div>
             <div class="stat-label">Approved</div>
+            <div class="stat-value" id="approvedCount">0</div>
         </div>
+
         <div class="stat-card">
-            <div class="stat-value" id="rejectedCount">0</div>
             <div class="stat-label">Rejected</div>
+            <div class="stat-value" id="rejectedCount">0</div>
         </div>
     </div>
 
-    <!-- TABLE -->
+    <!-- TABLE CARD -->
     <div class="card">
+
         <div class="card-header">
             <h2>Recent Form Submissions</h2>
-            <select id="statusFilter" onchange="filterByStatus()">
-                <option value="ALL">All Status</option>
-                <option value="PENDING">Pending</option>
-                <option value="APPROVED">Approved</option>
-                <option value="REJECTED">Rejected</option>
-            </select>
+
+            <div class="table-actions">
+                <div class="select-wrapper">
+                    <select id="statusFilter" onchange="filterByStatus()">
+                        <option value="ALL">All Status</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <table>
             <thead>
-            <tr>
-                <th>ID</th>
-                <th>Company</th>
-                <th>Contact</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Submitted</th>
-                <th>Actions</th>
-            </tr>
+                <tr>
+                    <th>ID</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                </tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
+
 </div>
 
 <!-- VIEW MODAL -->
@@ -102,7 +116,6 @@
     </div>
 </div>
 
-<script src="/js/admin-dashboard.js"></script>
+<script src="../frontend/js/admin-dashboard.js"></script>
 </body>
 </html>
-

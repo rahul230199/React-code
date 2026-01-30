@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
     <link rel="icon" href="assests/1000055723.jpg" type="image/png">
-    <link href="/styles/index.css" rel="stylesheet" />
+    <link href="../frontend/styles/index.css" rel="stylesheet" />
     <style>
         /* Prevent body scroll when menu is open */
         body.no-scroll {
@@ -28,32 +28,41 @@
     </div>
 
     <!-- ========== HEADER ========== -->
-    <header class="header" id="mainHeader">
-        <div class="header-content">
-            <a href="/" class="logo">AXO Networks</a>
-            <div class="nav-links">
-                <a href="/network-access" class="nav-link">Network Access</a>
-                <a href="/part-discovery" class="nav-link">Part Discovery</a>
-                <a href="/financial-partners" class="nav-link">Financial Partners</a>
-                <a href="/about" class="nav-link">About</a>
-                <a href="/blog" class="nav-link">Blog</a>
-                <a href="/careers" class="nav-link">Careers</a>
-                <a href="/login" class="cta-button" style="margin-left: 1rem;">Login</a>
-            </div>
-            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="dropdown-menu" id="dropdownMenu">
-                <a href="/network-access" class="dropdown-item">Network Access</a>
-                <a href="/part-discovery" class="dropdown-item">Part Discovery</a>
-                <a href="/financial-partners" class="dropdown-item">Financial Partners</a>
-                <a href="/about" class="dropdown-item">About</a>
-                <a href="/blog" class="dropdown-item">Blog</a>
-                <a href="/careers" class="dropdown-item">Careers</a>
-                <a href="/login" class="dropdown-item" style="color: var(--primary); font-weight: 800;">Login</a>
-            </div>
-        </div>
-    </header>
+   <header class="header" id="mainHeader">
+  <div class="header-content">
+    <a href="/" class="logo">AXO Networks</a>
+
+    <nav class="nav-links">
+      <a href="/network-access" class="nav-link">Network Access</a>
+      <a href="/part-discovery" class="nav-link">Part Discovery</a>
+      <a href="/financial-partners" class="nav-link">Financial Partners</a>
+      <a href="/about" class="nav-link">About</a>
+      <a href="/blog" class="nav-link">Blog</a>
+      <a href="/careers" class="nav-link">Careers</a>
+      <a href="/login" class="cta-button" style="margin-left: 1rem;">Login</a>
+    </nav>
+
+    <!-- CHANGE: aria-expanded for accessibility + consistency -->
+    <button
+      class="menu-toggle"
+      id="menuToggle"
+      aria-label="Toggle menu"
+      aria-expanded="false">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- CHANGE: menu is sibling, not affecting layout -->
+    <div class="dropdown-menu" id="dropdownMenu">
+      <a href="/network-access" class="dropdown-item">Network Access</a>
+      <a href="/part-discovery" class="dropdown-item">Part Discovery</a>
+      <a href="/financial-partners" class="dropdown-item">Financial Partners</a>
+      <a href="/about" class="dropdown-item">About</a>
+      <a href="/blog" class="dropdown-item">Blog</a>
+      <a href="/careers" class="dropdown-item">Careers</a>
+      <a href="/login" class="dropdown-item" style="color: var(--primary); font-weight: 800;">Login</a>
+    </div>
+  </div>
+</header>
 
     <!-- ========== HERO SECTION ========== -->
     <section class="hero" id="home">
