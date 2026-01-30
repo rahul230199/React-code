@@ -1,175 +1,61 @@
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
+// services/PasswordResetService.js
+const bcrypt = require("bcrypt");
+const { Pool } = require("pg");
+const jwt = require("jsonwebtoken");
 
-class PasswordResetService {
-    // Reset password for first-time users
-    static async forceResetPassword(email, newPassword) {
-        try {
-            console.log('🔄 Force password reset for:', email);
+const pool = new Pool({
+  host: process.env.PGHOST || "localhost",
+  database: process.env.PGDATABASE || "axo_networks",
+  user: process.env.PGUSER || "postgres",
+  password: process.env.PGPASSWORD || "",
+  port: process.env.PGPORT || 5432,
+});
 
-            if (!email || !newPassword) {
-                return {
-                    success: false,
-                    message: "Email and new password are required"
-                };
-            }
+const JWT_SECRET = process.env.JWT_SECRET || "axo-secret";
 
-            if (newPassword.length < 6) {
-                return {
-                    success: false,
-                    message: "New password must be at least 6 characters"
-                };
-            }
+module.exports = {
+  /* =========================================
+     FORCE PASSWORD RESET (FIRST LOGIN)
+  ========================================= */
+  async forceResetPassword(email, newPassword) {
+    // Check user exists
+    const userRes = await pool.query(
+      "SELECT * FROM users WHERE email=$1",
+      [email]
+    );
 
-            const user = await User.findOne({ email: email.toLowerCase() });
-            if (!user) {
-                return {
-                    success: false,
-                    message: "User not found"
-                };
-            }
-
-            // Update password
-            user.password = newPassword;
-            user.tempPassword = newPassword;
-            user.forcePasswordReset = false;
-            await user.save();
-
-            console.log('✅ Password force reset successful for:', email);
-
-            // Create token
-            const token = jwt.sign(
-                {
-                    userId: user._id,
-                    email: user.email,
-                    userType: user.userType
-                },
-                process.env.JWT_SECRET || "secret",
-                { expiresIn: "24h" }
-            );
-
-            return {
-                success: true,
-                message: "Password reset successful",
-                token: token,
-                user: {
-                    _id: user._id,
-                    email: user.email,
-                    name: user.name,
-                    username: user.username,
-                    company: user.company,
-                    userType: user.userType || 'supplier',
-                    forcePasswordReset: false
-                }
-            };
-
-        } catch (error) {
-            console.error('❌ Force password reset error:', error);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+    if (!userRes.rows.length) {
+      return { success: false, message: "User not found" };
     }
 
-    // Regular password reset (requires current password)
-    static async resetPassword(email, currentPassword, newPassword) {
-        try {
-            console.log('🔄 Regular password reset for:', email);
+    const passwordHash = await bcrypt.hash(newPassword, 10);
 
-            if (!email || !newPassword) {
-                return {
-                    success: false,
-                    message: "Email and new password are required"
-                };
-            }
+    await pool.query(
+      `UPDATE users
+       SET password_hash=$1, status='active'
+       WHERE email=$2`,
+      [passwordHash, email]
+    );
 
-            if (newPassword.length < 6) {
-                return {
-                    success: false,
-                    message: "New password must be at least 6 characters"
-                };
-            }
+    const user = userRes.rows[0];
 
-            const user = await User.findOne({ email: email.toLowerCase() });
-            if (!user) {
-                return {
-                    success: false,
-                    message: "User not found"
-                };
-            }
+    // Issue new token
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
-            // Verify current password
-            if (currentPassword && (currentPassword !== user.password && currentPassword !== user.tempPassword)) {
-                return {
-                    success: false,
-                    message: "Current password is incorrect"
-                };
-            }
+    return {
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        userType: user.role
+      }
+    };
+  }
+};
 
-            // Update password
-            user.password = newPassword;
-            user.tempPassword = newPassword;
-            user.forcePasswordReset = false;
-            await user.save();
-
-            console.log('✅ Password reset successful for:', email);
-
-            return {
-                success: true,
-                message: "Password reset successful"
-            };
-
-        } catch (error) {
-            console.error('❌ Password reset error:', error);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    // Admin password update (no current password required)
-    static async adminUpdatePassword(email, newPassword) {
-        try {
-            console.log('🔧 Admin password update for:', email);
-
-            if (!email || !newPassword) {
-                return {
-                    success: false,
-                    message: "Email and new password are required"
-                };
-            }
-
-            const user = await User.findOne({ email: email.toLowerCase() });
-            if (!user) {
-                return {
-                    success: false,
-                    message: "User not found"
-                };
-            }
-
-            // Update password
-            user.password = newPassword;
-            user.tempPassword = newPassword;
-            user.forcePasswordReset = false;
-            await user.save();
-
-            console.log('✅ Admin password update successful for:', email);
-
-            return {
-                success: true,
-                message: "Password updated successfully"
-            };
-
-        } catch (error) {
-            console.error('❌ Admin password update error:', error);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-}
-
-module.exports = PasswordResetService;

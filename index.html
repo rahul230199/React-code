@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AXO Networks - The Operating Layer for India's EV Manufacturing</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+    <link rel="icon" href="assests/1000055723.jpg" type="image/png">
+    <link href="/styles/index.css" rel="stylesheet" />
+    <style>
+        /* Prevent body scroll when menu is open */
+        body.no-scroll {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- ========== HEADER ========== -->
+    <header class="header" id="mainHeader">
+        <div class="header-content">
+            <a href="/" class="logo">AXO Networks</a>
+            <div class="nav-links">
+                <a href="/network-access" class="nav-link">Network Access</a>
+                <a href="/part-discovery" class="nav-link">Part Discovery</a>
+                <a href="/financial-partners" class="nav-link">Financial Partners</a>
+                <a href="/about" class="nav-link">About</a>
+                <a href="/blog" class="nav-link">Blog</a>
+                <a href="/careers" class="nav-link">Careers</a>
+                <a href="/login" class="cta-button" style="margin-left: 1rem;">Login</a>
+            </div>
+            <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="/network-access" class="dropdown-item">Network Access</a>
+                <a href="/part-discovery" class="dropdown-item">Part Discovery</a>
+                <a href="/financial-partners" class="dropdown-item">Financial Partners</a>
+                <a href="/about" class="dropdown-item">About</a>
+                <a href="/blog" class="dropdown-item">Blog</a>
+                <a href="/careers" class="dropdown-item">Careers</a>
+                <a href="/login" class="dropdown-item" style="color: var(--primary); font-weight: 800;">Login</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== HERO SECTION ========== -->
+    <section class="hero" id="home">
+        <!-- Subtle Background Image Layer -->
+        <div class="hero-background"></div>
+
+        <!-- Blueprint Grid -->
+        <svg class="blueprint-grid" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="0.5" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+        </svg>
+
+        <!-- Parallax Background Layer -->
+        <div class="parallax-layer" id="parallaxLayer">
+            <div class="hero-circle-1"></div>
+            <div class="hero-circle-2"></div>
+            <div class="hero-circle-3"></div>
+            <div class="hero-circle-4"></div>
+
+            <!-- Abstract Schematic Lines -->
+            <svg class="hero-svg" viewBox="0 0 1600 900" preserveAspectRatio="none">
+                <path d="M0,100 Q400,150 800,100 T1600,100" fill="none" stroke="#1E3A8A" stroke-width="1" />
+                <path d="M0,800 L1600,200" fill="none" stroke="#1E3A8A" stroke-width="0.5" stroke-dasharray="10 10" />
+                <path d="M400,300 L1200,600" fill="none" stroke="#1E3A8A" stroke-width="0.3" stroke-dasharray="5 5" />
+            </svg>
+        </div>
+
+        <div class="hero-content">
+            <div class="animate-reveal">
+                <!-- Home Title -->
+                <h1 class="hero-title">
+                    <span class="title-line-1">The Operating Layer for</span>
+                    <span class="title-line-2">India's EV Manufacturing</span>
+                </h1>
+            </div>
+
+            <div class="animate-reveal" style="transition-delay: 200ms">
+                <!-- Home Subtitle -->
+                <p class="hero-subtitle">
+                    AXO Networks synchronizes industrial capacity with institutional capital. We unify the end-to-end manufacturing lifecycle, from strategic sourcing to capital deployment, into a single, high-integrity architecture.
+                </p>
+            </div>
+
+            <div class="animate-reveal" style="transition-delay: 400ms">
+                <!-- UPDATED: Only 2 buttons with equal size and center aligned -->
+                <div class="button-group">
+                    <a href="/network-access" class="primary-button access-btn">
+                        <span>Access Network<i class="fas fa-arrow-right"></i></span>
+                    </a>
+                    <a href="/financial-partners" class="secondary-button finance-btn">Financial Partners</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PHILOSOPHY SECTION ========== -->
+    <section class="philosophy" style="padding-top: 50px;padding-bottom: 50px;">
+        <div class="container animate-reveal">
+            <blockquote class="quote">
+                "We believe in the power of <span>invisible infrastructure</span>. The most effective systems are those you don't see, but feel."
+            </blockquote>
+        </div>
+    </section>
+
+    <!-- ========== STRUCTURED DIGITAL FLOWS SECTION ========== -->
+    <section class="infrastructure" id="infrastructure"  style="padding-top: 50px;padding-bottom: 50px;">
+        <div class="container">
+            <div class="infrastructure-grid">
+                <div class="infrastructure-content">
+                    <h2>Industrial Orchestration<br />
+                        <span class="gradient-text" style="color: #111827;">Engineered for Scale</span>
+                    </h2>
+                    <p>AXO converts the fragmentation of EV manufacturing into a high-fidelity data environment. "By elevating industrial execution into a unified intelligence layer, AXO delivers the clarity required to manage multi-tier manufacturing ecosystems with institutional confidence.</p>
+
+                    <!-- Features List - Now Left Aligned -->
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon" style="width: 1.75rem; height: 1.75rem; font-size: 0.8rem;">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <span class="feature-text" style="font-size: 1rem; text-align: left;">End-to-End Value Chain Transparency</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon" style="width: 1.75rem; height: 1.75rem; font-size: 0.8rem;">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <span class="feature-text" style="font-size: 1rem; text-align: left;">Adaptive Production Alignment</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon" style="width: 1.75rem; height: 1.75rem; font-size: 0.8rem;">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <span class="feature-text" style="font-size: 1rem; text-align: left;">Capital Alignment Framework</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon" style="width: 1.75rem; height: 1.75rem; font-size: 0.8rem;">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <span class="feature-text" style="font-size: 1rem; text-align: left;">Forward-Looking Industrial Insight</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Container - Made Smaller -->
+                <div class="dashboard-container" style="transform: scale(0.9); transform-origin: center;">
+                    <!-- System Tag positioned above the table - Right aligned -->
+                    <div class="system-tag" style="font-size: 0.8rem; margin-bottom: 1rem; text-align: right; margin-left: auto; margin-right: 0; display: block; padding:0.25rem 0.75rem; width: fit-content;">
+                        // SYSTEM_ARCHITECTURE
+                    </div>
+
+                    <div class="dashboard-card">
+                        <!-- Dashboard Header -->
+                        <div class="dashboard-header" style="padding: 1rem 1.25rem;">
+                            <div class="window-controls">
+                                <div class="control-dot red" style="width: 0.6rem; height: 0.6rem;"></div>
+                                <div class="control-dot yellow" style="width: 0.6rem; height: 0.6rem;"></div>
+                                <div class="control-dot green" style="width: 0.6rem; height: 0.6rem;"></div>
+                            </div>
+                            <div class="dashboard-version" style="font-size: 0.7rem;">AXO_OS_V2.4.1</div>
+                        </div>
+
+                        <!-- Dashboard Content -->
+                        <div class="dashboard-content" style="padding: 1.25rem;">
+                            <div class="metrics-grid" style="gap: 1rem; margin-bottom: 1.5rem;">
+                                <div class="metric-box" style="padding: 1rem;">
+                                    <div class="metric-label" style="font-size: 0.75rem;">Active Nodes</div>
+                                    <div class="metric-value" style="font-size: 1.5rem;">1,248</div>
+                                </div>
+                                <div class="metric-box" style="padding: 1rem;">
+                                    <div class="metric-label" style="font-size: 0.75rem;">Operational Throughput</div>
+                                    <div class="metric-value neon" style="font-size: 1.5rem;">98.4%</div>
+                                </div>
+                            </div>
+
+                            <div class="progress-bars" style="gap: 1.25rem; margin-bottom: 1.5rem;">
+                                <div class="progress-item">
+                                    <div class="progress-info">
+                                        <span class="progress-label" style="font-size: 0.75rem;">Production Efficiency</span>
+                                        <span class="progress-value" style="font-size: 0.75rem;">94%</span>
+                                    </div>
+                                    <div class="progress-bar-bg" style="height: 0.375rem;">
+                                        <div class="progress-bar-fill"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-item">
+                                    <div class="progress-info">
+                                        <span class="progress-label" style="font-size: 0.75rem;">Supply Chain Health</span>
+                                        <span class="progress-value" style="font-size: 0.75rem;">93%</span>
+                                    </div>
+                                    <div class="progress-bar-bg" style="height: 0.375rem;">
+                                        <div class="progress-bar-fill"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-item">
+                                    <div class="progress-info">
+                                        <span class="progress-label" style="font-size: 0.75rem;">Financial Alignment</span>
+                                        <span class="progress-value" style="font-size: 0.75rem;">91%</span>
+                                    </div>
+                                    <div class="progress-bar-bg" style="height: 0.375rem;">
+                                        <div class="progress-bar-fill"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-item">
+                                    <div class="progress-info">
+                                        <span class="progress-label" style="font-size: 0.75rem;">Quality Metrics</span>
+                                        <span class="progress-value" style="font-size: 0.75rem;">96%</span>
+                                    </div>
+                                    <div class="progress-bar-bg" style="height: 0.375rem;">
+                                        <div class="progress-bar-fill"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Graph Area -->
+                            <div class="graph-container" style="height: 4.5rem;">
+                                <div class="graph-grid"></div>
+                                <svg class="graph-line" viewBox="0 0 600 100" preserveAspectRatio="none">
+                                    <path d="M0,100 C100,80 200,120 300,60 S500,90 600,40" fill="none" stroke="rgba(30, 58, 138, 0.5)" stroke-width="2"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PRECISION SECTION ========== -->
+    <section class="precision"  style="padding-top: 50px;padding-bottom: 50px;">
+        <div class="container">
+            <div class="precision-header animate-reveal">
+                <h2>Built for Precision</h2>
+                <p>AXO Networks unifies the three critical drivers of industrial scale. By aligning the incentives of OEMs, Suppliers, and Capital, we create a high-velocity ecosystem where growth is a structural certainty.</p>
+            </div>
+            <div class="role-cards">
+                <div class="role-card animate-reveal">
+                    <h3>OEMs</h3>
+                    <div class="role-subtitle">Streamline Your Supply Chain</div>
+                    <p>Transform fragmented procurement into a resilient, data-driven competitive advantage. Access a pre-qualified industrial base and manage complex production cycles with absolute precision.</p>
+                    <a href="/network-access" class="role-link">Access Network<i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="role-card animate-reveal" style="transition-delay: 100ms">
+                    <h3>Suppliers</h3>
+                    <div class="role-subtitle">Expand Your Market Reach</div>
+                    <p>Align your manufacturing capacity with high-tier demand. AXO provides the structural visibility required to optimize production schedules, secure long-term order books, and build a verifiable track record of excellence.</p>
+                    <a href="/network-access" class="role-link">Access Network<i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="role-card animate-reveal" style="transition-delay: 200ms">
+                    <h3>Financial Partners</h3>
+                    <div class="role-subtitle">De-risk EV Investments</div>
+                    <p>Deploy capital into the EV sector with institutional-grade transparency. Our platform converts operational noise into clean, performance-aligned data, allowing for the efficient deployment of supply chain finance and growth capital.</p>
+                    <a href="/financial-partners" class="role-link">Financial Partners <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== CORE FUNCTIONS SECTION ========== -->
+    <section class="core-functions"  style="padding-top: 50px;padding-bottom: 50px;">
+        <div class="container">
+            <h2 class="animate-reveal">Core Functions</h2>
+            <p class="animate-reveal">The foundation of our operating layer, enabling seamless collaboration across the EV manufacturing ecosystem.</p>
+            <div class="functions-grid">
+                <div class="function-card animate-reveal">
+                    <div class="function-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3>Verification</h3>
+                    <p>Ensuring the authenticity and quality of every component and partner within the network.</p>
+                </div>
+                <div class="function-card animate-reveal" style="transition-delay: 150ms">
+                    <div class="function-icon"><i class="fas fa-bolt"></i></div>
+                    <h3>Connection</h3>
+                    <p>Seamlessly linking suppliers, OEMs, and financial partners for efficient collaboration.</p>
+                </div>
+                <div class="function-card animate-reveal" style="transition-delay: 300ms">
+                    <div class="function-icon"><i class="fas fa-layer-group"></i></div>
+                    <h3>Transparency</h3>
+                    <p>Providing clear, real-time visibility into every stage of the operational workflow.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== OPERATIONAL WORKFLOW SECTION ========== -->
+    <section class="workflow" id="workflow"  style="padding-top: 50px;padding-bottom: 50px;">
+        <div class="container">
+            <div class="workflow-header animate-reveal">
+                <h2>The Architecture of Execution</h2>
+                <p>AXO establishes a disciplined execution architecture, reducing uncertainty and reinforcing confidence across complex manufacturing programs.</p>
+                <p>Execution is governed through a unified framework that aligns technical intent, manufacturing readiness, and institutional oversight ensuring every program progresses with clarity, accountability, and resilience.</p>
+            </div>
+
+            <div class="workflow-status animate-reveal" style="transition-delay: 900ms">
+                <p class="status-badge">STATUS: Execution Continuity Active. System Integrity Maintained.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== VALUES SECTION - UPDATED ========== -->
+    <section class="values" id="values"  style="padding-top: 50px;padding-bottom: 50px;">
+        <div class="container">
+            <h2 class="animate-reveal">Why It Matters</h2>
+            <!-- UPDATED: Plain text instead of box -->
+            <p class="values-header-text animate-reveal" style="transition-delay: 100ms">
+                The Right infrastructure enables sustainable growth without sacrificing control or clarity.
+            </p>
+            <div class="values-grid">
+                <div class="value-item animate-reveal">
+                    <h3>Clarity</h3>
+                    <p class="value-description">Reducing industrial complexity into intuitive, high-velocity workflows.</p>
+                </div>
+                <div class="value-item animate-reveal" style="transition-delay: 100ms">
+                    <h3>Structure</h3>
+                    <p class="value-description">Replacing optimistic projections with verifiable, data-driven milestones.</p>
+                </div>
+                <div class="value-item animate-reveal" style="transition-delay: 200ms">
+                    <h3>Velocity</h3>
+                    <p class="value-description">Prioritizing tangible industrial progress over market narrative.</p>
+                </div>
+                <div class="value-item animate-reveal" style="transition-delay: 300ms">
+                    <h3>Longevity</h3>
+                    <p class="value-description">Building resilient infrastructure designed for decadal compounding.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== STATEMENT SECTION ========== -->
+    <section class="statement"  style="padding-top: 50px;padding-bottom: 50px;">
+        <div class="container animate-reveal">
+            <div class="statement-card"  style="padding-top: 20px;padding-bottom: 20px;">
+                <blockquote>"This platform is onboarding suppliers, OEMs, and financial partners into its initial operating workflow. Early participants help shape how structured manufacturing and financing will work at scale."</blockquote>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== CTA SECTION ========== -->
+    <section class="cta"  style="padding-top: 30px;padding-bottom: 30px;">
+        <div class="container animate-reveal">
+            <h2>Ready to build <br>the future?</h2>
+            <!-- UPDATED: Only 2 buttons with equal size and center aligned -->
+            <div class="cta-buttons">
+                <a href="/network-access" class="primary-button" style="min-width: 200px;">Access Network</a>
+                <a href="/financial-partners" class="secondary-button" style="min-width: 200px;">Financial Partners</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h3>AXO Networks</h3>
+                    <p>The operating layer for India's EV manufacturing ecosystem.</p>
+                </div>
+                <div>
+                    <!-- UPDATED: New quick links -->
+                    <h4>Quick links</h4>
+                    <a href="/network-access">Network Access</a>
+                    <a href="/part-discovery">Part Discovery</a>
+                    <a href="/financial-partners">Financial Partners</a>
+                </div>
+                <div>
+                    <h4>Company</h4>
+                    <a href="/about">About</a>
+                    <a href="/blog">Blog</a>
+                    <a href="/careers">Careers</a>
+                    <a href="/contact">Contact Us</a>
+                </div>
+                <div>
+                    <h4>Legal</h4>
+                    <a href="#terms">Terms of Service</a>
+                    <a href="#privacy">Privacy Policy</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="currentYear"></span> AXO Networks. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+<script>
+    // ========== MOBILE MENU FIXES ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set current year in footer
+        const yearElement = document.getElementById("currentYear");
+        if (yearElement) {
+            yearElement.textContent = new Date().getFullYear();
+        }
+
+        // ========== PROGRESS BAR ==========
+        window.addEventListener('scroll', function() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            
+            const scrolled = (winScroll / height) * 100;
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) {
+                progressBar.style.width = scrolled + '%';
+            }
+        });
+
+        // ========== HEADER SCROLL EFFECT ==========
+        let lastScrollTop = 0;
+        const header = document.getElementById('mainHeader');
+
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+            
+            if (scrollTop > lastScrollTop && scrollTop > 200) {
+                header.classList.add('hidden');
+            } else {
+                header.classList.remove('hidden');
+            }
+            const bg = document.querySelector('.hero-background');
+  bg.style.transform = `translateY(${window.scrollY * 0.2}px)`;
+            lastScrollTop = scrollTop;
+        });
+
+        // ========== MOBILE MENU TOGGLE - FIXED ==========
+        const menuToggle = document.getElementById('menuToggle');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const body = document.body;
+
+        if (menuToggle && dropdownMenu) {
+            menuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const isActive = dropdownMenu.classList.contains('active');
+                const icon = menuToggle.querySelector('i');
+                
+                if (isActive) {
+                    // Close menu
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    icon.className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                } else {
+                    // Open menu
+                    dropdownMenu.classList.add('active');
+                    menuToggle.style.transform = 'rotate(90deg)';
+                    icon.className = 'fas fa-times';
+                    body.classList.add('no-scroll');
+                }
+            });
+
+            // Close menu when clicking on a link
+            dropdownMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    menuToggle.querySelector('i').className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdownMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    menuToggle.querySelector('i').className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                }
+            });
+
+            // Close menu on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && dropdownMenu.classList.contains('active')) {
+                    dropdownMenu.classList.remove('active');
+                    menuToggle.style.transform = 'rotate(0deg)';
+                    menuToggle.querySelector('i').className = 'fas fa-bars';
+                    body.classList.remove('no-scroll');
+                }
+            });
+
+            // Prevent menu from closing when clicking inside it
+            dropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+
+        // ========== ANIMATION OBSERVER ==========
+        const observerOptions = { 
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-reveal').forEach(el => observer.observe(el));
+
+        // ========== INFRASTRUCTURE SECTION ANIMATIONS ==========
+        const flowsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Animate system tag
+                    const systemTag = entry.target.querySelector('.system-tag');
+                    if (systemTag) {
+                        setTimeout(() => {
+                            systemTag.classList.add('animate-in');
+                        }, 100);
+                    }
+
+                    // Animate gradient text
+                    const gradientText = entry.target.querySelector('.gradient-text');
+                    if (gradientText) {
+                        setTimeout(() => {
+                            gradientText.classList.add('animate-in');
+                        }, 300);
+                    }
+
+                    // Animate feature items
+                    const featureItems = entry.target.querySelectorAll('.feature-item');
+                    featureItems.forEach((item, index) => {
+                        setTimeout(() => {
+                            item.classList.add('animate-in');
+                        }, 500 + (index * 100));
+                    });
+
+                    // Animate dashboard
+                    const dashboardContainer = entry.target.querySelector('.dashboard-container');
+                    if (dashboardContainer) {
+                        setTimeout(() => {
+                            dashboardContainer.classList.add('animate-in');
+                        }, 900);
+                    }
+
+                    // Animate metric boxes
+                    const metricBoxes = entry.target.querySelectorAll('.metric-box');
+                    metricBoxes.forEach((box, index) => {
+                        setTimeout(() => {
+                            box.classList.add('animate-in');
+                        }, 1100 + (index * 100));
+                    });
+
+                    // Animate progress items
+                    const progressItems = entry.target.querySelectorAll('.progress-item');
+                    progressItems.forEach((item, index) => {
+                        setTimeout(() => {
+                            item.classList.add('animate-in');
+                        }, 1300 + (index * 100));
+                    });
+
+                    // Animate graph
+                    const graphContainer = entry.target.querySelector('.graph-container');
+                    if (graphContainer) {
+                        setTimeout(() => {
+                            graphContainer.classList.add('animate-in');
+                        }, 1700);
+                    }
+                }
+            });
+        }, { threshold: 0.2 });
+
+        // ========== WORKFLOW SECTION ANIMATIONS ==========
+        const workflowObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Add animate-in class to workflow-steps container
+                    const workflowSteps = entry.target.querySelector('.workflow-steps');
+                    if (workflowSteps) {
+                        setTimeout(() => {
+                            workflowSteps.classList.add('animate-in');
+                        }, 300);
+                    }
+
+                    // Add animate-in class to individual steps with staggered delays
+                    const workflowStepItems = entry.target.querySelectorAll('.workflow-step');
+                    workflowStepItems.forEach((step, index) => {
+                        step.style.setProperty('--step-index', index);
+                        setTimeout(() => {
+                            step.classList.add('animate-in');
+                        }, 500 + (index * 100));
+                    });
+
+                    // Animate status badge
+                    const workflowStatus = entry.target.querySelector('.workflow-status');
+                    if (workflowStatus) {
+                        setTimeout(() => {
+                            workflowStatus.classList.add('animate-in');
+                        }, 1400);
+                    }
+                }
+            });
+        }, { threshold: 0.2 });
+
+        // Observe sections
+        const infrastructureSection = document.querySelector('.infrastructure');
+        if (infrastructureSection) {
+            flowsObserver.observe(infrastructureSection);
+        }
+
+        const workflowSection = document.querySelector('.workflow');
+        if (workflowSection) {
+            workflowObserver.observe(workflowSection);
+        }
+
+        // ========== SMOOTH HOVER EFFECTS ==========
+        const buttons = document.querySelectorAll('.primary-button, .secondary-button, .cta-button, .role-link');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px) scale(1.02)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+            });
+        });
+
+        // ========== TOUCH DEVICE SUPPORT ==========
+        function isTouchDevice() {
+            return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        }
+
+        if (isTouchDevice()) {
+            // Add touch-specific optimizations
+            document.documentElement.classList.add('touch-device');
+            
+            // Improve button responsiveness on touch
+            buttons.forEach(button => {
+                button.addEventListener('touchstart', function() {
+                    this.classList.add('touch-active');
+                });
+                
+                button.addEventListener('touchend', function() {
+                    this.classList.remove('touch-active');
+                });
+            });
+        }
+
+        // ========== FIX FOR IOS SAFARI 100VH BUG ==========
+        function setVH() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        
+        setVH();
+        window.addEventListener('resize', setVH);
+        window.addEventListener('orientationchange', setVH);
+    });
+
+    // ========== WINDOW LOAD FIXES ==========
+    window.addEventListener('load', function() {
+        // Fix for iOS initial load
+        setTimeout(function() {
+            window.scrollTo(0, 0);
+        }, 100);
+        
+        // Fix for mobile viewport height
+        const hero = document.querySelector('.hero');
+        if (hero && window.innerHeight > 0) {
+            hero.style.minHeight = window.innerHeight + 'px';
+        }
+    });
+</script>
+</body>
+</html>
