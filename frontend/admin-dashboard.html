@@ -115,6 +115,28 @@
         <div id="modalBody"></div>
     </div>
 </div>
+<!-- STATUS CONFIRM MODAL -->
+<div id="statusModal" class="modal">
+  <div class="modal-content status-modal">
+    <h3 id="statusTitle">Confirm Action</h3>
+
+    <textarea
+      id="statusComment"
+      placeholder="Enter comment (mandatory)"
+      rows="4"
+    ></textarea>
+
+    <div class="status-actions">
+      <button class="btn btn-secondary" onclick="closeStatusModal()">
+        Cancel
+      </button>
+      <button class="btn btn-primary" id="confirmStatusBtn">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
 
 <script src="../frontend/js/admin-dashboard.js"></script>
 </body>
