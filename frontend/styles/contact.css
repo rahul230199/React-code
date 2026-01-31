@@ -836,7 +836,7 @@
   background-size: 75% auto;
 
   opacity: 0.15;                 /* ✅ IMAGE OPACITY ONLY */
-  animation: gradientShift 15s linear infinite;
+  animation: gradientShift 10s linear infinite;
 
   z-index: 0;
   pointer-events: none;

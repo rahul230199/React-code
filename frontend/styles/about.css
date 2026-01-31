@@ -429,7 +429,7 @@ section {
 .dropdown-item:hover {
     background: var(--light-grey);
     padding-left: 2rem;
-    color: var(--primary);
+    color: var(--foreground);
 }
 
 .dropdown-item::before {
@@ -478,7 +478,7 @@ section {
     opacity: 0.15;
     pointer-events: none;
     z-index: 0;
-    animation: gradientShift 15s ease infinite;
+    animation: gradientShift 10s ease infinite;
 }
 
 .parallax-layer {
@@ -1439,4 +1439,18 @@ section {
         margin-bottom: 2rem;
     }
 
+}
+/* ===== iPHONE + MOBILE FIX FOR BACKGROUND PARALLAX ===== */
+@media (max-width: 1024px) {
+
+    .about-hero-background {
+        background-attachment: scroll; /* disable fixed */
+        background-position: center top;
+        background-size: cover;
+    }
+
+}
+.parallax-layer {
+    will-change: transform;
+    transform: translateZ(0);
 }
