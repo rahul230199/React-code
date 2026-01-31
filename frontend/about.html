@@ -47,7 +47,7 @@
                 <a href="/about" class="dropdown-item">About</a>
                 <a href="/blog" class="dropdown-item">Blog</a>
                 <a href="/careers" class="dropdown-item">Careers</a>
-                <a href="/login" class="dropdown-item" style="color: var(--primary); font-weight: 800;">Login</a>
+                <a href="/login" class="dropdown-item" style="color: var(--foreground); font-weight: 800;">Login</a>
             </div>
     </header>
 
@@ -387,9 +387,19 @@
         }
         
         // Desktop Parallax (Disabled on mobile for performance)
-        if (parallaxLayer && window.innerWidth >= 1024) {
-            parallaxLayer.style.transform = `translateY(${scrollTop * 0.4}px)`;
-        }
+       if (parallaxLayer) {
+
+    let speed = 0.4;
+
+    // Lighter movement on mobile for performance
+    if (window.innerWidth < 768) {
+        speed = 0.15;
+    } else if (window.innerWidth < 1024) {
+        speed = 0.25;
+    }
+
+    parallaxLayer.style.transform = `translateY(${scrollTop * speed}px)`;
+}
 
         // Catch for mobile "bounce" scrolling (prevents negative values)
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 

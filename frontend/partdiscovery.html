@@ -37,7 +37,7 @@
                 <a href="/about" class="dropdown-item">About</a>
                 <a href="/blog" class="dropdown-item">Blog</a>
                 <a href="/careers" class="dropdown-item">Careers</a>
-                <a href="/portal-login" class="dropdown-item" style="color: var(--primary); font-weight: 800;">Login</a>
+                <a href="/portal-login" class="dropdown-item" style="color: var(--foreground); font-weight: 800;">Login</a>
             </div>
         </div>
     </header>
@@ -1047,65 +1047,31 @@
     }
 
     function initializeLayerToggles() {
-        const layerToggles = document.querySelectorAll('.layer-toggle');
-        console.log('Found layer toggles:', layerToggles.length);
 
-        layerToggles.forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const layer = this.dataset.layer;
-                const layerSection = document.getElementById(`layer${layer}`);
-                
-                if (layerSection) {
-                    const isExpanding = !layerSection.classList.contains('expanded');
-                    
-                    // Animate the toggle icon
-                    this.style.transform = 'scale(0.9)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 300);
-                    
-                    // Toggle the layer
-                    layerSection.classList.toggle('expanded');
-                    this.classList.toggle('rotated');
-                    
-                    // Animate cards if expanding
-                    if (isExpanding) {
-                        const cards = layerSection.querySelectorAll('.component-card');
-                        cards.forEach((card, index) => {
-                            card.style.animationDelay = `${index * 0.05}s`;
-                        });
-                    }
-                    
-                    console.log(`Toggled layer ${layer}, expanded: ${layerSection.classList.contains('expanded')}`);
-                }
-            });
+    const layerSections = document.querySelectorAll('.layer-section');
+
+    layerSections.forEach(section => {
+
+        const header = section.querySelector('.layer-header');
+        const toggle = section.querySelector('.layer-toggle');
+
+        function toggleLayer() {
+            section.classList.toggle('expanded');
+            toggle.classList.toggle('rotated');
+        }
+
+        // ONE event only (works mobile + desktop)
+        header.addEventListener('click', toggleLayer);
+
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleLayer();
         });
 
-        // Also allow clicking on the entire header
-        const layerHeaders = document.querySelectorAll('.layer-header');
-        layerHeaders.forEach(header => {
-            header.addEventListener('click', function(e) {
-                if (e.target.closest('.layer-toggle')) return;
-                const layer = this.dataset.layer;
-                const layerSection = document.getElementById(`layer${layer}`);
-                const toggle = layerSection.querySelector('.layer-toggle');
+    });
 
-                if (layerSection && toggle) {
-                    const isExpanding = !layerSection.classList.contains('expanded');
-                    
-                    // Trigger click on toggle
-                    toggle.click();
-                    
-                    // Add header animation
-                    this.style.transform = 'translateX(10px)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 300);
-                }
-            });
-        });
-    }
+}
+
 
     function showComponentDetail(component, layer) {
         const modal = document.getElementById('detailModal');
