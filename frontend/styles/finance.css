@@ -1305,3 +1305,40 @@ SMALL MOBILE PREMIUM LAYOUT
     }
 
 }
+@media (max-width: 768px) {
+    .hero {
+        height: 100svh;
+        min-height: 100svh;
+        max-height: 100svh;
+        overflow: hidden;
+    }
+}
+@media (max-width: 768px) {
+    section:not(.hero) {
+        min-height: auto;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+}
+@media (max-width: 768px) {
+    .hero {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero-content {
+        margin-top: 0;
+        padding-top: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    main {
+        overflow: hidden;
+    }
+}
