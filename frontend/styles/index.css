@@ -541,7 +541,7 @@ section {
     opacity: 0.15;
     pointer-events: none;
     z-index: 0;
-    animation: gradientShift 15s ease infinite;
+    animation: gradientShift 10s ease infinite;
 }
 
 .parallax-layer {
@@ -1890,7 +1890,7 @@ MOBILE PHONES
     }
 
     .hero-title {
-        font-size: clamp(3rem, 7vw, 2.8rem);
+        font-size: clamp(2.2rem, 7vw, 2.8rem);
         line-height: 1.2;
     }
 
@@ -1899,7 +1899,7 @@ MOBILE PHONES
         padding: 0 10px;
     }
     .hero-content{
-        padding-top: 50px;
+        padding-top: 80px;
     }
 
     /* ---------- BUTTONS ---------- */
@@ -2019,205 +2019,4 @@ DESKTOP LOCK
         display: flex !important;
     }
 
-}
-
-/* =====================================================
-   UNIVERSAL TYPOGRAPHY & SPACING SYSTEM
-   SAFE OVERRIDES ONLY — NO LAYOUT BREAKS
-   ===================================================== */
-
-/* ---------- BASE (Desktop Default) ---------- */
-
-body {
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-h1 { font-size: 3.5rem; }
-h2 { font-size: 2.75rem; }
-h3 { font-size: 1.75rem; }
-h4 { font-size: 1.25rem; }
-
-p {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-/* Section vertical rhythm */
-section:not(.hero) {
-  padding: 8rem 0;
-}
-
-/* Global horizontal padding */
-.container,
-.section-wrapper,
-.page-container {
-  padding-left: 2rem;
-  padding-right: 2rem;
-}
-
-/* Cards / blocks spacing */
-.role-card,
-.function-card,
-.value-item,
-.benefit-item,
-.benefit-item-improved,
-.dashboard-content {
-  padding: 2rem;
-}
-@media (max-width: 1024px) {
-
-  body {
-    font-size: 15.5px;
-  }
-
-  h1 { font-size: 3rem; }
-  h2 { font-size: 2.4rem; }
-  h3 { font-size: 1.6rem; }
-
-  p {
-    font-size: 0.98rem;
-    margin-bottom: 0.9rem;
-  }
-
-  section:not(.hero) {
-    padding: 6rem 0;
-  }
-
-  .container,
-  .section-wrapper,
-  .page-container {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-
-  .role-card,
-  .function-card,
-  .value-item,
-  .benefit-item,
-  .benefit-item-improved {
-    padding: 1.75rem;
-  }
-}
-@media (max-width: 768px) {
-
-  body {
-    font-size: 15px;
-    line-height: 1.65;
-  }
-
-  h1 { font-size: 2.2rem; }
-  h2 { font-size: 1.9rem; }
-  h3 { font-size: 1.35rem; }
-  h4 { font-size: 1.1rem; }
-
-  p {
-    font-size: 0.95rem;
-    margin-bottom: 0.85rem;
-  }
-
-  section:not(.hero) {
-    padding: 4rem 0;
-  }
-
-  .container,
-  .section-wrapper,
-  .page-container {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-  }
-
-  .role-card,
-  .function-card,
-  .value-item,
-  .benefit-item,
-  .benefit-item-improved {
-    padding: 1.25rem;
-  }
-}
-@media (max-width: 420px) {
-
-  body {
-    font-size: 14.5px;
-  }
-
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.7rem; }
-  h3 { font-size: 1.2rem; }
-
-  p {
-    font-size: 0.9rem;
-  }
-
-  section:not(.hero) {
-    padding: 3rem 0;
-  }
-
-  .container,
-  .section-wrapper,
-  .page-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  .role-card,
-  .function-card,
-  .value-item,
-  .benefit-item,
-  .benefit-item-improved {
-    padding: 1.1rem;
-  }
-}
-.dropdown-menu.active{
-   padding: 0px;
-   
-    width: 250px;
-
-
-}
-
-.dropdown-item{
-     width: 256px;
-    padding-top: 16px;
-    padding-left: 24px;
-    padding-bottom: 16px;
-    padding-right: 24px;
-
-   
-
-}
-@media (max-width: 768px) {
-
-  .philosophy .quote {
-    font-size: 1.5rem;      /* readable, premium */
-    line-height: 1.4;
-    padding: 0 0.5rem;      /* prevent edge touching */
-  }
-
-  .philosophy .quote span {
-    font-size: 1.6rem;      /* highlight word slightly larger */
-    display: inline-block;
-  }
-}
-@media (max-width: 420px) {
-
-  .philosophy .quote {
-    font-size: 1.35rem;
-    line-height: 1.45;
-  }
-
-  .philosophy .quote span {
-    font-size: 1.45rem;
-  }
-}
-@media (min-width: 769px) and (max-width: 1024px) {
-
-  .philosophy .quote {
-    font-size: 2rem;
-    line-height: 1.35;
-  }
-
-  .philosophy .quote span {
-    font-size: 2.15rem;
-  }
 }

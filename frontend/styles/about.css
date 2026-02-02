@@ -478,7 +478,7 @@ section {
     opacity: 0.15;
     pointer-events: none;
     z-index: 0;
-    animation: gradientShift 15s ease infinite;
+    animation: gradientShift 10s ease infinite;
 }
 
 .parallax-layer {
@@ -1453,113 +1453,4 @@ section {
 .parallax-layer {
     will-change: transform;
     transform: translateZ(0);
-}
-/* =========================================================
-   FINAL OVERRIDES – SAFE MOBILE + TABLET FIX (ABOUT PAGE)
-   Paste at VERY BOTTOM
-   ========================================================= */
-
-/* ---------- FIX: Abstract / Parallax NOT moving on mobile ---------- */
-section {
-  overflow-x: hidden !important;
-  overflow-y: visible !important; /* CRITICAL: allows animation */
-}
-
-.parallax-layer,
-.about-hero-background,
-.hero-circle-1,
-.hero-circle-2,
-.hero-circle-3,
-.hero-circle-4 {
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-/* Disable fixed background ONLY on mobile/tablet (Safari + Android fix) */
-@media (max-width: 1024px) {
-  .about-hero-background {
-    background-attachment: scroll !important;
-    background-size: cover;
-    background-position: center top;
-  }
-}
-
-/* ---------- FIX: Consistent Header Height ---------- */
-.header {
-  height: auto;
-}
-
-@media (max-width: 768px) {
-  .header {
-    padding-top: 10px;
-    padding-bottom: 10px;
-  }
-}
-
-/* ---------- FIX: Anchor / scroll offset consistency ---------- */
-:root {
-  --header-offset: 100px;
-}
-
-@media (max-width: 768px) {
-  :root {
-    --header-offset: 80px;
-  }
-}
-
-/* ---------- FIX: HERO TOP GAP (clean & single source) ---------- */
-@media (max-width: 768px) {
-  .about-hero {
-    min-height: 100svh;
-    padding-top: var(--header-offset);
-    padding-bottom: 32px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-  }
-
-  .about-hero-content {
-    margin-top: 24px;
-  }
-
-  .about-hero-title {
-    font-size: 3rem;
-    line-height: 1.15;
-  }
-
-  .about-hero-subtitle {
-    font-size: 1rem;
-  }
-}
-
-/* ---------- EXTRA SMALL PHONES (iPhone SE etc) ---------- */
-@media (max-width: 400px) {
-  .about-hero-title {
-    font-size: 2.4rem;
-  }
-}
-
-/* ---------- FIX: Grid overflow on mobile ---------- */
-@media (max-width: 768px) {
-  .cards-grid,
-  .team-grid,
-  .team-grid-updated {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* ---------- FIX: Button full-width on mobile ---------- */
-@media (max-width: 768px) {
-  .primary-button,
-  .secondary-button {
-    width: 100%;
-    min-width: auto;
-  }
-}
-
-/* ---------- FIX: Prevent horizontal scroll (Android issue) ---------- */
-html, body {
-  max-width: 100%;
-  overflow-x: hidden;
 }

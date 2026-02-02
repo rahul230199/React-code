@@ -574,7 +574,7 @@
     }
 
     .contact-hero h1 {
-        font-size: 3rem;
+        font-size: 2.25rem;
     }
 
     .contact-hero p {
@@ -836,7 +836,7 @@
   background-size: 75% auto;
 
   opacity: 0.15;                 /* ✅ IMAGE OPACITY ONLY */
-  animation: gradientShift 15s linear infinite;
+  animation: gradientShift 10s linear infinite;
 
   z-index: 0;
   pointer-events: none;
@@ -871,142 +871,4 @@
     animation-duration: 30s;
     opacity: 0.14;              /* slightly softer on small screens */
   }
-}
-/* ===============================
-   BASE (DESKTOP DEFAULT)
-   =============================== */
-
-body {
-  font-size: 1rem;              /* 16px */
-  line-height: 1.6;
-}
-
-h1 { font-size: 3.5rem; }
-h2 { font-size: 2.5rem; }
-h3 { font-size: 1.75rem; }
-h4 { font-size: 1.25rem; }
-
-p {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-/* Section spacing */
-section {
-  padding: 6rem 0;
-}
-
-/* Containers */
-.container {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-/* ===============================
-   MOBILE (Android + iPhone)
-   =============================== */
-
-@media (max-width: 768px) {
-
-  body {
-    font-size: 0.95rem;
-    line-height: 1.65;
-  }
-
-  h1 { font-size: 2.2rem; }
-  h2 { font-size: 1.9rem; }
-  h3 { font-size: 1.4rem; }
-  h4 { font-size: 1.15rem; }
-
-  p {
-    font-size: 0.95rem;
-    margin-bottom: 0.85rem;
-  }
-
-  /* Section spacing */
-  section {
-    padding: 3.5rem 0;
-  }
-
-  /* Containers tighter on phones */
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  /* Cards / blocks */
-  .contact-card,
-  .contact-form,
-  .footer,
-  .dropdown-menu {
-    padding: 1.5rem;
-  }
-}
-/* ===============================
-   TABLET (Portrait & Landscape)
-   =============================== */
-
-@media (min-width: 769px) and (max-width: 1024px) {
-
-  body {
-    font-size: 1rem;
-  }
-
-  h1 { font-size: 2.8rem; }
-  h2 { font-size: 2.2rem; }
-  h3 { font-size: 1.6rem; }
-
-  p {
-    font-size: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  section {
-    padding: 5rem 0;
-  }
-
-  .container {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-  }
-
-  .contact-card,
-  .contact-form {
-    padding: 2rem;
-  }
-}
-/* ===============================
-   SMALL PHONES
-   =============================== */
-
-@media (max-width: 480px) {
-
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.7rem; }
-  h3 { font-size: 1.3rem; }
-
-  p {
-    font-size: 0.9rem;
-  }
-
-  section {
-    padding: 3rem 0;
-  }
-
-  .container {
-    padding-left: 0.9rem;
-    padding-right: 0.9rem;
-  }
-}
-.dropdown-menu.active{
-   padding: 0px;
-
-}
-
-.dropdown-item{
-    
-    padding-top: 16px;
-    padding-left: 24px;
-    padding-bottom: 16px;
-    padding-right: 24px;
-
 }

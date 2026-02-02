@@ -432,7 +432,7 @@ section {
     opacity: 0.15;
     pointer-events: none;
     z-index: 0;
-    animation: gradientShift 15s ease infinite;
+    animation: gradientShift 10s ease infinite;
 }
 
 .parallax-layer {
@@ -1097,11 +1097,11 @@ section:not(.hero) {
     }
 
     .hero-title {
-        font-size: 3rem;
+        font-size: 2rem;
     }
     .hero-content{
         
-    padding-top: 50px;
+    padding-top: 60px;
 
     }
 
@@ -1304,147 +1304,4 @@ SMALL MOBILE PREMIUM LAYOUT
         font-size: 0.9rem;
     }
 
-}
-/* =================================================
-   BASE TYPOGRAPHY & SPACING (DESKTOP DEFAULT)
-   ================================================= */
-
-body {
-  font-size: 1rem;              /* 16px */
-  line-height: 1.6;
-}
-
-h1 { font-size: 3.5rem; }
-h2 { font-size: 2.75rem; }
-h3 { font-size: 1.75rem; }
-h4 { font-size: 1.25rem; }
-
-p {
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-/* Section rhythm */
-section:not(.hero) {
-  padding: 8rem 0;
-}
-
-/* Containers */
-.container,
-.section-wrapper,
-.page-container {
-  padding-left: 2rem;
-  padding-right: 2rem;
-}
-/* =================================================
-   TABLET (769px – 1024px)
-   ================================================= */
-
-@media (max-width: 1024px) {
-
-  body {
-    font-size: 0.98rem;
-  }
-
-  h1 { font-size: 3rem; }
-  h2 { font-size: 2.4rem; }
-  h3 { font-size: 1.6rem; }
-
-  p {
-    font-size: 0.98rem;
-    margin-bottom: 0.95rem;
-  }
-
-  section:not(.hero) {
-    padding: 6rem 0;
-  }
-
-  .container,
-  .section-wrapper,
-  .page-container {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-
-  /* Cards / blocks */
-  .benefit-item-improved,
-  .benefit-item,
-  .contact-card,
-  .contact-form {
-    padding: 1.75rem;
-  }
-}
-/* =================================================
-   MOBILE (≤ 768px)
-   ================================================= */
-
-@media (max-width: 768px) {
-
-  body {
-    font-size: 0.95rem;
-    line-height: 1.65;
-  }
-
-  h1 { font-size: 2.2rem; }
-  h2 { font-size: 1.9rem; }
-  h3 { font-size: 1.35rem; }
-  h4 { font-size: 1.1rem; }
-
-  p {
-    font-size: 0.95rem;
-    margin-bottom: 0.85rem;
-  }
-
-  section:not(.hero) {
-    padding: 4rem 0;
-  }
-
-  .container,
-  .section-wrapper,
-  .page-container {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-  }
-
-  /* Cards & content */
-  .benefit-item-improved,
-  .benefit-item,
-  .contact-card,
-  .contact-form {
-    padding: 1.25rem;
-  }
-}
-/* =================================================
-   SMALL PHONES (≤ 420px)
-   ================================================= */
-
-@media (max-width: 420px) {
-
-  body {
-    font-size: 0.9rem;
-  }
-
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.7rem; }
-  h3 { font-size: 1.2rem; }
-
-  p {
-    font-size: 0.9rem;
-  }
-
-  section:not(.hero) {
-    padding: 3rem 0;
-  }
-
-  .container,
-  .section-wrapper,
-  .page-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  .benefit-item-improved,
-  .benefit-item {
-    padding: 1.1rem;
-  }
 }

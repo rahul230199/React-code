@@ -628,17 +628,17 @@ section {
 
 /* Subtle Background Image Layer */
 .careers-hero-background {
-   position: absolute;
-    inset: 0;
-    background-image: url('https://static.wixstatic.com/media/3d4c2a_2f337be5b7da445db58a7946af6d1fe4~mv2.jpg');
-    background-size: auto 75%;
-    background-position: 0 0;
-    background-attachment: fixed;
-    background-repeat: repeat-x;
-    opacity: 0.15;
-    pointer-events: none;
-    z-index: 0;
-    animation: gradientShift 15s ease infinite;
+  position: absolute;
+      inset: 0;
+      background-image: url('https://static.wixstatic.com/media/3d4c2a_2f337be5b7da445db58a7946af6d1fe4~mv2.jpg');
+      background-size: auto 75%;
+      background-position: 0 0;
+      background-attachment: fixed;
+      background-repeat: repeat-x;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+      animation: gradientShift 10s ease infinite;
 }
 
 .parallax-layer {
@@ -1313,7 +1313,9 @@ section {
 /* ---------- GLOBAL SAFARI + GPU STABILITY ---------- */
 
 .parallax-layer,
-.careers-hero-background {
+.careers-hero-background,
+.blog-hero-background,
+.about-hero-background {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     will-change: transform;
@@ -1322,7 +1324,9 @@ section {
 
 /* ---------- HERO ABSOLUTE SAFE FOR ALL DEVICES ---------- */
 
-.careers-hero{
+.careers-hero,
+.blog-hero,
+.about-hero {
     position: relative;
     min-height: 100svh;
     min-height: 100dvh;
@@ -1331,7 +1335,9 @@ section {
 
 
 /* Prevent stacking issues */
-.careers-hero-content{
+.careers-hero-content,
+.blog-hero-content,
+.about-hero-content {
     position: relative;
     z-index: 20;
 }
@@ -1344,7 +1350,9 @@ section {
 @media (max-width: 768px) {
 
     /* ----- Background Fix (iPhone Safari) ----- */
-    .careers-hero-background{
+    .careers-hero-background,
+    .blog-hero-background,
+    .about-hero-background {
         background-attachment: scroll !important;
         background-position: center top;
         background-size: cover;
@@ -1352,23 +1360,29 @@ section {
     }
 
     /* ----- HERO MOBILE POSITIONING ----- */
-    .careers-hero{
+    .careers-hero,
+    .blog-hero,
+    .about-hero {
         padding-top: 70px;
         padding-bottom: 30px;
         align-items: flex-start;
     }
 
-    .careers-hero-content{
+    .careers-hero-content,
+    .blog-hero-content,
+    .about-hero-content {
         margin-top: 6vh;
     }
 
     /* ----- HERO TEXT MOBILE ----- */
-    .careers-title{
-        font-size: 3rem;
+    .careers-title,
+    .blog-hero-title {
+        font-size: 2.6rem;
         line-height: 1.2;
     }
 
-    .careers-subtitle{
+    .careers-subtitle,
+    .blog-hero-subtitle {
         font-size: 1rem;
         padding: 0 10px;
     }
@@ -1421,7 +1435,8 @@ section {
 
 @media (min-width: 769px) and (max-width: 1024px) {
 
-    .careers-title{
+    .careers-title,
+    .blog-hero-title {
         font-size: 4rem;
     }
 
@@ -1601,37 +1616,4 @@ section {
 
 * {
     -webkit-tap-highlight-color: transparent;
-}
-/* =========================================
-   BASE TYPOGRAPHY & SPACING (DESKTOP)
-   ========================================= */
-
-body {
-  font-size: 1rem; /* 16px */
-  line-height: 1.6;
-}
-
-h1 { font-size: 4.5rem; }
-h2 { font-size: 3.5rem; }
-h3 { font-size: 2.25rem; }
-h4 { font-size: 1.5rem; }
-
-p {
-  font-size: 1.05rem;
-  margin-bottom: 1.25rem;
-}
-
-/* Section rhythm */
-section,
-.section {
-  padding: 8rem 0;
-}
-
-/* Cards & content blocks */
-.card,
-.culture-card,
-.open-roles-card,
-.final-cta-card,
-.future-quote {
-  padding: 3.5rem;
 }

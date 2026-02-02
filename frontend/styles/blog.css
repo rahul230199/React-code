@@ -532,7 +532,7 @@ section {
     opacity: 0.15;
     pointer-events: none;
     z-index: 0;
-    animation: gradientShift 15s ease infinite;
+    animation: gradientShift 10s ease infinite;
 }
 
 .parallax-layer {
@@ -1594,59 +1594,4 @@ section {
         font-size: 1.6rem;
     }
 
-}
-/* =========================================
-   SECTION SPACING – MOBILE
-   Android + iPhone
-   ========================================= */
-
-@media (max-width: 768px) {
-
-  section {
-    padding: 4rem 0;
-  }
-
-  /* Sections that usually need tighter spacing */
-  .blog-posts-section,
-  .newsletter-section,
-  .footer-note {
-    padding: 3.5rem 0;
-  }
-
-  /* Hero handled separately – no bottom crowding */
-  .blog-hero,
-  .about-hero {
-    padding-bottom: 2rem;
-  }
-}
-/* =========================================
-   SECTION SPACING – TABLET
-   iPad / Tablets
-   ========================================= */
-
-@media (min-width: 769px) and (max-width: 1024px) {
-
-  section {
-    padding: 6rem 0;
-  }
-
-  .blog-posts-section,
-  .newsletter-section {
-    padding: 5rem 0;
-  }
-}
-/* =========================================
-   SECTION SPACING – EXTRA SMALL PHONES
-   ========================================= */
-
-@media (max-width: 420px) {
-
-  section {
-    padding: 3rem 0;
-  }
-
-  .blog-posts-section,
-  .newsletter-section {
-    padding: 3rem 0;
-  }
 }
