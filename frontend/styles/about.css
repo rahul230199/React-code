@@ -1519,3 +1519,11 @@ section {
 .cta-button-large:hover i {
     transform: translateX(5px);
 }
+/* =========================================
+REMOVE BACKGROUND GRID / GREY LINES
+========================================= */
+
+.blueprint-grid,
+.hero-svg {
+    display: none !important;
+}

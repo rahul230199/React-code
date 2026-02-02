@@ -3448,3 +3448,11 @@ h2 {
 .layer-header {
     will-change: transform;
 }
+/* =========================================
+REMOVE BACKGROUND GRID / GREY LINES
+========================================= */
+
+.blueprint-grid,
+.hero-svg {
+    display: none !important;
+}

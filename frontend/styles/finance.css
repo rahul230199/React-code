@@ -1342,3 +1342,11 @@ SMALL MOBILE PREMIUM LAYOUT
         overflow: hidden;
     }
 }
+/* =========================================
+REMOVE BACKGROUND GRID / GREY LINES
+========================================= */
+
+.blueprint-grid,
+.hero-svg {
+    display: none !important;
+}
