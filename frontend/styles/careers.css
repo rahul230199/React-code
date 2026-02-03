@@ -17,6 +17,7 @@
   --light-grey: #f9fafb;
   --grey: #e5e7eb;
   --dark-grey: #6b7280;
+  --header-offset: 110px;
   --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -542,6 +543,7 @@ section {
   box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
 }
 
+/* ========== DROPDOWN MENU - EXACT FINANCE CODE ========== */
 .dropdown-menu {
   display: none;
   position: absolute;
@@ -594,15 +596,29 @@ section {
 
 .menu-toggle {
   display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--foreground);
+  transition: transform 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 50%;
+  z-index: 1002;
 }
 
-/* ========== CAREERS HERO SECTION - IMPROVED CENTERING ========== */
+.menu-toggle:hover {
+  background: var(--light-grey);
+  transform: rotate(90deg);
+}
+
+/* ========== CAREERS HERO SECTION - MATCHING FINANCE CODE ========== */
 .careers-hero {
   position: relative;
   min-height: 100vh;
   width: 100%;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  padding-top: 80px;
+  padding-top: 110px; /* FINANCE CODE ALIGNMENT */
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -629,16 +645,16 @@ section {
 /* Subtle Background Image Layer */
 .careers-hero-background {
   position: absolute;
-      inset: 0;
-      background-image: url('https://static.wixstatic.com/media/3d4c2a_2f337be5b7da445db58a7946af6d1fe4~mv2.jpg');
-      background-size: auto 75%;
-      background-position: 0 0;
-      background-attachment: fixed;
-      background-repeat: repeat-x;
-      opacity: 0.15;
-      pointer-events: none;
-      z-index: 0;
-      animation: gradientShift 10s ease infinite;
+  inset: 0;
+  background-image: url('https://static.wixstatic.com/media/3d4c2a_2f337be5b7da445db58a7946af6d1fe4~mv2.jpg');
+  background-size: auto 75%;
+  background-position: 0 0;
+  background-attachment: fixed;
+  background-repeat: repeat-x;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  animation: gradientShift 10s ease infinite;
 }
 
 .parallax-layer {
@@ -1309,9 +1325,7 @@ section {
 /* ===== Android + iPhone + iPad + Tablets ========= */
 /* ================================================= */
 
-
 /* ---------- GLOBAL SAFARI + GPU STABILITY ---------- */
-
 .parallax-layer,
 .careers-hero-background,
 .blog-hero-background,
@@ -1321,9 +1335,7 @@ section {
     will-change: transform;
 }
 
-
 /* ---------- HERO ABSOLUTE SAFE FOR ALL DEVICES ---------- */
-
 .careers-hero,
 .blog-hero,
 .about-hero {
@@ -1333,7 +1345,6 @@ section {
     overflow: hidden;
 }
 
-
 /* Prevent stacking issues */
 .careers-hero-content,
 .blog-hero-content,
@@ -1342,188 +1353,289 @@ section {
     z-index: 20;
 }
 
-
-/* ================================================= */
-/* ================= MOBILE PHONES ================= */
-/* ================================================= */
-
+/* ========== MOBILE RESPONSIVE - MATCHING FINANCE CODE ========== */
 @media (max-width: 768px) {
-
-    /* ----- Background Fix (iPhone Safari) ----- */
-    .careers-hero-background,
-    .blog-hero-background,
-    .about-hero-background {
-        background-attachment: scroll !important;
-        background-position: center top;
-        background-size: cover;
-        opacity: 0.12;
-    }
-
-    /* ----- HERO MOBILE POSITIONING ----- */
-    .careers-hero,
-    .blog-hero,
-    .about-hero {
-        padding-top: 70px;
-        padding-bottom: 30px;
-        align-items: flex-start;
-    }
-
-    .careers-hero-content,
-    .blog-hero-content,
-    .about-hero-content {
-        margin-top: 6vh;
-    }
-
-    /* ----- HERO TEXT MOBILE ----- */
-    .careers-title,
-    .blog-hero-title {
-        font-size: 2.6rem;
-        line-height: 1.2;
-    }
-
-    .careers-subtitle,
-    .blog-hero-subtitle {
-        font-size: 1rem;
-        padding: 0 10px;
-    }
-
-    /* ----- BUTTON FULL WIDTH MOBILE ----- */
-    .primary-button,
-    .secondary-button,
-    .cta-button-large {
-        width: 100%;
-        min-width: auto;
-    }
-
-    /* ----- NAV MOBILE ----- */
+    /* FIX: MOBILE DROPDOWN - EXACT FINANCE CODE */
     .nav-links {
-        display: none;
+        display: none !important;
     }
 
     .menu-toggle {
-        display: block;
-        font-size: 1.4rem;
+        display: block !important;
         background: none;
         border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        color: var(--foreground);
+        padding: 0.5rem;
+    }
+    
+    /* DROPDOWN MENU - EXACT SAME AS FINANCE CODE */
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 1.5rem;
+        background-color: white;
+        min-width: 250px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        z-index: 1001;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .dropdown-menu.active {
+        display: block;
+    }
+    
+    .dropdown-item {
+        display: block;
+        padding: 1rem 1.5rem;
+        color: var(--foreground);
+        border-bottom: 1px solid #f9fafb;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dropdown-item:hover {
+        background: var(--light-grey);
+        padding-left: 2rem;
+        color: var(--foreground);
+    }
+    
+    .dropdown-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background: var(--primary);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .dropdown-item:hover::before {
+        transform: scaleY(1);
     }
 
-    /* ----- GRID STACK MOBILE ----- */
+    /* FIX: HERO SECTION MOBILE ALIGNMENT - MATCHING FINANCE CODE */
+    .careers-hero {
+        padding-top: 100px;
+        padding-bottom: 40px;
+        align-items: center;
+        min-height: 90vh;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .careers-hero-content {
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .careers-hero-background {
+        background-attachment: scroll;
+        background-size: 800px auto;
+        animation-duration: 20s;
+        opacity: 0.1;
+    }
+
+    .careers-title {
+        font-size: clamp(2rem, 6vw, 2.8rem);
+        line-height: 1.15;
+        margin-bottom: 1rem;
+        padding: 0 1rem;
+    }
+
+    .careers-subtitle {
+        font-size: 1rem;
+        padding: 0 1rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+    
+    /* Fix sections for mobile */
+    .section {
+        padding: 5rem 0 !important;
+    }
+    
+    .section-container {
+        padding: 0 1.5rem !important;
+    }
+    
+    .section-title {
+        font-size: 2rem !important;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+    
+    .section-subtitle {
+        font-size: 1.1rem !important;
+        padding: 0 0.5rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+    
+    /* Fix buttons */
+    .primary-button,
+    .secondary-button,
+    .cta-button-large {
+        min-width: auto;
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+    
+    .scroll-indicator {
+        bottom: 25px;
+    }
+    
+    /* Fix culture grid */
     .culture-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 0 0.5rem;
     }
-
+    
+    .culture-card {
+        padding: 1.25rem;
+        border-radius: 1rem;
+    }
+    
+    .culture-number {
+        font-size: 2rem;
+    }
+    
+    .culture-card-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Fix qualities grid */
     .qualities-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0 0.5rem;
     }
-
+    
+    .quality-item {
+        padding: 1.25rem;
+        font-size: 0.95rem;
+    }
+    
+    /* Fix future readiness grid */
     .future-readiness-grid {
         grid-template-columns: 1fr;
-        gap: 3rem;
+        gap: 2rem;
     }
-
+    
+    .future-quote {
+        padding: 2rem;
+    }
+    
+    .quote-text {
+        font-size: 1.5rem;
+    }
+    
+    /* Fix open roles card */
+    .open-roles-card {
+        padding: 2rem;
+    }
+    
+    .open-roles-text {
+        font-size: 1rem;
+    }
+    
+    /* Fix final cta card */
+    .final-cta-card {
+        padding: 2rem;
+    }
+    
+    /* Fix button group */
     .button-group {
         flex-direction: column;
-        align-items: stretch;
+        width: 100%;
     }
-
 }
 
-
-/* ================================================= */
-/* ================= TABLET PORTRAIT ============== */
-/* ================================================= */
+@media (max-width: 480px) {
+    .careers-hero {
+        padding-top: 90px;
+        min-height: 85vh;
+    }
+    
+    .careers-title {
+        font-size: 1.8rem;
+    }
+    
+    .careers-subtitle {
+        font-size: 0.95rem;
+    }
+    
+    .section-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .section-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .careers-hero-background {
+        background-size: 600px auto;
+    }
+    
+    .culture-card {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+    
+    .quality-item {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+}
 
 @media (min-width: 769px) and (max-width: 1024px) {
-
-    .careers-title,
-    .blog-hero-title {
-        font-size: 4rem;
+    .careers-hero-background {
+        background-size: 1100px auto;
+        animation-duration: 18s;
     }
 
+    .careers-title {
+        font-size: clamp(3.5rem, 6vw, 5rem);
+    }
+    
     .culture-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
     }
-
-    .qualities-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .future-readiness-grid {
-        grid-template-columns: 1fr;
-        gap: 4rem;
-    }
-
 }
-
-
-/* ================================================= */
-/* ================= TABLET LANDSCAPE ============= */
-/* ================================================= */
 
 @media (min-width: 1025px) and (max-width: 1366px) {
-
-    .careers-title,
-    .blog-hero-title {
-        font-size: 5rem;
+    .careers-hero-background {
+        background-size: 1300px auto;
     }
-
-    .culture-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
 }
-
-
-/* ================================================= */
-/* ================= SMALL PHONES ================= */
-/* ================================================= */
-
-@media (max-width: 420px) {
-
-    .careers-title,
-    .blog-hero-title {
-        font-size: 2.2rem;
-    }
-
-    .careers-hero-content,
-    .blog-hero-content {
-        margin-top: 4vh;
-    }
-
-}
-
-
-/* ================================================= */
-/* ===== iPHONE SAFE AREA (NOTCH PHONES) ========== */
-/* ================================================= */
 
 @supports (padding: max(0px)) {
-
-    .careers-hero,
-    .blog-hero,
-    .about-hero {
-        padding-top: max(80px, env(safe-area-inset-top));
-        padding-left: max(0px, env(safe-area-inset-left));
-        padding-right: max(0px, env(safe-area-inset-right));
+    .careers-hero {
+        padding-top: max(110px, env(safe-area-inset-top));
     }
-
 }
 
-
-/* ================================================= */
-/* ===== TOUCH FEEL IMPROVEMENT =================== */
-/* ================================================= */
-
-* {
-    -webkit-tap-highlight-color: transparent;
-}
 /* ================================================= */
 /* ========= ULTRA PREMIUM MOBILE EXPERIENCE ======= */
 /* ================================================= */
 
-
 /* ---------- GPU LAYER LOCK ---------- */
-
 .parallax-layer,
 .careers-hero-background,
 .blog-hero-background,
@@ -1534,9 +1646,7 @@ section {
     backface-visibility: hidden;
 }
 
-
 /* ---------- HERO PERFECT VIEWPORT ---------- */
-
 .careers-hero,
 .blog-hero,
 .about-hero {
@@ -1546,9 +1656,7 @@ section {
     overflow: hidden;
 }
 
-
 /* ---------- FAKE FIXED BACKGROUND SYSTEM ---------- */
-
 .careers-hero-background,
 .blog-hero-background,
 .about-hero-background {
@@ -1558,9 +1666,7 @@ section {
     transition: transform 0.08s linear;
 }
 
-
 /* ---------- CONTENT ABOVE EVERYTHING ---------- */
-
 .careers-hero-content,
 .blog-hero-content,
 .about-hero-content {
@@ -1568,11 +1674,8 @@ section {
     z-index: 20;
 }
 
-
 /* ---------- MOBILE OPTICAL TUNING ---------- */
-
 @media (max-width: 768px) {
-
     .careers-title,
     .blog-hero-title {
         font-size: clamp(2.2rem, 6vw, 2.8rem);
@@ -1583,37 +1686,26 @@ section {
     .blog-hero-subtitle {
         font-size: 1rem;
     }
-
 }
 
-
 /* ---------- SMALL PHONE SAFE ---------- */
-
 @media (max-width: 420px) {
-
     .careers-title,
     .blog-hero-title {
         font-size: 2.1rem;
     }
-
 }
 
-
 /* ---------- SAFE AREA SUPPORT ---------- */
-
 @supports (padding: max(0px)) {
-
     .careers-hero,
     .blog-hero,
     .about-hero {
         padding-top: max(80px, env(safe-area-inset-top));
     }
-
 }
 
-
 /* ---------- TOUCH FEEL ---------- */
-
 * {
     -webkit-tap-highlight-color: transparent;
 }

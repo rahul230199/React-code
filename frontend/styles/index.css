@@ -1,4 +1,4 @@
-/* ========== UPDATED TO MATCH PART DISCOVERY STYLES ========== */
+/* ========== UPDATED TO MATCH PART DISCOVERY STYLES WITH MOBILE FIXES ========== */
 * {
     margin: 0;
     padding: 0;
@@ -17,11 +17,13 @@
     --light-grey: #F9FAFB;
     --grey: #E5E7EB;
     --dark-grey: #6B7280;
+    --header-offset: 110px;
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -32,6 +34,11 @@ body {
     overflow-x: hidden;
     min-height: 100vh;
     width: 100%;
+}
+
+/* Fix iOS input zoom */
+input, textarea, select, button {
+    font-size: 16px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -63,7 +70,7 @@ a {
     padding: 0 1.5rem;
 }
 
-/* ========== SMOOTH ANIMATIONS FROM PART DISCOVERY ========== */
+/* ========== SMOOTH ANIMATIONS ========== */
 .animate-reveal {
     opacity: 0;
     transform: translateY(30px);
@@ -169,12 +176,12 @@ a {
 }
 
 @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-10px); }
-    60% { transform: translateY(-5px); }
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+    40% { transform: translateY(-10px) translateX(-50%); }
+    60% { transform: translateY(-5px) translateX(-50%); }
 }
 
-/* Button Animations - UPDATED TO MATCH PART DISCOVERY */
+/* Button Animations */
 .primary-button {
     position: relative;
     padding: 1rem 2rem;
@@ -214,7 +221,7 @@ a {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     transition: left 0.7s ease;
 }
 
@@ -312,13 +319,28 @@ a {
     inset: 0;
     width: 100%;
     height: 100%;
-    opacity: 0.03;
+    opacity: 0.008;
     pointer-events: none;
+    z-index: 1;
+}
+
+.blueprint-grid rect {
+    fill: url(#grid-pattern);
+}
+
+.blueprint-grid pattern {
+    color: rgba(30, 58, 138, 0.05);
 }
 
 section {
     position: relative;
     overflow: hidden;
+    scroll-margin-top: var(--header-offset);
+}
+
+/* Remove blueprint grid from sections if it's too prominent */
+section:not(.hero) .blueprint-grid {
+    display: none;
 }
 
 /* ========== HEADER - FIXED FOR MOBILE ========== */
@@ -331,7 +353,7 @@ section {
     background-color: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    padding: 1rem 0.75rem;
+    padding: 1rem 0;
     transform: translateY(0);
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -350,23 +372,19 @@ section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
     max-width: 100rem;
     margin: 0 auto;
-    position: relative;
+    padding: 0 1.5rem;
 }
 
 .logo {
     font-size: 1.5rem;
     font-weight: 800;
-    background: var(--foreground);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--foreground);
     letter-spacing: -0.02em;
     position: relative;
     overflow: hidden;
-    z-index: 1003;
+    text-decoration: none;
 }
 
 .logo::after {
@@ -398,6 +416,7 @@ section {
     position: relative;
     padding: 0.5rem 0;
     transition: var(--transition);
+    white-space: nowrap;
 }
 
 .nav-link::after {
@@ -442,7 +461,7 @@ section {
     box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
 }
 
-/* ========== MOBILE DROPDOWN MENU - FIXED ========== */
+/* ========== DROPDOWN MENU - EXACT FROM FIRST CODE ========== */
 .dropdown-menu {
     display: none;
     position: absolute;
@@ -499,15 +518,10 @@ section {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+    color: var(--foreground);
     transition: transform 0.3s ease;
     padding: 0.5rem;
     border-radius: 50%;
-    color: var(--foreground);
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     z-index: 1002;
 }
 
@@ -516,10 +530,12 @@ section {
     transform: rotate(90deg);
 }
 
-/* ========== HERO SECTION ========== */
+/* ========== HERO SECTION WITH MOBILE FIXES ========== */
 .hero {
     position: relative;
     min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     width: 100%;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     padding-top: 80px;
@@ -534,14 +550,17 @@ section {
     position: absolute;
     inset: 0;
     background-image: url('https://static.wixstatic.com/media/3d4c2a_2f337be5b7da445db58a7946af6d1fe4~mv2.jpg');
-    background-size: auto 75%;
-    background-position: 0 0;
-    background-attachment: fixed;
+    background-size: clamp(700px, 70vw, 1400px) auto;
+    background-position: 0% 50%;
+    background-attachment: scroll;
     background-repeat: repeat-x;
     opacity: 0.15;
     pointer-events: none;
     z-index: 0;
     animation: gradientShift 10s ease infinite;
+    transform: translate3d(0,0,0);
+    will-change: transform, background-position;
+    backface-visibility: hidden;
 }
 
 .parallax-layer {
@@ -551,6 +570,9 @@ section {
     height: 100%;
     pointer-events: none;
     z-index: 10;
+    transform: translate3d(0,0,0);
+    will-change: transform, background-position;
+    backface-visibility: hidden;
 }
 
 .hero-circle-1 {
@@ -665,6 +687,44 @@ section {
 
 .access-btn {
     margin-bottom: 0;
+}
+
+/* Scroll Indicator */
+.scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 20;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    animation: bounce 2s infinite;
+}
+
+.scroll-text {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--dark-grey);
+    font-weight: 600;
+    opacity: 0.8;
+    margin-bottom: 4px;
+    display: block;
+    text-align: center;
+    width: 100%;
+    letter-spacing: 2px;
+}
+
+.scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom,
+        rgba(30, 58, 138, 0) 0%,
+        rgba(30, 58, 138, 0.7) 50%,
+        rgba(30, 58, 138, 0) 100%);
 }
 
 /* ========== PHILOSOPHY SECTION ========== */
@@ -1707,6 +1767,71 @@ section {
     flex-wrap: wrap;
 }
 
+/* ========== BUTTON STYLES ========== */
+.cta-button-large {
+    position: relative;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--foreground) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 9999px;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Nunito Sans', sans-serif;
+    min-width: 200px;
+    justify-content: center;
+    text-align: center;
+    animation: pulseSlow 4s ease-in-out infinite;
+}
+
+.cta-button-large:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(30, 58, 138, 0.3);
+    animation: none;
+}
+
+.cta-button-large:active {
+    transform: translateY(-1px);
+}
+
+.cta-button-large::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    transition: left 0.7s ease;
+}
+
+.cta-button-large:hover::before {
+    left: 100%;
+}
+
+.cta-button-large span {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.cta-button-large i {
+    transition: transform 0.4s ease;
+}
+
+.cta-button-large:hover i {
+    transform: translateX(5px);
+}
+
 /* ========== FOOTER ========== */
 .footer {
     background: linear-gradient(135deg, var(--foreground) 0%, #1f2937 100%);
@@ -1838,185 +1963,394 @@ section {
     transform: translateY(-3px) rotate(5deg);
     box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
 }
-/* =========================================
-UNIVERSAL MOBILE SAFE BASE
-========================================= */
 
-html {
-    -webkit-text-size-adjust: 100%;
-}
+/* ========== MOBILE RESPONSIVE ========== */
 
-body {
-    overflow-x: hidden;
-}
-
-/* Fix iOS input zoom + rendering */
-input, textarea, select, button {
-    font-size: 16px;
-}
-/* =========================================
-MOBILE PHONES
-========================================= */
-
+/* MOBILE PHONES (0-767px) */
 @media (max-width: 767px) {
-
-    /* ---------- HEADER ---------- */
-
-    .menu-toggle {
-        display: flex !important;
-    }
-
+    /* Header and Navigation */
     .nav-links {
         display: none !important;
     }
-
-    /* Keep SAME dropdown size like your original */
+    
+    .menu-toggle {
+        display: block !important;
+        font-size: 1.4rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--foreground);
+        padding: 0.5rem;
+    }
+    
+    /* Dropdown sizing fix */
     .dropdown-menu {
         width: min(280px, 90vw);
         right: 1rem;
         border-radius: 14px;
     }
-
+    
     .dropdown-item {
         padding: 14px 20px;
         font-size: 0.95rem;
     }
-
-    /* ---------- HERO ---------- */
-
+    
+    /* Hero Section Fixes */
     .hero {
-        padding-top: 70px;
-        min-height: auto;
+        padding-top: 100px;
+        padding-bottom: 40px;
+        align-items: center;
+        min-height: 90vh;
+        max-height: none;
+        overflow: visible;
     }
-
+    
+    .hero-content {
+        padding-top: 80px;
+        margin-top: 0;
+    }
+    
+    .hero-background {
+        background-size: 800px auto;
+        animation-duration: 20s;
+        opacity: 0.1;
+    }
+    
     .hero-title {
-        font-size: clamp(2.2rem, 7vw, 2.8rem);
-        line-height: 1.2;
+        font-size: clamp(2rem, 6vw, 2.8rem);
+        line-height: 1.15;
+        margin-bottom: 1rem;
+        padding: 0 1rem;
     }
-
+    
     .hero-subtitle {
         font-size: 1rem;
-        padding: 0 10px;
+        padding: 0 1rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
     }
-    .hero-content{
-        padding-top: 80px;
+    
+    /* Fix sections for mobile */
+    section:not(.hero) {
+        padding: 5rem 0 !important;
+        min-height: auto !important;
     }
-
-    /* ---------- BUTTONS ---------- */
-
-    .button-group {
-        flex-direction: column;
-        gap: 14px;
+    
+    .philosophy,
+    .infrastructure,
+    .precision,
+    .core-functions,
+    .workflow,
+    .values,
+    .statement,
+    .cta {
+        padding: 5rem 0 !important;
     }
-
-    .primary-button,
-    .secondary-button {
-        width: 100%;
-        min-width: unset;
-        padding: 14px 20px;
-        font-size: 0.95rem;
-    }
-
-    /* ---------- SECTION TITLES ---------- */
-
+    
+    /* Fix all section titles */
     h2 {
-        font-size: clamp(1.6rem, 5vw, 2rem);
+        font-size: clamp(1.6rem, 5vw, 2rem) !important;
     }
-
-    /* ---------- GRID SECTIONS ---------- */
-
+    
+    .section-title {
+        font-size: 2rem !important;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+    
+    .section-subtitle {
+        font-size: 1.1rem !important;
+        padding: 0 0.5rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+    
+    /* Quote size fix */
+    .quote {
+        font-size: 1.5rem;
+        padding: 0 1rem;
+    }
+    
+    /* Fix grids for mobile */
     .infrastructure-grid,
-    .values-grid {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+    .values-grid,
+    .two-column-benefits {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 0 0.5rem;
     }
-
+    
     .role-cards,
     .functions-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
-
-    /* ---------- WORKFLOW ---------- */
-
+    
+    /* Fix cards for mobile */
+    .benefit-item-improved {
+        padding: 1.25rem;
+        border-radius: 1rem;
+    }
+    
+    .benefit-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    .benefit-content h3 {
+        font-size: 1.1rem;
+    }
+    
+    .benefit-content p {
+        font-size: 0.95rem;
+    }
+    
+    .role-card {
+        padding: 1.5rem;
+    }
+    
+    .function-card {
+        padding: 1.25rem;
+    }
+    
+    /* Fix workflow steps */
     .workflow-steps {
         flex-direction: column;
         gap: 2.5rem;
     }
-
-    /* ---------- CTA ---------- */
-
+    
+    .step-description {
+        max-width: 100%;
+    }
+    
+    /* Fix CTA section */
     .cta h2 {
         font-size: clamp(2rem, 7vw, 2.8rem);
+        margin-bottom: 2rem;
     }
-
+    
+    /* Fix buttons */
+    .button-group {
+        flex-direction: column;
+        gap: 14px;
+    }
+    
+    .primary-button,
+    .secondary-button,
+    .cta-button-large {
+        min-width: auto;
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    /* Fix spacing */
+    .scroll-indicator {
+        bottom: 25px;
+    }
+    
+    /* Fix dashboard/metrics */
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Fix statement card */
+    .statement-card {
+        padding: 2rem 1.5rem;
+        margin: 0 1rem;
+    }
+    
+    .statement-card blockquote {
+        font-size: 1.1rem;
+    }
 }
-/* =========================================
-TABLETS
-========================================= */
 
-@media (min-width: 768px) and (max-width: 1024px) {
-
-    .menu-toggle {
-        display: flex !important;
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .hero {
+        padding-top: 90px;
+        min-height: 85vh;
     }
+    
+    .hero-title {
+        font-size: 1.8rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.95rem;
+    }
+    
+    .section-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .section-subtitle {
+        font-size: 1rem !important;
+    }
+    
+    .benefit-item-improved {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+    
+    .benefit-icon {
+        margin-bottom: 0.75rem;
+    }
+    
+    .benefit-content {
+        text-align: center;
+    }
+    
+    .benefit-content h3 {
+        font-size: 1rem;
+    }
+    
+    .benefit-content p {
+        font-size: 0.9rem;
+    }
+    
+    .hero-background {
+        background-size: 600px auto;
+    }
+    
+    .dropdown-menu {
+        width: min(260px, 85vw);
+    }
+}
 
+/* TABLETS (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .menu-toggle {
+        display: block !important;
+    }
+    
     .nav-links {
         display: none !important;
     }
-
+    
     /* Keep same dropdown feel */
     .dropdown-menu {
         width: 300px;
     }
-
+    
     /* HERO */
-
+    .hero-background {
+        background-size: 1100px auto;
+        animation-duration: 18s;
+    }
+    
     .hero-title {
         font-size: clamp(3rem, 5vw, 4rem);
     }
-
+    
     .hero-subtitle {
         font-size: 1.1rem;
     }
-
+    
     /* GRIDS */
-
     .role-cards {
         grid-template-columns: repeat(2, 1fr);
     }
-
+    
     .functions-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-
+    
     .values-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .infrastructure-grid {
         grid-template-columns: 1fr;
         gap: 3rem;
     }
-
+    
     /* CTA */
-
     .cta h2 {
         font-size: clamp(3rem, 6vw, 4rem);
     }
-
+    
+    /* Adjust section padding */
+    section:not(.hero) {
+        padding: 6rem 0 !important;
+    }
+    
+    .two-column-benefits {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+    
+    .benefit-item-improved {
+        padding: 1.5rem;
+    }
 }
-/* =========================================
-DESKTOP LOCK
-========================================= */
 
+/* DESKTOP (1025px and above) */
 @media (min-width: 1025px) {
-
     .menu-toggle {
         display: none !important;
     }
-
+    
     .nav-links {
         display: flex !important;
     }
+}
 
+/* Additional responsive fixes */
+@media (max-width: 1024px) {
+    .section-wrapper {
+        padding: 0 1.5rem;
+    }
+    
+    .infrastructure-content h2,
+    .precision-header h2,
+    .core-functions h2,
+    .workflow-header h2,
+    .values h2,
+    .cta h2 {
+        font-size: clamp(2rem, 5vw, 3rem) !important;
+    }
+    
+    .infrastructure-content p,
+    .precision-header p,
+    .core-functions p,
+    .workflow-header p,
+    .values-header-text {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* Additional fix to ensure dropdown doesn't override hero content on mobile */
+@media (max-width: 768px) {
+    .hero {
+        padding-top: 80px;
+    }
+}
+
+/* Touch device optimizations */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area support for modern devices */
+@supports (padding: max(0px)) {
+    .hero {
+        padding-top: max(110px, env(safe-area-inset-top));
+    }
+    
+    .header {
+        padding-top: max(1rem, env(safe-area-inset-top));
+    }
 }

@@ -17,6 +17,7 @@
     --light-grey: #F9FAFB;
     --grey: #E5E7EB;
     --dark-grey: #6B7280;
+    --header-offset: 110px;
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -436,6 +437,7 @@ section {
     box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
 }
 
+/* ========== DROPDOWN MENU - EXACT FINANCE CODE ========== */
 .dropdown-menu {
     display: none;
     position: absolute;
@@ -492,9 +494,11 @@ section {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+    color: var(--foreground);
     transition: transform 0.3s ease;
     padding: 0.5rem;
     border-radius: 50%;
+    z-index: 1002;
 }
 
 .menu-toggle:hover {
@@ -508,7 +512,7 @@ section {
     min-height: 100vh;
     width: 100%;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    padding-top: 80px;
+    padding-top: 110px; /* FINANCE CODE ALIGNMENT */
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -1029,7 +1033,7 @@ section {
 }
 
 .footer a::before {
-    content: '?';
+    content: '→';
     position: absolute;
     left: -20px;
     opacity: 0;
@@ -1106,92 +1110,250 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-/* =========================================
-MOBILE PHONES
-========================================= */
 
-@media (max-width: 767px) {
-
-    /* ---------- NAV ---------- */
-
-    .menu-toggle {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-    }
-
+/* ========== MOBILE RESPONSIVE - MATCHING FINANCE CODE ========== */
+@media (max-width: 768px) {
+    /* FIX: MOBILE DROPDOWN - EXACT FINANCE CODE */
     .nav-links {
         display: none !important;
     }
 
-    /* KEEP SAME DROPDOWN STYLE */
+    .menu-toggle {
+        display: block !important;
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        color: var(--foreground);
+        padding: 0.5rem;
+    }
+    
+    /* DROPDOWN MENU - EXACT SAME AS FINANCE CODE */
     .dropdown-menu {
-        width: min(280px, 92vw);
-        right: 1rem;
+        position: absolute;
+        top: 100%;
+        right: 1.5rem;
+        background-color: white;
+        min-width: 250px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid #E5E7EB;
+        z-index: 1001;
+        animation: fadeIn 0.3s ease-out;
     }
-
+    
+    .dropdown-menu.active {
+        display: block;
+    }
+    
     .dropdown-item {
+        display: block;
         padding: 1rem 1.5rem;
-        font-size: 0.95rem;
+        color: var(--foreground);
+        border-bottom: 1px solid #F9FAFB;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dropdown-item:hover {
+        background: var(--light-grey);
+        padding-left: 2rem;
+        color: var(--foreground);
+    }
+    
+    .dropdown-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background: var(--primary);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .dropdown-item:hover::before {
+        transform: scaleY(1);
     }
 
-    /* ---------- HERO ---------- */
+    /* FIX: HERO SECTION MOBILE ALIGNMENT - MATCHING FINANCE CODE */
+    .network-hero {
+        padding-top: 100px;
+        padding-bottom: 40px;
+        align-items: center;
+        min-height: 90vh;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .hero-content {
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .hero-background {
+        background-attachment: scroll;
+        background-size: 800px auto;
+        animation-duration: 20s;
+        opacity: 0.1;
+    }
 
     .hero-title {
-        font-size: clamp(2.2rem, 7vw, 2.8rem);
-        line-height: 1.2;
+        font-size: clamp(2rem, 6vw, 2.8rem);
+        line-height: 1.15;
+        margin-bottom: 1rem;
+        padding: 0 1rem;
     }
 
     .hero-subtitle {
         font-size: 1rem;
-        padding: 0 10px;
+        padding: 0 1rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
     }
-
-    .hero-content {
-        padding-top: 40px;
-    }
-
-    /* ---------- SECTION HEADERS ---------- */
-
-    .section-header h2 {
-        font-size: clamp(1.8rem, 6vw, 2.3rem);
-    }
-
-    .section-header p {
-        font-size: 1rem;
-        padding: 0 10px;
-    }
-
-    /* ---------- GRIDS ---------- */
-
-    .cards-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .grid-2 {
-        grid-template-columns: 1fr;
-    }
-
-    /* ---------- FORM ---------- */
-
-    .form-container {
-        padding: 2rem 1.5rem;
-        border-radius: 1.25rem;
-    }
-
-    /* ---------- SECTIONS SPACING ---------- */
-
+    
+    /* Fix sections for mobile */
     .who-section,
     .how-section,
-    .form-section {
-        padding: 5rem 0;
-        min-height: auto;
+    .form-section,
+    .after-section {
+        padding: 5rem 0 !important;
+        min-height: auto !important;
+    }
+    
+    .section-header h2 {
+        font-size: 2rem !important;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+    
+    .section-header p {
+        font-size: 1.1rem !important;
+        padding: 0 0.5rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+    
+    /* Fix cards grid */
+    .cards-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 0 0.5rem;
+    }
+    
+    .feature-card, .step-card {
+        padding: 1.25rem;
+        border-radius: 1rem;
+    }
+    
+    .feature-card h3, .step-card h3 {
+        font-size: 1.1rem;
+    }
+    
+    .feature-card p, .step-card p {
+        font-size: 0.95rem;
+    }
+    
+    /* Fix form */
+    .form-container {
+        padding: 2rem;
+        border-radius: 1.25rem;
+    }
+    
+    .grid-2 {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    /* Fix buttons */
+    .primary-button,
+    .secondary-button,
+    .cta-button {
+        min-width: auto;
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+    
+    .scroll-indicator {
+        bottom: 25px;
+    }
+    
+    /* Fix after section */
+    .after-section p {
+        padding: 1.5rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .network-hero {
+        padding-top: 90px;
+        min-height: 85vh;
+    }
+    
+    .hero-title {
+        font-size: 1.8rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.95rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.75rem !important;
+    }
+    
+    .section-header p {
+        font-size: 1rem !important;
+    }
+    
+    .feature-card, .step-card {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+    
+    .hero-background {
+        background-size: 600px auto;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .hero-background {
+        background-size: 1100px auto;
+        animation-duration: 18s;
     }
 
+    .hero-title {
+        font-size: clamp(3.5rem, 6vw, 5rem);
+    }
+    
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
 }
+
+@media (min-width: 1025px) and (max-width: 1366px) {
+    .hero-background {
+        background-size: 1300px auto;
+    }
+}
+
+@supports (padding: max(0px)) {
+    .network-hero {
+        padding-top: max(110px, env(safe-area-inset-top));
+    }
+}
+
 /* =========================================
 TABLETS
 ========================================= */
@@ -1244,6 +1406,7 @@ TABLETS
     }
 
 }
+
 /* =========================================
 DESKTOP ONLY
 ========================================= */

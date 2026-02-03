@@ -17,6 +17,7 @@
     --light-grey: #F9FAFB;
     --grey: #E5E7EB;
     --dark-grey: #6B7280;
+    --header-offset: 110px;
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -437,6 +438,7 @@ section {
     box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
 }
 
+/* ========== DROPDOWN MENU - EXACT FINANCE CODE ========== */
 .dropdown-menu {
     display: none;
     position: absolute;
@@ -489,17 +491,33 @@ section {
 
 .menu-toggle {
     display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--foreground);
+    transition: transform 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 50%;
+    z-index: 1002;
+}
+
+.menu-toggle:hover {
+    background: var(--light-grey);
+    transform: rotate(90deg);
 }
 
 /* ========== BLOG HERO SECTION - MATCHING NETWORK ACCESS ========== */
 .blog-hero {
-    display: flex;
     position: relative;
     min-height: 100vh;
     width: 100%;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    padding-top: 80px;
+    padding-top: 110px; /* FINANCE CODE ALIGNMENT */
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .blog-hero-inner {
@@ -1238,7 +1256,7 @@ section {
 }
 
 .footer a::before {
-    content: '?';
+    content: '→';
     position: absolute;
     left: -20px;
     opacity: 0;
@@ -1305,162 +1323,245 @@ section {
     transform: translateZ(0);
 }
 
-/* ================================================= */
-/* ================= MOBILE PHONES ================== */
-/* ================================================= */
-
+/* ========== MOBILE RESPONSIVE - MATCHING FINANCE CODE ALIGNMENT ========== */
 @media (max-width: 768px) {
-
-    :root {
-        --header-offset: 85px;
+    /* FIX: MOBILE DROPDOWN - EXACT FINANCE CODE */
+    .nav-links {
+        display: none !important;
     }
 
-    /* ---------- Disable Fixed Background (iPhone Fix) ---------- */
-    .blog-hero-background,
-    .about-hero-background {
+    .menu-toggle {
+        display: block !important;
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        color: var(--foreground);
+        padding: 0.5rem;
+    }
+    
+    /* DROPDOWN MENU - EXACT SAME AS FINANCE CODE */
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 1.5rem;
+        background-color: white;
+        min-width: 250px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid #E5E7EB;
+        z-index: 1001;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .dropdown-menu.active {
+        display: block;
+    }
+    
+    .dropdown-item {
+        display: block;
+        padding: 1rem 1.5rem;
+        color: var(--foreground);
+        border-bottom: 1px solid #F9FAFB;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dropdown-item:hover {
+        background: var(--light-grey);
+        padding-left: 2rem;
+        color: var(--foreground);
+    }
+    
+    .dropdown-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background: var(--primary);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .dropdown-item:hover::before {
+        transform: scaleY(1);
+    }
+
+    /* FIX: HERO SECTION MOBILE ALIGNMENT - MATCHING FINANCE CODE */
+    .blog-hero {
+        padding-top: 100px;
+        padding-bottom: 40px;
+        align-items: center;
+        min-height: 90vh;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .blog-hero-content {
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    .blog-hero-background {
         background-attachment: scroll;
-        background-position: center top;
-        background-size: cover;
-        opacity: 0.12;
+        background-size: 800px auto;
+        animation-duration: 20s;
+        opacity: 0.1;
     }
 
-    /* ---------- HERO MOBILE OPTICAL POSITION ---------- */
-    .blog-hero,
-    .about-hero {
-        min-height: 100svh;
-        padding-top: 70px;
-        padding-bottom: 30px;
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-    }
-
-    .blog-hero-content,
-    .about-hero-content {
-        margin-top: 6vh;
-    }
-
-    /* ---------- Typography Mobile ---------- */
     .blog-hero-title {
-        font-size: 2.8rem;
-        line-height: 1.2;
+        font-size: clamp(2rem, 6vw, 2.8rem);
+        line-height: 1.15;
+        margin-bottom: 1rem;
+        padding: 0 1rem;
     }
 
     .blog-hero-subtitle {
         font-size: 1rem;
-        padding: 0 10px;
+        padding: 0 1rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
     }
-
-    /* ---------- Buttons Mobile ---------- */
+    
+    /* Fix sections for mobile */
+    .blog-posts-section {
+        padding: 5rem 0 !important;
+    }
+    
+    .section-container {
+        padding: 0 1.5rem !important;
+    }
+    
+    .section-title {
+        font-size: 2rem !important;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+    
+    /* Fix buttons */
     .primary-button,
     .secondary-button,
     .cta-button-large {
-        width: 100%;
         min-width: auto;
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
     }
-
-    /* ---------- Header Mobile ---------- */
-    .nav-links {
-        display: none;
+    
+    .scroll-indicator {
+        bottom: 25px;
     }
-
-    .menu-toggle {
-        display: block;
-        font-size: 1.4rem;
-        background: none;
-        border: none;
-        cursor: pointer;
-    }
-
-    /* ---------- Featured Grid Stack ---------- */
+    
+    /* Featured Grid Stack */
     .featured-grid {
         grid-template-columns: 1fr;
     }
-
-    /* ---------- Articles Grid Stack ---------- */
+    
+    .featured-content {
+        padding: 1.25rem;
+    }
+    
+    .featured-title {
+        font-size: 1.5rem;
+    }
+    
+    .featured-excerpt {
+        font-size: 0.95rem;
+    }
+    
+    /* Articles Grid Stack */
     .articles-grid {
         grid-template-columns: 1fr;
     }
-
-    /* ---------- Newsletter Stack ---------- */
+    
+    .article-card {
+        padding: 1.25rem;
+    }
+    
+    .article-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Newsletter Stack */
     .newsletter-form {
         flex-direction: column;
     }
-
+    
+    .newsletter-card {
+        padding: 2rem;
+    }
+    
+    .newsletter-title {
+        font-size: 2rem;
+    }
 }
 
-/* ================================================= */
-/* ================= LARGE PHONES / SMALL TABS ===== */
-/* ================================================= */
-
-@media (min-width: 769px) and (max-width: 1024px) {
-
-    :root {
-        --header-offset: 95px;
+@media (max-width: 480px) {
+    .blog-hero {
+        padding-top: 90px;
+        min-height: 85vh;
     }
-
-    .blog-hero-background,
-    .about-hero-background {
-        background-attachment: scroll;
-        background-size: cover;
-    }
-
+    
     .blog-hero-title {
-        font-size: 4rem;
+        font-size: 1.8rem;
     }
-
-    .featured-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .articles-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-}
-
-/* ================================================= */
-/* ================= TABLETS LANDSCAPE ============= */
-/* ================================================= */
-
-@media (min-width: 1025px) and (max-width: 1366px) {
-
-    .blog-hero-title {
-        font-size: 5rem;
-    }
-
-}
-
-/* ================================================= */
-/* ================= SMALL PHONES ================== */
-/* ================================================= */
-
-@media (max-width: 400px) {
-
-    .blog-hero-title {
-        font-size: 2.3rem;
-    }
-
+    
     .blog-hero-subtitle {
         font-size: 0.95rem;
     }
-
-}
-
-/* ================================================= */
-/* ===== SAFARI SAFE AREA (NOTCH PHONES) =========== */
-/* ================================================= */
-
-@supports (padding: max(0px)) {
-    body {
-        padding-left: max(0px, env(safe-area-inset-left));
-        padding-right: max(0px, env(safe-area-inset-right));
+    
+    .section-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .featured-content {
+        padding: 1rem;
+    }
+    
+    .featured-title {
+        font-size: 1.3rem;
+    }
+    
+    .blog-hero-background {
+        background-size: 600px auto;
     }
 }
-/* ===== iPHONE ABSOLUTE POSITION STABILITY FIX ===== */
 
-.blog-hero,
-.about-hero {
+@media (min-width: 769px) and (max-width: 1024px) {
+    .blog-hero-background {
+        background-size: 1100px auto;
+        animation-duration: 18s;
+    }
+
+    .blog-hero-title {
+        font-size: clamp(3.5rem, 6vw, 5rem);
+    }
+    
+    .featured-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1366px) {
+    .blog-hero-background {
+        background-size: 1300px auto;
+    }
+}
+
+@supports (padding: max(0px)) {
+    .blog-hero {
+        padding-top: max(110px, env(safe-area-inset-top));
+    }
+}
+
+/* ===== iPHONE ABSOLUTE POSITION STABILITY FIX ===== */
+.blog-hero {
     position: relative;
     min-height: 100svh;
     min-height: 100dvh;
@@ -1483,13 +1584,6 @@ section {
     z-index: 20;
 }
 
-/* Fix iPhone notch safe areas */
-@supports (padding: max(0px)) {
-    .blog-hero,
-    .about-hero {
-        padding-top: max(80px, env(safe-area-inset-top));
-    }
-}
 /* ========================================== */
 /* ===== FEATURED GRID MOBILE + TABLET FIX == */
 /* ========================================== */
@@ -1499,12 +1593,7 @@ section {
     width: 100%;
 }
 
-/* ========================================== */
-/* =============== MOBILE =================== */
-/* ========================================== */
-
 @media (max-width: 768px) {
-
     .featured-grid {
         display: grid;
         grid-template-columns: 1fr;
@@ -1537,15 +1626,9 @@ section {
         flex-wrap: wrap;
         gap: 0.5rem;
     }
-
 }
 
-/* ========================================== */
-/* ============ SMALL TABLETS =============== */
-/* ========================================== */
-
 @media (min-width: 769px) and (max-width: 1024px) {
-
     .featured-grid {
         grid-template-columns: 1fr;
     }
@@ -1561,15 +1644,9 @@ section {
     .featured-image {
         min-height: 280px;
     }
-
 }
 
-/* ========================================== */
-/* ============ TABLET LANDSCAPE ============ */
-/* ========================================== */
-
 @media (min-width: 1025px) and (max-width: 1280px) {
-
     .featured-grid {
         grid-template-columns: 1.1fr 0.9fr;
     }
@@ -1577,15 +1654,9 @@ section {
     .featured-title {
         font-size: 2.6rem;
     }
-
 }
 
-/* ========================================== */
-/* ===== EXTRA SMALL PHONES (IPHONE SE) ==== */
-/* ========================================== */
-
 @media (max-width: 420px) {
-
     .featured-content {
         padding: 1.5rem;
     }
@@ -1593,8 +1664,8 @@ section {
     .featured-title {
         font-size: 1.6rem;
     }
-
 }
+
 /* =========================================
 REMOVE BACKGROUND GRID / GREY LINES
 ========================================= */
