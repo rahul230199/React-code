@@ -23,6 +23,8 @@
 
 html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 body {
@@ -32,6 +34,14 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Fix iOS input zoom */
+input, textarea, select, button {
+    font-size: 16px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -169,9 +179,9 @@ a {
 }
 
 @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-10px); }
-    60% { transform: translateY(-5px); }
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+    40% { transform: translateY(-10px) translateX(-50%); }
+    60% { transform: translateY(-5px) translateX(-50%); }
 }
 
 /* Button Animations - UPDATED TO MATCH PART DISCOVERY */
@@ -1091,20 +1101,6 @@ section {
 GLOBAL MOBILE ENGINE (iOS + Android Safe)
 ========================================= */
 
-html {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-}
-
-body {
-    overflow-x: hidden;
-}
-
-/* Prevent iPhone zoom on inputs */
-input, textarea, select, button {
-    font-size: 16px;
-}
-
 /* Smooth font rendering */
 body {
     -webkit-font-smoothing: antialiased;
@@ -1269,7 +1265,7 @@ body {
         gap: 1rem;
     }
     
-    /* Fix buttons */
+    /* Fix buttons - REMOVE SCALE ON HOVER FOR MOBILE */
     .primary-button,
     .secondary-button,
     .cta-button {
@@ -1281,6 +1277,14 @@ body {
         margin: 0 auto;
     }
     
+    /* Remove scale on hover for mobile */
+    .primary-button:hover,
+    .secondary-button:hover,
+    .cta-button:hover {
+        transform: translateY(-2px) !important;
+        scale: 1 !important;
+    }
+    
     .scroll-indicator {
         bottom: 25px;
     }
@@ -1289,6 +1293,33 @@ body {
     .after-section p {
         padding: 1.5rem;
         font-size: 1rem;
+    }
+    
+    /* MOBILE ZOOM/SLIDING PREVENTION FIXES */
+    .feature-card:hover,
+    .step-card:hover,
+    .form-container:hover,
+    .after-section p:hover,
+    .social-links a:hover {
+        transform: none !important;
+        scale: 1 !important;
+    }
+    
+    .feature-card:hover,
+    .step-card:hover {
+        transform: translateY(-5px) !important;
+    }
+    
+    .form-container:hover {
+        transform: translateY(-5px) !important;
+    }
+    
+    .after-section p:hover {
+        transform: translateY(-3px) !important;
+    }
+    
+    .social-links a:hover {
+        transform: translateY(-3px) rotate(5deg) !important;
     }
 }
 
@@ -1316,9 +1347,6 @@ body {
     
     .feature-card, .step-card {
         padding: 1rem;
-        flex-direction: column;
-        text-align: center;
-        align-items: center;
     }
     
     .hero-background {
@@ -1421,4 +1449,116 @@ DESKTOP ONLY
         display: flex !important;
     }
 
+}
+
+/* ========== CRITICAL MOBILE ZOOM/SLIDING PREVENTION ========== */
+@media (max-width: 767px) {
+    /* Prevent unwanted zooming and sliding on mobile */
+    html, body {
+        touch-action: pan-y;
+        -ms-touch-action: pan-y;
+        width: 100%;
+        overflow-x: hidden;
+        position: relative;
+    }
+    
+    /* Prevent double-tap zoom */
+    a, button, input, textarea, select {
+        touch-action: manipulation;
+    }
+    
+    /* Ensure abstract background animation continues to work */
+    .hero-background {
+        animation: gradientShift 10s ease infinite;
+        will-change: background-position;
+    }
+    
+    /* Keep hero circle animations */
+    .hero-circle-1,
+    .hero-circle-2,
+    .hero-circle-3,
+    .hero-circle-4 {
+        animation-duration: 60s;
+    }
+    
+    /* Keep scroll indicator animation */
+    .scroll-indicator {
+        animation: bounce 2s infinite;
+    }
+    
+    /* Keep hero title/subtitle animations */
+    .hero-title {
+        animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .hero-subtitle {
+        animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+    }
+    
+    /* Prevent scale transforms on mobile hover */
+    .primary-button:hover,
+    .secondary-button:hover,
+    .cta-button:hover,
+    .feature-card:hover,
+    .step-card:hover,
+    .form-container:hover,
+    .after-section p:hover,
+    .social-links a:hover,
+    .menu-toggle:hover,
+    .dropdown-item:hover {
+        transform: none !important;
+    }
+    
+    /* Allow only vertical translation for hover effects */
+    .primary-button:hover {
+        transform: translateY(-3px) !important;
+    }
+    
+    .secondary-button:hover {
+        transform: translateY(-2px) !important;
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-2px) !important;
+    }
+    
+    .feature-card:hover,
+    .step-card:hover {
+        transform: translateY(-5px) !important;
+    }
+    
+    .form-container:hover {
+        transform: translateY(-5px) !important;
+    }
+    
+    .after-section p:hover {
+        transform: translateY(-3px) !important;
+    }
+    
+    .social-links a:hover {
+        transform: translateY(-3px) rotate(5deg) !important;
+    }
+    
+    /* Fix bounce animation for mobile */
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+        40% { transform: translateY(-10px) translateX(-50%); }
+        60% { transform: translateY(-5px) translateX(-50%); }
+    }
+}
+
+/* Touch device optimizations */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area support for modern devices */
+@supports (padding: max(0px)) {
+    .network-hero {
+        padding-top: max(110px, env(safe-area-inset-top));
+    }
+    
+    .header {
+        padding-top: max(1rem, env(safe-area-inset-top));
+    }
 }

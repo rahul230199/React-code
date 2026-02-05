@@ -2354,3 +2354,171 @@ section:not(.hero) .blueprint-grid {
         padding-top: max(1rem, env(safe-area-inset-top));
     }
 }
+
+/* ========== MOBILE ZOOM/SLIDING PREVENTION FIXES ========== */
+
+/* Prevent zoom on mobile */
+@media (max-width: 767px) {
+    html, body {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        touch-action: pan-y;
+        width: 100%;
+        overflow-x: hidden;
+        position: relative;
+    }
+    
+    /* Remove scale transforms that cause zooming */
+    .primary-button:hover,
+    .secondary-button:hover,
+    .cta-button:hover,
+    .cta-button-large:hover,
+    .nav-link:hover,
+    .menu-toggle:hover,
+    .dashboard-card:hover,
+    .metric-box:hover,
+    .feature-item:hover,
+    .feature-icon:hover,
+    .control-dot:hover,
+    .role-card:hover,
+    .function-card:hover,
+    .value-item:hover,
+    .statement-card:hover,
+    .social-links a:hover {
+        transform: none !important;
+        scale: 1 !important;
+    }
+    
+    /* Keep vertical movement but remove scale */
+    .primary-button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 15px 30px rgba(30, 58, 138, 0.3);
+    }
+    
+    .secondary-button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cta-button:hover,
+    .cta-button-large:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    }
+    
+    .role-card:hover,
+    .function-card:hover,
+    .value-item:hover,
+    .statement-card:hover {
+        transform: translateY(-5px) !important;
+    }
+    
+    .feature-item:hover {
+        transform: translateX(5px) !important;
+    }
+    
+    .workflow-step:hover .step-circle {
+        transform: scale(1.05) !important;
+    }
+    
+    /* Prevent double-tap zoom on mobile */
+    a, button, input, textarea, select {
+        touch-action: manipulation;
+    }
+    
+    /* Ensure hero background animation continues to work */
+    .hero-background {
+        animation: gradientShift 10s ease infinite;
+        will-change: background-position;
+    }
+    
+    /* Keep hero circle animations */
+    .hero-circle-1,
+    .hero-circle-2,
+    .hero-circle-3,
+    .hero-circle-4 {
+        animation-duration: 60s;
+    }
+    
+    /* Keep scroll indicator animation */
+    .scroll-indicator {
+        animation: bounce 2s infinite;
+    }
+    
+    /* Keep hero title/subtitle animations */
+    .hero-title {
+        animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .hero-subtitle {
+        animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+    }
+    
+    .button-group {
+        animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    /* Keep background animation */
+    .hero-background {
+        animation-duration: 15s;
+        background-size: 600px auto;
+    }
+    
+    /* Adjust hero circles for mobile */
+    .hero-circle-1 {
+        width: 300px;
+        height: 300px;
+        top: 15%;
+        left: 10%;
+    }
+    
+    .hero-circle-2 {
+        width: 200px;
+        height: 200px;
+        bottom: 15%;
+        right: 10%;
+    }
+    
+    .hero-circle-3,
+    .hero-circle-4 {
+        width: 100px;
+        height: 100px;
+        opacity: 0.1;
+    }
+}
+
+/* Prevent mobile zoom on inputs */
+@media (max-width: 768px) {
+    input, textarea, select {
+        font-size: 16px !important;
+        max-height: 3em;
+    }
+    
+    button, .primary-button, .secondary-button, .cta-button, .cta-button-large {
+        font-size: 16px !important;
+    }
+}
+
+/* Additional touch optimization */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area support for modern devices */
+@supports (padding: max(0px)) {
+    .hero {
+        padding-top: max(110px, env(safe-area-inset-top));
+    }
+    
+    .header {
+        padding-top: max(1rem, env(safe-area-inset-top));
+    }
+}

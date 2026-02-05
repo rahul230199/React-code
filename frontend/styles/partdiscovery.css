@@ -761,6 +761,8 @@ section {
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 .layer-header::before {
@@ -826,6 +828,8 @@ section {
     border-radius: 50%;
     position: relative;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .layer-toggle::before {
@@ -865,19 +869,32 @@ section {
     transform: scale(1.1);
 }
 
-/* Component Grid */
+/* ========== FIX FOR COMPONENT GRID - CRITICAL FIX ========== */
 .component-grid {
-    display: none;
+    display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
+    max-height: 0;
+    overflow: hidden;
     padding: 0;
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     background: white;
+    transform-origin: top;
+    transform: scaleY(0);
 }
 
 .layer-section.expanded .component-grid {
-    display: grid;
+    max-height: 5000px;
     padding: 2rem;
-    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1;
+    transform: scaleY(1);
+    display: grid;
+}
+
+/* Fix for component cards animation reset */
+.layer-section.expanded .component-card {
+    animation: cardReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .component-card {
@@ -893,15 +910,23 @@ section {
     height: 100%;
     display: flex;
     flex-direction: column;
-    transform: translateY(20px);
     opacity: 0;
-    animation: cardReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: translateY(20px);
+}
+
+.component-card.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .component-card:hover {
     transform: translateY(-8px) scale(1.02);
     border-color: var(--primary);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.component-card:hover.visible {
+    transform: translateY(-8px) scale(1.02);
 }
 
 .component-card::before {
@@ -1418,19 +1443,19 @@ section {
     box-shadow: 0 5px 15px rgba(30, 58, 138, 0.3);
 }
 
-/* Component Card Stagger Animation */
-.component-card:nth-child(1) { animation-delay: 0.1s; }
-.component-card:nth-child(2) { animation-delay: 0.15s; }
-.component-card:nth-child(3) { animation-delay: 0.2s; }
-.component-card:nth-child(4) { animation-delay: 0.25s; }
-.component-card:nth-child(5) { animation-delay: 0.3s; }
-.component-card:nth-child(6) { animation-delay: 0.35s; }
-.component-card:nth-child(7) { animation-delay: 0.4s; }
-.component-card:nth-child(8) { animation-delay: 0.45s; }
-.component-card:nth-child(9) { animation-delay: 0.5s; }
-.component-card:nth-child(10) { animation-delay: 0.55s; }
-.component-card:nth-child(11) { animation-delay: 0.6s; }
-.component-card:nth-child(12) { animation-delay: 0.65s; }
+/* Component Card Stagger Animation - FIXED */
+.layer-section.expanded .component-card:nth-child(1) { animation-delay: 0.1s; }
+.layer-section.expanded .component-card:nth-child(2) { animation-delay: 0.15s; }
+.layer-section.expanded .component-card:nth-child(3) { animation-delay: 0.2s; }
+.layer-section.expanded .component-card:nth-child(4) { animation-delay: 0.25s; }
+.layer-section.expanded .component-card:nth-child(5) { animation-delay: 0.3s; }
+.layer-section.expanded .component-card:nth-child(6) { animation-delay: 0.35s; }
+.layer-section.expanded .component-card:nth-child(7) { animation-delay: 0.4s; }
+.layer-section.expanded .component-card:nth-child(8) { animation-delay: 0.45s; }
+.layer-section.expanded .component-card:nth-child(9) { animation-delay: 0.5s; }
+.layer-section.expanded .component-card:nth-child(10) { animation-delay: 0.55s; }
+.layer-section.expanded .component-card:nth-child(11) { animation-delay: 0.6s; }
+.layer-section.expanded .component-card:nth-child(12) { animation-delay: 0.65s; }
 
 /* Progress Bar Animation */
 .progress-container {
@@ -1469,7 +1494,7 @@ section {
 @media (max-width: 768px) {
     .component-grid {
         grid-template-columns: 1fr;
-        padding: 0;
+        gap: 1.25rem;
     }
 
     .layer-section.expanded .component-grid {
@@ -1502,10 +1527,10 @@ section {
     
     /* FIX: ABSTRACT BACKGROUND ON MOBILE */
     .hero-background {
-        background-attachment: scroll; /* Changed from fixed */
-        background-size: 800px auto; /* Added for mobile */
-        animation-duration: 20s; /* Matches finance code */
-        opacity: 0.1; /* Matches finance code */
+        background-attachment: scroll;
+        background-size: 800px auto;
+        animation-duration: 20s;
+        opacity: 0.1;
     }
 }
 
@@ -1538,7 +1563,6 @@ section {
         display: block !important;
     }
     
-    /* DROPDOWN MENU - EXACT SAME SIZE AS FINANCE CODE */
     .dropdown-menu {
         position: absolute;
         top: 100%;
@@ -1608,11 +1632,9 @@ section {
     transform: rotate(90deg);
 }
 
-.discovery-hero{
-    
+.discovery-hero {
     padding-bottom: 50px;
     padding-top: 150px;
-
 }
 
 /* =================================================
@@ -1642,14 +1664,13 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
 /* =================================================
 MOBILE PHONES
 ================================================= */
 
 @media (max-width: 767px) {
-
     /* NAVIGATION */
-
     .menu-toggle {
         display: flex !important;
         width: 44px;
@@ -1663,10 +1684,9 @@ MOBILE PHONES
     }
 
     /* HERO */
-
     .hero-title,
     .part-discovery-header h2 {
-        font-size: clamp(1rem, 7vw, 1rem);
+        font-size: clamp(2rem, 7vw, 3rem);
         line-height: 1.2;
     }
 
@@ -1680,28 +1700,69 @@ MOBILE PHONES
         padding-top: 40px;
     }
 
-    /* DISCOVERY SEARCH */
+    /* LAYER SECTIONS - CRITICAL FIX FOR DROPDOWN */
+    .layer-header {
+        padding: 1rem;
+        min-height: 70px;
+        display: flex;
+        align-items: center;
+    }
 
+    .layer-title h3 {
+        font-size: 1.1rem;
+        line-height: 1.3;
+    }
+
+    .layer-count {
+        font-size: 0.8rem;
+    }
+
+    .layer-toggle {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    /* COMPONENT GRID - CRITICAL MOBILE FIX */
+    .component-grid {
+        transform-origin: top;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .layer-section.expanded .component-grid {
+        display: grid;
+        max-height: 3000px;
+        opacity: 1;
+        transform: scaleY(1);
+    }
+
+    /* Component cards animation reset fix */
+    .layer-section:not(.expanded) .component-card {
+        animation: none;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    
+    .layer-section.expanded .component-card {
+        animation: cardReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* DISCOVERY SEARCH */
     .search-input {
         font-size: 1rem;
         padding: 1rem 1rem 1rem 3.5rem;
     }
 
-    /* LAYER HEADER */
-
-    .layer-title h3 {
-        font-size: 1.2rem;
+    /* Component cards */
+    .component-card {
+        padding: 1.25rem;
     }
 
-    /* COMPONENT GRID */
-
-    .component-grid {
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
+    .component-card h4 {
+        font-size: 1.1rem;
     }
 
     /* CTA BUTTONS */
-
     .cta-buttons {
         flex-direction: column;
         width: 100%;
@@ -1711,23 +1772,22 @@ MOBILE PHONES
     .secondary-button {
         width: 100%;
         min-width: auto;
+        padding: 0.875rem 1.5rem;
     }
 
     /* FOOTER */
-
     .footer-content {
+        grid-template-columns: 1fr;
         gap: 2rem;
     }
-
 }
+
 /* =================================================
 TABLETS
 ================================================= */
 
 @media (min-width: 768px) and (max-width: 1024px) {
-
     /* NAV */
-
     .menu-toggle {
         display: flex !important;
     }
@@ -1737,35 +1797,42 @@ TABLETS
     }
 
     /* HERO */
-
     .hero-title,
     .part-discovery-header h2 {
-        font-size: clamp(2rem, 5vw, 1rem);
+        font-size: clamp(2.5rem, 5vw, 4rem);
     }
 
     .hero-subtitle {
         font-size: 1.1rem;
     }
 
-    /* GRID */
+    /* LAYER SECTIONS */
+    .layer-title h3 {
+        font-size: 1.3rem;
+    }
 
+    /* GRID */
     .component-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    /* SEARCH */
+    /* Component grid animation fix for tablet */
+    .layer-section.expanded .component-grid {
+        display: grid;
+        max-height: 4000px;
+    }
 
+    /* SEARCH */
     .search-input {
         font-size: 1.05rem;
     }
-
 }
+
 /* =================================================
 DESKTOP ONLY
 ================================================= */
 
 @media (min-width: 1025px) {
-
     .menu-toggle {
         display: none !important;
     }
@@ -1773,8 +1840,8 @@ DESKTOP ONLY
     .nav-links {
         display: flex !important;
     }
-
 }
+
 /* =========================================
 ULTRA RESPONSIVE HEADINGS
 ========================================= */
@@ -1783,12 +1850,11 @@ ULTRA RESPONSIVE HEADINGS
 .part-discovery-header h2,
 .section-header h2,
 h2 {
-
     font-size: clamp(1.8rem, 6vw, 4rem);
     line-height: 1.1;
 }
-@media (max-width: 640px) {
 
+@media (max-width: 640px) {
     .hero-title,
     .part-discovery-header h2,
     .section-header h2,
@@ -1797,25 +1863,23 @@ h2 {
         line-height: 1.2;
         letter-spacing: -0.01em;
     }
-
 }
-@media (min-width: 641px) and (max-width: 1024px) {
 
+@media (min-width: 641px) and (max-width: 1024px) {
     .hero-title,
     .part-discovery-header h2,
     .section-header h2,
     h2 {
         font-size: 3rem !important;
     }
-
 }
-@media (min-width: 1025px) {
 
+@media (min-width: 1025px) {
     .hero-title {
         font-size: 5.5rem;
     }
-
 }
+
 /* Fix mobile tap behaviour */
 .layer-header,
 .layer-toggle {
@@ -1826,4 +1890,145 @@ h2 {
 /* Prevent animation blocking clicks */
 .layer-header {
     will-change: transform;
+}
+
+/* ========== CRITICAL FIX FOR LAYER DROPDOWN ========== */
+/* This ensures the expanded class works properly */
+.layer-section.expanded {
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px rgba(30, 58, 138, 0.1);
+}
+
+.layer-section.expanded .layer-toggle i {
+    transform: rotate(180deg);
+}
+
+.layer-section.expanded .layer-header {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(30, 58, 138, 0.1) 100%);
+}
+
+.layer-section.expanded .layer-title h3 {
+    color: var(--primary);
+}
+
+.layer-section.expanded .layer-count {
+    color: var(--primary);
+}
+
+/* Mobile-specific layer section fixes */
+@media (max-width: 768px) {
+    .layer-section {
+        margin-bottom: 1rem;
+    }
+    
+    .layer-header {
+        position: relative;
+        z-index: 10;
+    }
+    
+    /* Ensure proper stacking context */
+    .layer-section.expanded {
+        z-index: 5;
+    }
+}
+
+/* Fix for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    .layer-header {
+        cursor: pointer;
+    }
+    
+    .layer-toggle {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+}
+
+/* JavaScript workaround - Add this CSS class for proper animation reset */
+.layer-section.expanding .component-grid,
+.layer-section.collapsing .component-grid {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reset component card animations when collapsing */
+.layer-section:not(.expanded) .component-card {
+    animation: none;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+/* ========== CRITICAL ANIMATION FIXES ========== */
+/* Ensure component cards are visible when expanded */
+.layer-section.expanded .component-card {
+    animation-name: cardReveal;
+    animation-fill-mode: forwards;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reset animations properly */
+@keyframes cardRevealReset {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+.layer-section:not(.expanded) .component-card {
+    animation: cardRevealReset 0.3s ease forwards;
+}
+
+/* Mobile-specific animation reset */
+@media (max-width: 768px) {
+    /* Force hardware acceleration for smooth animations */
+    .layer-section,
+    .component-grid,
+    .component-card {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+    
+    /* Prevent animation conflicts */
+    .layer-section.expanded .component-grid {
+        will-change: max-height, padding, opacity, transform;
+    }
+    
+    /* Ensure smooth closing animation */
+    .layer-section:not(.expanded) .component-grid {
+        transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                   padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                   opacity 0.3s ease,
+                   transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 0;
+        padding: 0;
+        opacity: 0;
+        transform: scaleY(0);
+    }
+}
+
+/* Fix for Firefox */
+@-moz-document url-prefix() {
+    .component-grid {
+        transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                   padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+}
+
+/* Fallback for older browsers */
+.layer-section .component-grid {
+    display: none;
+}
+
+.layer-section.expanded .component-grid {
+    display: grid;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }

@@ -746,13 +746,27 @@ section:not(.about-hero) .blueprint-grid {
 }
 
 .section-header h2 {
-    font-size: 3.5rem;
+    font-size: 2.25rem;
     color: var(--foreground);
     margin-bottom: 1.5rem;
+    text-align: center;
+    width: 100%;
     background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+@media (min-width: 768px) {
+    .section-header h2 {
+        font-size: 2.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .section-header h2 {
+        font-size: 3.5rem;
+    }
 }
 
 .section-header p {
@@ -1049,12 +1063,24 @@ blockquote {
 }
 
 .philosophy-content h2 {
-    font-size: 3rem;
+    font-size: 2.25rem;
     margin-bottom: 2rem;
     background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+@media (min-width: 768px) {
+    .philosophy-content h2 {
+        font-size: 2.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .philosophy-content h2 {
+        font-size: 3.5rem;
+    }
 }
 
 .philosophy-content .text-lg {
@@ -1125,12 +1151,24 @@ blockquote {
 }
 
 .join-container-updated h2 {
-    font-size: 2.75rem;
+    font-size: 2.25rem;
     margin-bottom: 1.5rem;
     background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+@media (min-width: 768px) {
+    .join-container-updated h2 {
+        font-size: 2.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .join-container-updated h2 {
+        font-size: 3.5rem;
+    }
 }
 
 .join-description {
@@ -1466,7 +1504,7 @@ section {
         right: 1rem;
         border-radius: 14px;
     }
-    
+
     .dropdown-item {
         padding: 14px 20px;
         font-size: 0.95rem;
@@ -1529,6 +1567,30 @@ section {
     .philosophy-section-expanded,
     .join-section-updated {
         padding: 5rem 0 !important;
+    }
+
+    /* Fix section headers for mobile */
+    .section-header h2,
+    .section-title,
+    .mission-section h2,
+    .team-section h2,
+    .philosophy-section h2,
+    .join-section h2,
+    .philosophy-content h2,
+    .join-container-updated h2 {
+        font-size: 2rem !important;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+
+    .section-header p,
+    .philosophy-content .text-lg,
+    .join-description {
+        font-size: 1.1rem !important;
+        padding: 0 0.5rem;
+        margin-bottom: 2rem;
+        line-height: 1.5;
     }
 
     /* Grid Layout Stack */
@@ -1658,7 +1720,7 @@ section {
         max-width: 100%;
         overflow-x: hidden;
     }
-    
+
     .container {
         padding: 0 1rem;
         max-width: 100%;
@@ -1710,6 +1772,18 @@ section {
         padding: 0 1rem;
     }
 
+    /* Fix section headers for tablet */
+    .section-header h2,
+    .section-title,
+    .mission-section h2,
+    .team-section h2,
+    .philosophy-section h2,
+    .join-section h2,
+    .philosophy-content h2,
+    .join-container-updated h2 {
+        font-size: 2.5rem !important;
+    }
+
     /* Adjust section padding */
     section:not(.about-hero) {
         padding: 6rem 0 !important;
@@ -1719,7 +1793,7 @@ section {
         background-size: 1100px auto;
         animation-duration: 18s;
     }
-    
+
     /* Prevent zoom on tablets */
     html, body {
         -webkit-text-size-adjust: 100%;
@@ -1754,8 +1828,21 @@ section {
         font-size: 0.95rem;
     }
 
-    .section-header h2 {
-        font-size: 1.75rem;
+    .section-header h2,
+    .section-title,
+    .mission-section h2,
+    .team-section h2,
+    .philosophy-section h2,
+    .join-section h2,
+    .philosophy-content h2,
+    .join-container-updated h2 {
+        font-size: 1.75rem !important;
+    }
+
+    .section-header p,
+    .philosophy-content .text-lg,
+    .join-description {
+        font-size: 1rem !important;
     }
 
     .feature-card,
@@ -1818,8 +1905,8 @@ section {
     input, select, textarea {
         font-size: 16px !important;
     }
-    
-    .about-hero-title, 
+
+    .about-hero-title,
     .about-hero-subtitle,
     .section-header h2,
     .section-header p {
