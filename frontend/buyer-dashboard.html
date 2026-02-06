@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Buyer Dashboard | AXO Networks</title>
+  <link rel="stylesheet" href="../frontend/styles/buyerdashboard.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <h2>AXO Networks – Buyer Dashboard</h2>
+    <div class="user-info">
+      <span id="userEmail">buyer@email.com</span>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- SUMMARY CARDS -->
+  <section class="summary">
+    <div class="card">
+      <h3>Total RFQs</h3>
+      <p id="totalRfqs">0</p>
+    </div>
+
+    <div class="card">
+      <h3>Active RFQs</h3>
+      <p id="activeRfqs">0</p>
+    </div>
+
+    <div class="card">
+      <h3>Purchase Orders</h3>
+      <p id="totalPos">0</p>
+    </div>
+  </section>
+
+  <!-- ACTION BAR -->
+  <section class="actions">
+    <button onclick="goToCreateRFQ()">+ Create RFQ</button>
+  </section>
+
+  <!-- RFQ TABLE -->
+  <section class="table-section">
+    <h3>My RFQs</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>RFQ ID</th>
+          <th>Part Name</th>
+          <th>Total Qty</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="rfqTableBody">
+        <!-- Filled by JS -->
+        <tr>
+          <td colspan="5">Loading RFQs...</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <script src="./js/buyer-dashboard.js"></script>
+</body>
+</html>

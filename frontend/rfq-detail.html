@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RFQ Detail | AXO Networks</title>
+  <link rel="stylesheet" href="./styles/buyerdashboard.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <h2>RFQ Details</h2>
+    <div class="user-info">
+      <button onclick="goBack()">← Back</button>
+    </div>
+  </header>
+
+  <!-- RFQ SUMMARY -->
+  <section class="summary">
+    <div class="card">
+      <h3>Part Name</h3>
+      <p id="partName">-</p>
+    </div>
+
+    <div class="card">
+      <h3>Total Quantity</h3>
+      <p id="totalQty">-</p>
+    </div>
+
+    <div class="card">
+      <h3>Status</h3>
+      <p id="rfqStatus">-</p>
+    </div>
+  </section>
+
+  <!-- RFQ DETAILS -->
+  <section class="table-section">
+    <div class="card">
+      <h3>RFQ Information</h3>
+
+      <p><b>Part ID:</b> <span id="partId">-</span></p>
+      <p><b>Batch Quantity:</b> <span id="batchQty">-</span></p>
+      <p><b>Delivery Timeline:</b> <span id="deliveryTimeline">-</span></p>
+      <p><b>Material Specification:</b> <span id="materialSpec">-</span></p>
+      <p><b>PPAP Level:</b> <span id="ppapLevel">-</span></p>
+    </div>
+  </section>
+
+  <!-- RFQ FILES -->
+  <section class="table-section">
+    <div class="card">
+      <h3>RFQ Files</h3>
+      <ul id="rfqFiles">
+        <li>No files uploaded</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- QUOTES -->
+  <section class="table-section">
+    <h3>Supplier Quotes</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Supplier</th>
+          <th>Price</th>
+          <th>Batch Qty</th>
+          <th>Delivery</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="quotesTable">
+        <tr>
+          <td colspan="6">No quotes yet</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- MESSAGES -->
+  <section class="table-section">
+    <div class="card">
+      <h3>Messages</h3>
+
+      <div id="messagesBox" style="max-height:200px; overflow-y:auto;">
+        <p>No messages yet</p>
+      </div>
+
+      <br />
+
+      <textarea id="messageInput" rows="3" placeholder="Type a message..."></textarea>
+      <br /><br />
+      <button onclick="sendMessage()">Send Message</button>
+    </div>
+  </section>
+
+  <script>
+    function goBack() {
+      window.location.href = "buyer-dashboard.html";
+    }
+  </script>
+<script src="./js/rfq-detail.js"></script>
+
+</body>
+</html>

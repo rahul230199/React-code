@@ -1,7 +1,8 @@
 require("dotenv").config();
 const express = require("express");
+const path = require("path");
 
-// ✅ USE SHARED DB POOL (instead of creating a new Pool here)
+// ✅ SHARED DB POOL
 const pool = require("./src/config/db");
 
 // Swagger
@@ -10,14 +11,14 @@ const swaggerSetup = require("./src/docs/swagger");
 // Routes
 const rfqRoutes = require("./routes/rfq.routes");
 const rfqFiles = require("./routes/rfqFiles.routes");
-const quote = require("./routes/quote.routes");
-const rfqmessages = require("./routes/rfqMessage.routes");
-const purchaseOrder = require("./routes/purchaseOrder.routes");
-const quoteAcceptance = require("./routes/quoteAcceptance.routes");
+const quoteRoutes = require("./routes/quote.routes");
+const rfqMessagesRoutes = require("./routes/rfqMessage.routes");
+const purchaseOrderRoutes = require("./routes/purchaseOrder.routes");
+const quoteAcceptanceRoutes = require("./routes/quoteAcceptance.routes");
 const authRoutes = require("./routes/auth.routes");
 
-// Middlewares
-const errorHandler = require("../axo-networks/middleware/errorHandler.middleware");
+// Middleware
+const errorHandler = require("./middleware/errorHandler.middleware");
 
 // Services
 const { createUsersFromRequest } = require("./services/userProvisioningService");
@@ -25,11 +26,12 @@ const { createUsersFromRequest } = require("./services/userProvisioningService")
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Swagger setup
+/* ===================== SWAGGER ===================== */
 swaggerSetup(app);
 
 /* ===================== MIDDLEWARE ===================== */
 app.use(express.json());
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -38,22 +40,63 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ===================== ROUTES ===================== */
+/* ===================== FRONTEND ===================== */
+// ✅ Serve frontend FIRST (important)
+app.use(express.static(path.join(__dirname, "frontend")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "login.html"));
+});
+
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "login.html"));
+});
+
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "dashboard.html"));
+});
+
+app.get("/admin-dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "admin-dashboard.html"));
+});
+
+/* ===================== API ROUTES ===================== */
+// ✅ APIs AFTER frontend
 app.use("/api/auth", authRoutes);
 app.use("/api/rfqs", rfqRoutes);
 app.use("/api/rfq-files", rfqFiles);
-app.use("/api/quotes", quote);
-app.use("/api/quotes", quoteAcceptance);
-app.use("/api/rfq-messages", rfqmessages);
-app.use("/api/purchase-orders", purchaseOrder);
+app.use("/api/quotes", quoteRoutes);
+app.use("/api/quotes", quoteAcceptanceRoutes);
+app.use("/api/rfq-messages", rfqMessagesRoutes);
+app.use("/api/purchase-orders", purchaseOrderRoutes);
 
 /* ===================== HEALTH ===================== */
 app.get("/api/_health", async (_, res) => {
-  const r = await pool.query("SELECT NOW()");
-  res.json({ status: "up", dbTime: r.rows[0].now });
+  try {
+    // Server is UP if this endpoint is hit
+    let dbStatus = "up";
+    let dbTime = null;
+
+    try {
+      const r = await pool.query("SELECT NOW()");
+      dbTime = r.rows[0].now;
+    } catch (dbErr) {
+      console.error("❌ DB not reachable:", dbErr.message);
+      dbStatus = "down";
+    }
+
+    res.json({
+      status: "up",        // ✅ SERVER STATUS
+      dbStatus,            // ℹ️ DB STATUS
+      dbTime,
+    });
+  } catch (err) {
+    res.status(500).json({ status: "down" });
+  }
 });
 
-/* ===================== ADMIN DASHBOARD ===================== */
+
+/* ===================== ADMIN DASHBOARD APIs ===================== */
 app.get("/api/network-request", async (_, res) => {
   const r = await pool.query(
     `SELECT * FROM network_access_requests ORDER BY submission_timestamp DESC`
@@ -61,7 +104,6 @@ app.get("/api/network-request", async (_, res) => {
   res.json({ success: true, data: r.rows });
 });
 
-/* ===================== FORM SUBMIT ===================== */
 app.post("/api/network-request", async (req, res) => {
   const {
     companyName, website, registeredAddress, cityState,
@@ -129,7 +171,7 @@ app.put("/api/network-request/:id/status", async (req, res) => {
 /* ===================== ERROR HANDLER (LAST) ===================== */
 app.use(errorHandler);
 
-/* ===================== START ===================== */
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-);
+/* ===================== START SERVER ===================== */
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

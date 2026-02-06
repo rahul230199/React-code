@@ -1,7 +1,9 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { Pool } = require("pg");
+
+// ✅ CORRECT DB IMPORT (FIXED)
+const pool = require("../src/config/db");
 
 console.log("✅ auth.routes.js LOADED");
 
@@ -9,18 +11,7 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "axo-secret";
 
 /* ======================================================
-   DB CONNECTION
-====================================================== */
-const pool = new Pool({
-  host: process.env.PGHOST || "localhost",
-  database: process.env.PGDATABASE || "axo_networks",
-  user: process.env.PGUSER || "postgres",
-  password: process.env.PGPASSWORD || "",
-  port: process.env.PGPORT || 5432,
-});
-
-/* ======================================================
-   LOGIN
+   LOGIN (FUNCTIONALITY UNCHANGED)
 ====================================================== */
 router.post("/login", async (req, res) => {
   try {
@@ -29,13 +20,13 @@ router.post("/login", async (req, res) => {
     console.log("🔐 LOGIN ATTEMPT:", email);
 
     /* =========================
-       HARD-CODED ADMIN LOGIN
+       ADMIN LOGIN (UNCHANGED)
     ========================== */
-    if (email.toLowerCase() === "admin@axonetworks.com") {
+    if (email && email.toLowerCase() === "admin@axonetworks.com") {
       if (password !== "Admin@123") {
         return res.status(401).json({
           success: false,
-          message: "Invalid admin password"
+          message: "Invalid admin password",
         });
       }
 
@@ -50,8 +41,8 @@ router.post("/login", async (req, res) => {
         token,
         user: {
           email,
-          role: "admin"
-        }
+          role: "admin",
+        },
       });
     }
 
@@ -59,24 +50,32 @@ router.post("/login", async (req, res) => {
        NORMAL USER LOGIN
     ========================== */
     const userRes = await pool.query(
-      "SELECT * FROM users WHERE email=$1 AND status='active'",
+      "SELECT id, email, password_hash, role, status FROM users WHERE email=$1",
       [email]
     );
 
-    if (!userRes.rows.length) {
+    if (!userRes.rows.length || userRes.rows[0].status !== "active") {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials"
+        message: "Invalid credentials",
       });
     }
 
     const user = userRes.rows[0];
 
+    if (!user.password_hash) {
+      console.error("❌ password_hash missing for user:", email);
+      return res.status(500).json({
+        success: false,
+        message: "Database error",
+      });
+    }
+
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials"
+        message: "Invalid credentials",
       });
     }
 
@@ -92,18 +91,19 @@ router.post("/login", async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
 
   } catch (err) {
-    console.error("❌ Login error:", err);
+    console.error("❌ LOGIN ERROR:", err.message);
+    console.error(err.stack);
+
     res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Database error",
     });
   }
 });
 
 module.exports = router;
-
