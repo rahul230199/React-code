@@ -1,19 +1,39 @@
-[dotenv@17.2.4] injecting env (9) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[dotenv@17.2.4] injecting env (9) from .env -- tip: ⚙️  override existing env vars with { override: true }
 🌍 Environment: production
+DB_HOST: localhost
+DB_USER: postgres
+DB_NAME: axo_networks
+✅ auth.routes.js loaded
 🚀 Server running on port 3000
+
+ port 3000
+0
+� Server running on port 3000
+ 3000
+000
+stgres' }
+🔐 LOGIN ATTEMPT
+📧 Email: admin@axonetworks.com
+🔑 Password length: 9
 ✅ PostgreSQL connected
+🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
+🔐 LOGIN ATTEMPT
+📧 Email: admin@axonetworks.com
+🔑 Password length: 9
 ✅ PostgreSQL connected
+🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
+🔐 LOGIN ATTEMPT
+📧 Email: admin@axonetworks.com
+🔑 Password length: 9
 ✅ PostgreSQL connected
+🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
+🔐 LOGIN ATTEMPT
+📧 Email: admin@axonetworks.com
+🔑 Password length: 9
 ✅ PostgreSQL connected
+🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
+🔐 LOGIN ATTEMPT
+📧 Email: admin@axonetworks.com
+🔑 Password length: 9
 ✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
-✅ PostgreSQL connected
+🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
