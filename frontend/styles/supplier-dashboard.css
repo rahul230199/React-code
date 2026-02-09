@@ -1,5 +1,5 @@
 /* =========================================================
-   ROOT VARIABLES
+   ROOT VARIABLES (ENTERPRISE TUNED)
 ========================================================= */
 :root {
   --primary: #1e3a8a;
@@ -10,18 +10,18 @@
   --foreground-light: #374151;
   --muted: #6b7280;
 
-  --bg: #f6f8fc;
-  --card: rgba(255, 255, 255, 0.85);
+  --bg: #f8fafc;
+  --card: #ffffff;
   --border: #e5e7eb;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
 
-  --shadow-sm: 0 6px 16px rgba(0,0,0,0.05);
-  --shadow-md: 0 18px 48px rgba(0,0,0,0.10);
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 20px rgba(0,0,0,0.06);
 
-  --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition: all 0.2s ease;
 }
 
 /* =========================================================
@@ -35,22 +35,21 @@
 
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: linear-gradient(180deg, #f8fafc, #eef2f7);
+  background: var(--bg);
   color: var(--foreground);
 }
 
 /* =========================================================
-   HEADER
+   HEADER (CLEAN / ENTERPRISE)
 ========================================================= */
 .header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(14px);
+  background: #ffffff;
   border-bottom: 1px solid var(--border);
-
   padding: 14px 18px;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -83,7 +82,7 @@ body {
 }
 
 .truncate {
-  max-width: 130px;
+  max-width: 160px;
   font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
@@ -98,7 +97,6 @@ body {
   border-radius: 999px;
   font-size: 12px;
   cursor: pointer;
-  transition: var(--transition);
 }
 
 .ghost-btn:hover {
@@ -110,9 +108,9 @@ body {
    MAIN LAYOUT
 ========================================================= */
 .dashboard {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: auto;
-  padding: 22px 16px 80px;
+  padding: 24px 16px 80px;
 }
 
 /* =========================================================
@@ -135,56 +133,44 @@ body {
 }
 
 /* =========================================================
-   STATUS MESSAGE
+   ACTION STRIP (SYSTEM NOTICE)
 ========================================================= */
-.status-message {
-  display: none;
-  position: sticky;
-  top: 68px;
-  margin-bottom: 12px;
+.action-strip {
+  background: #fef2f2;
+  color: #991b1b;
   padding: 12px 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   font-size: 13px;
+  margin-bottom: 16px;
   text-align: center;
+  font-weight: 500;
 }
 
-.status-message.error {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.status-message.success {
-  background: #dcfce7;
-  color: #166534;
+.action-strip.hidden {
+  display: none;
 }
 
 /* =========================================================
-   SUMMARY CARDS
+   SUMMARY CARDS (EXECUTIVE STYLE)
 ========================================================= */
 .summary {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 16px;
 }
 
 .card {
   background: var(--card);
-  backdrop-filter: blur(10px);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 18px;
   box-shadow: var(--shadow-sm);
-  transition: var(--transition);
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
 }
 
 .card h3 {
   font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 12px;
+  font-weight: 600;
   color: var(--foreground-light);
 }
 
@@ -194,8 +180,40 @@ body {
   margin-top: 6px;
 }
 
+.card span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 /* =========================================================
-   TABLE SECTION
+   CHARTS (CALM / ANALYTICAL)
+========================================================= */
+.charts-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin: 28px 0;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-card h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--foreground-light);
+}
+
+/* =========================================================
+   TABLES (RFQ + PO — SAME STYLE)
 ========================================================= */
 .table-section {
   margin-top: 28px;
@@ -214,25 +232,26 @@ body {
 
 table {
   width: 100%;
-  min-width: 600px;
+  min-width: 700px;
   border-collapse: separate;
   border-spacing: 0;
-  background: #fff;
+  background: #ffffff;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
 
 thead th {
-  background: var(--foreground);
-  color: #fff;
+  background: #f9fafb;
+  color: var(--foreground-light);
   font-size: 12px;
+  font-weight: 600;
   padding: 14px 16px;
   text-align: left;
-  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
 }
 
 tbody td {
-  padding: 14px 16px;
+  padding: 16px;
   font-size: 13px;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
@@ -242,16 +261,12 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
-tbody tr {
-  transition: var(--transition);
-}
-
 tbody tr:hover {
   background: #f9fafb;
 }
 
 /* =========================================================
-   STATUS BADGES
+   STATUS BADGES (PROFESSIONAL TERMS)
 ========================================================= */
 .status {
   display: inline-block;
@@ -261,79 +276,47 @@ tbody tr:hover {
   font-weight: 500;
 }
 
-.status.active {
-  background: #dbeafe;
-  color: #1e40af;
+/* Supplier Action Required */
+.status.supplier_action {
+  background: #eef2ff;
+  color: #1e3a8a;
 }
 
-.status.quoted {
-  background: #ede9fe;
-  color: #5b21b6;
+/* Buyer Review Pending */
+.status.buyer_review {
+  background: #f5f3ff;
+  color: #4c1d95;
 }
 
+/* Purchase Order Issued */
 .status.po {
-  background: #dcfce7;
-  color: #166534;
+  background: #ecfdf5;
+  color: #065f46;
 }
 
 /* =========================================================
-   ACTION BUTTON
+   ACTION BUTTONS
 ========================================================= */
 table button {
-  background: linear-gradient(
-    135deg,
-    var(--primary),
-    #1e40af
-  );
+  background: var(--primary);
   color: #fff;
   border: none;
   padding: 7px 14px;
   border-radius: 999px;
   font-size: 12px;
   cursor: pointer;
-  transition: var(--transition);
 }
 
 table button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(30,58,138,.35);
+  opacity: 0.9;
 }
 
 /* =========================================================
-   SKELETON LOADING
+   MISC
 ========================================================= */
-.skeleton {
-  height: 28px;
-  width: 60px;
-  border-radius: 8px;
-  background: linear-gradient(
-    90deg,
-    #e5e7eb 25%,
-    #f3f4f6 37%,
-    #e5e7eb 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-.skeleton-row {
-  height: 18px;
-  width: 100%;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  background: linear-gradient(
-    90deg,
-    #e5e7eb 25%,
-    #f3f4f6 37%,
-    #e5e7eb 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 100% 0 }
-  100% { background-position: 0 0 }
+.muted {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 /* =========================================================
@@ -349,4 +332,9 @@ table button:hover {
   .summary {
     grid-template-columns: repeat(4, 1fr);
   }
+
+  .charts-section {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
+

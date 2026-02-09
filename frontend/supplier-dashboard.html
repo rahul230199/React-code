@@ -8,10 +8,11 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&display=swap" rel="stylesheet">
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- CSS -->
   <link rel="stylesheet" href="./styles/supplier-dashboard.css" />
@@ -19,7 +20,6 @@
 
 <body>
 
-<!-- ================= HEADER ================= -->
 <header class="header">
   <div class="header-left">
     <h2 class="logo">AXO Networks</h2>
@@ -27,50 +27,46 @@
   </div>
 
   <div class="user-info">
-    <span id="userEmail" class="truncate">supplier@axonetworks.com</span>
+    <span id="userEmail" class="truncate"></span>
     <button class="ghost-btn" onclick="logout()">Logout</button>
   </div>
 </header>
 
-<!-- ================= MAIN ================= -->
 <main class="dashboard">
 
-  <!-- ===== STATUS MESSAGE ===== -->
-  <div id="statusMessage" class="status-message"></div>
+  <!-- ACTION STRIP -->
+  <section id="actionStrip" class="action-strip hidden"></section>
 
-  <!-- ===== PAGE TITLE ===== -->
+  <!-- PAGE HEADER -->
   <section class="page-head">
     <h1>Supplier Dashboard</h1>
-    <p>View RFQs, submit quotes, and manage orders</p>
+    <p>Operational overview of RFQs and accepted purchase orders</p>
   </section>
 
-  <!-- ================= SUMMARY ================= -->
-  <section class="summary" id="summarySection">
-    <div class="card">
-      <h3>Total RFQs</h3>
-      <p class="skeleton"></p>
+  <!-- KPI SUMMARY -->
+  <section class="summary" id="summarySection"></section>
+
+  <!-- ANALYTICS -->
+  <section class="charts-section">
+    <div class="chart-card">
+      <h3>Supplier Workload</h3>
+      <canvas id="rfqFunnelChart"></canvas>
     </div>
 
-    <div class="card">
-      <h3>Quoted RFQs</h3>
-      <p class="skeleton"></p>
+    <div class="chart-card">
+      <h3>RFQ Flow Health</h3>
+      <canvas id="winRateChart"></canvas>
     </div>
 
-    <div class="card">
-      <h3>PO Received</h3>
-      <p class="skeleton"></p>
-    </div>
-
-    <div class="card">
-      <h3>Active Orders</h3>
-      <p class="skeleton"></p>
+    <div class="chart-card">
+      <h3>Conversion Effectiveness</h3>
+      <canvas id="actionLoadChart"></canvas>
     </div>
   </section>
 
-  <!-- ================= RFQ LIST ================= -->
+  <!-- RFQ TABLE -->
   <section class="table-section">
-    <h3>Available RFQs</h3>
-
+    <h3>Open Requests for Quotation</h3>
     <div class="table-wrap">
       <table>
         <thead>
@@ -79,28 +75,38 @@
             <th>Part Name</th>
             <th>Quantity</th>
             <th>Status</th>
-            <th>Action</th>
+            <th>Last Activity</th>
+            <th></th>
           </tr>
         </thead>
+        <tbody id="rfqTableBody"></tbody>
+      </table>
+    </div>
+  </section>
 
-        <tbody id="rfqTableBody">
-          <!-- Skeleton rows -->
+  <!-- PO TABLE -->
+  <section class="table-section">
+    <h3>Accepted Purchase Orders</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
           <tr>
-            <td colspan="5">
-              <div class="skeleton-row"></div>
-              <div class="skeleton-row"></div>
-              <div class="skeleton-row"></div>
-            </td>
+            <th>PO ID</th>
+            <th>RFQ ID</th>
+            <th>Part Name</th>
+            <th>Quantity</th>
+            <th>Accepted Date</th>
+            <th></th>
           </tr>
-        </tbody>
+        </thead>
+        <tbody id="poTableBody"></tbody>
       </table>
     </div>
   </section>
 
 </main>
 
-<!-- ================= SCRIPT ================= -->
 <script src="./js/supplier-dashboard.js"></script>
-
 </body>
 </html>
+

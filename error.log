@@ -1,5 +1,7 @@
-🔥 LOGIN ERROR: error: relation "users" does not exist
-    at /home/ec2-user/AXO-Project/node_modules/pg-pool/index.js:45:11
+❌ Missing environment variables:
+   - JWT_SECRET
+cation failed for user "postgres"
+oject/node_modules/pg-pool/index.js:45:11
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
     at async /home/ec2-user/AXO-Project/routes/auth.routes.js:39:20 {
   length: 104,

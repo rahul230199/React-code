@@ -1,39 +1,34 @@
-[dotenv@17.2.4] injecting env (9) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.4] injecting env (9) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
 🌍 Environment: production
 DB_HOST: localhost
 DB_USER: postgres
 DB_NAME: axo_networks
+DB_SSL: false
 ✅ auth.routes.js loaded
 🚀 Server running on port 3000
-
- port 3000
-0
-� Server running on port 3000
- 3000
-000
-stgres' }
-🔐 LOGIN ATTEMPT
-📧 Email: admin@axonetworks.com
-🔑 Password length: 9
-✅ PostgreSQL connected
-🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
-🔐 LOGIN ATTEMPT
-📧 Email: admin@axonetworks.com
-🔑 Password length: 9
-✅ PostgreSQL connected
-🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
-🔐 LOGIN ATTEMPT
-📧 Email: admin@axonetworks.com
-🔑 Password length: 9
-✅ PostgreSQL connected
-🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
-🔐 LOGIN ATTEMPT
-📧 Email: admin@axonetworks.com
-🔑 Password length: 9
-✅ PostgreSQL connected
-🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
-🔐 LOGIN ATTEMPT
-📧 Email: admin@axonetworks.com
-🔑 Password length: 9
-✅ PostgreSQL connected
-🧠 DB CONNECTED TO: { db: 'postgres', user: 'postgres' }
+🔌 New PostgreSQL client connected
+✅ PostgreSQL connected at: 2026-02-08T12:28:44.030Z
+🔌 New PostgreSQL client connected
+🔌 New PostgreSQL client connected
+🔐 Login attempt: jillu.supplier@axonetworks.com
+✅ Login success: jillu.supplier@axonetworks.com
+🔌 New PostgreSQL client connected
+🔐 Login attempt: jillu.supplier@axonetworks.com
+✅ Login success: jillu.supplier@axonetworks.com
+🔌 New PostgreSQL client connected
+🔐 Login attempt: jillu.supplier@axonetworks.com
+🔌 New PostgreSQL client connected
+✅ Login success: jillu.supplier@axonetworks.com
+🔌 New PostgreSQL client connected
+🔐 Login attempt: jillu.supplier@axonetworks.com
+✅ Login success: jillu.supplier@axonetworks.com
+🔐 Login attempt: jillu.supplier@axonetworks.com
+✅ Login success: jillu.supplier@axonetworks.com
+🔌 New PostgreSQL client connected
+🔌 New PostgreSQL client connected
+🔌 New PostgreSQL client connected
+🔐 Login attempt: Jillu.supplier@axonetworks.com
+✅ Login success: jillu.supplier@axonetworks.com
+🔐 Login attempt: Jillu.supplier@axonetworks.com
+🔌 New PostgreSQL client connected
+✅ Login success: jillu.supplier@axonetworks.com
