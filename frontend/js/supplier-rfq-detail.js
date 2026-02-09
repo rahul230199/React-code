@@ -1,59 +1,42 @@
 /* =========================================================
-   ENV MODE CONFIG
+   AUTH HELPERS
 ========================================================= */
-
-const ENV = "local"; // "local" | "prod"
-const IS_LOCAL = ENV === "local";
-
-/* =========================================================
-   AUTH / USER
-========================================================= */
-
 function getUser() {
-  return JSON.parse(localStorage.getItem("user"));
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
 }
 
 function getToken() {
   return localStorage.getItem("token");
 }
 
-/* ---------------- LOCAL MODE ---------------- */
-if (IS_LOCAL) {
-  if (!getUser()) {
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: 22,
-        email: "supplier.local@axonetworks.com",
-        role: "SUPPLIER"
-      })
-    );
-    localStorage.setItem("token", "LOCAL_SUPPLIER_TOKEN");
-  }
-}
+/* =========================================================
+   AUTH GUARD
+========================================================= */
+const user = getUser();
+const token = getToken();
 
-/* ---------------- PROD MODE ---------------- */
-if (!IS_LOCAL) {
-  if (!getUser() || !getToken()) {
-    window.location.href = "/login";
-  }
+if (!user || !token || user.role !== "SUPPLIER") {
+  window.location.href = "/login";
 }
 
 /* =========================================================
-   RFQ ID FROM URL
+   RFQ ID
 ========================================================= */
-
 const params = new URLSearchParams(window.location.search);
 const RFQ_ID = params.get("id");
 
 if (!RFQ_ID) {
-  showMessage("Invalid RFQ reference", "error");
+  alert("Invalid RFQ reference");
+  window.history.back();
 }
 
 /* =========================================================
    DOM READY
 ========================================================= */
-
 document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("quoteForm")
@@ -63,43 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* =========================================================
-   LOAD RFQ DETAIL
+   API HELPER
 ========================================================= */
-
-async function loadRFQDetail() {
-  try {
-    clearMessage();
-
-    let rfq, files, messages, quote;
-
-    if (IS_LOCAL) {
-      ({ rfq, files, messages, quote } = getMockData());
-    } else {
-      [rfq, files, messages, quote] = await Promise.all([
-        fetchRFQ(),
-        fetchFiles(),
-        fetchMessages(),
-        fetchMyQuote()
-      ]);
-    }
-
-    renderRFQ(rfq);
-    renderFiles(files);
-    renderMessages(messages);
-    renderQuoteState(quote);
-
-    hideSkeletons();
-
-  } catch (err) {
-    console.error(err);
-    showMessage(err.message || "Failed to load RFQ details", "error");
-  }
-}
-
-/* =========================================================
-   API FETCHERS (PROD)
-========================================================= */
-
 async function api(url, options = {}) {
   const res = await fetch(url, {
     headers: {
@@ -110,19 +58,46 @@ async function api(url, options = {}) {
   });
 
   const result = await res.json();
-  if (!result.success) throw new Error(result.message);
+  if (!result.success) {
+    throw new Error(result.message || "API error");
+  }
+
   return result.data;
 }
 
-const fetchRFQ = () => api(`/api/rfqs/${RFQ_ID}`);
-const fetchFiles = () => api(`/api/rfqs/${RFQ_ID}/files`);
-const fetchMessages = () => api(`/api/rfq-messages/${RFQ_ID}`);
-const fetchMyQuote = () => api(`/api/quotes/rfq/${RFQ_ID}/me`);
+/* =========================================================
+   LOAD RFQ DETAIL
+========================================================= */
+async function loadRFQDetail() {
+  try {
+    clearMessage();
+
+    const [rfq, files, messages, quotes] = await Promise.all([
+      api(`/api/rfqs/${RFQ_ID}`),
+      api(`/api/rfq-files/${RFQ_ID}`),
+      api(`/api/rfq-messages/${RFQ_ID}`),
+      api(`/api/quotes/rfq/${RFQ_ID}`)
+    ]);
+
+    const myQuote =
+      quotes.find(q => q.supplier_id === user.id) || null;
+
+    renderRFQ(rfq);
+    renderFiles(files);
+    renderMessages(messages);
+    renderQuoteState(myQuote);
+
+    hideSkeletons();
+
+  } catch (err) {
+    console.error(err);
+    showMessage(err.message || "Failed to load RFQ details", "error");
+  }
+}
 
 /* =========================================================
    RENDER RFQ
 ========================================================= */
-
 function renderRFQ(rfq) {
   setText("rfqId", rfq.id);
   setText("partName", rfq.part_name);
@@ -139,7 +114,6 @@ function renderRFQ(rfq) {
 /* =========================================================
    FILES
 ========================================================= */
-
 function renderFiles(files) {
   const list = document.getElementById("fileList");
   list.innerHTML = "";
@@ -161,18 +135,17 @@ function renderFiles(files) {
 /* =========================================================
    QUOTE STATE
 ========================================================= */
-
 function renderQuoteState(quote) {
   const form = document.getElementById("quoteForm");
+
   if (!quote) return;
 
-  form.querySelectorAll("input, textarea, button").forEach(el => {
-    el.disabled = true;
-  });
+  form.querySelectorAll("input, textarea, button")
+    .forEach(el => el.disabled = true);
 
   showMessage(
     quote.status === "accepted"
-      ? "Your quote has been accepted. PO issued."
+      ? "Your quote has been accepted. Purchase Order issued."
       : "You have already submitted a quote.",
     "success"
   );
@@ -181,33 +154,23 @@ function renderQuoteState(quote) {
 /* =========================================================
    SUBMIT QUOTE
 ========================================================= */
-
 async function submitQuote(e) {
   e.preventDefault();
   clearMessage();
 
   const payload = {
-    rfq_id: RFQ_ID,
-    supplier_id: getUser().id,
+    rfq_id: Number(RFQ_ID),
+    supplier_id: user.id,
     price: Number(getValue("price")),
     batch_quantity: Number(getValue("batchQty")),
     delivery_timeline: getValue("quoteTimeline"),
-    certifications: getValue("certifications")
+    certifications: getValue("certifications") || null
   };
 
   const error = validateQuote(payload);
-  if (error) {
-    showMessage(error, "error");
-    return;
-  }
+  if (error) return showMessage(error, "error");
 
   try {
-    if (IS_LOCAL) {
-      showMessage("Quote submitted (LOCAL MODE)", "success");
-      renderQuoteState({ status: "submitted" });
-      return;
-    }
-
     await api("/api/quotes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -226,7 +189,6 @@ async function submitQuote(e) {
 /* =========================================================
    MESSAGES
 ========================================================= */
-
 function renderMessages(messages) {
   const box = document.getElementById("messageList");
   box.innerHTML = "";
@@ -236,7 +198,7 @@ function renderMessages(messages) {
   messages.forEach(m => {
     box.innerHTML += `
       <div class="message ${
-        m.sender_id === getUser().id ? "supplier" : "buyer"
+        m.sender_id === user.id ? "supplier" : "buyer"
       }">
         ${m.message}
       </div>
@@ -250,12 +212,6 @@ async function sendMessage() {
   if (!text) return;
 
   try {
-    if (IS_LOCAL) {
-      input.value = "";
-      showMessage("Message sent (LOCAL MODE)", "success");
-      return;
-    }
-
     await api(`/api/rfq-messages/${RFQ_ID}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -274,7 +230,6 @@ async function sendMessage() {
 /* =========================================================
    HELPERS
 ========================================================= */
-
 function getValue(id) {
   return document.getElementById(id)?.value.trim();
 }
@@ -294,7 +249,8 @@ function validateQuote(q) {
   if (!q.price || q.price <= 0) return "Price must be greater than 0";
   if (!q.batch_quantity || q.batch_quantity <= 0)
     return "Batch quantity must be greater than 0";
-  if (!q.delivery_timeline) return "Delivery timeline is required";
+  if (!q.delivery_timeline)
+    return "Delivery timeline is required";
   return null;
 }
 
@@ -312,7 +268,6 @@ function goBack() {
 /* =========================================================
    STATUS MESSAGE
 ========================================================= */
-
 function showMessage(text, type = "error") {
   const box = document.getElementById("statusMessage");
   if (!box) return;
@@ -329,30 +284,4 @@ function showMessage(text, type = "error") {
 function clearMessage() {
   const box = document.getElementById("statusMessage");
   if (box) box.style.display = "none";
-}
-
-/* =========================================================
-   MOCK DATA (LOCAL MODE)
-========================================================= */
-
-function getMockData() {
-  return {
-    rfq: {
-      id: RFQ_ID,
-      part_name: "Aluminium Housing",
-      total_quantity: 5000,
-      delivery_timeline: "4–6 Weeks",
-      ppap_level: "Level 3",
-      material_specification: "ADC12 Aluminium",
-      status: "active"
-    },
-    files: [
-      { file_name: "drawing.pdf", file_url: "#" }
-    ],
-    messages: [
-      { sender_id: 1, message: "Please share tooling details." },
-      { sender_id: 22, message: "Tooling is included in price." }
-    ],
-    quote: null
-  };
 }

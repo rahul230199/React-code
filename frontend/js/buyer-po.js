@@ -1,67 +1,76 @@
-const ENV = "local";
-const IS_LOCAL = ENV === "local";
-
-/* AUTH */
+/* =========================================================
+   AUTH HELPERS
+========================================================= */
 function getUser() {
   return JSON.parse(localStorage.getItem("user"));
 }
+
 function getToken() {
   return localStorage.getItem("token");
 }
 
-/* MOCK DATA */
-const MOCK_POS = [
-  {
-    id: 9001,
-    rfq_id: 101,
-    supplier_id: 22,
-    quantity: 5000,
-    price: 120,
-    status: "issued"
+/* =========================================================
+   INIT
+========================================================= */
+document.addEventListener("DOMContentLoaded", () => {
+  if (!getUser() || !getToken()) {
+    window.location.href = "/login";
+    return;
   }
-];
 
-/* INIT */
-document.addEventListener("DOMContentLoaded", loadPOs);
+  loadPOs();
+});
 
+/* =========================================================
+   LOAD PURCHASE ORDERS (DB ONLY)
+========================================================= */
 async function loadPOs() {
   try {
-    let pos = [];
-
-    if (IS_LOCAL) {
-      pos = MOCK_POS;
-    } else {
-      pos = await fetchPOs();
-    }
-
+    const pos = await fetchPOs();
     renderPOs(pos);
   } catch (err) {
-    showMessage("Failed to load purchase orders", "error");
+    console.error("Load POs error:", err);
   }
 }
 
-/* API */
+/* =========================================================
+   API
+========================================================= */
 async function fetchPOs() {
   const buyerId = getUser().id;
 
   const res = await fetch(`/api/purchase-orders/buyer/${buyerId}`, {
     headers: {
-      Authorization: `Bearer ${getToken()}`
-    }
+      Authorization: `Bearer ${getToken()}`,
+    },
   });
 
+  if (!res.ok) {
+    throw new Error("Failed to fetch purchase orders");
+  }
+
   const result = await res.json();
-  if (!result.success) throw new Error(result.message);
+
+  if (!result.success) {
+    throw new Error(result.message || "Failed to fetch purchase orders");
+  }
+
   return result.data;
 }
 
-/* RENDER */
+/* =========================================================
+   RENDER
+========================================================= */
 function renderPOs(pos) {
   const tbody = document.getElementById("poTableBody");
   tbody.innerHTML = "";
 
-  if (!pos.length) {
-    tbody.innerHTML = `<tr><td colspan="7">No purchase orders</td></tr>`;
+  if (!pos || pos.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty">No purchase orders found</td>
+      </tr>
+    `;
     return;
   }
 
@@ -73,28 +82,26 @@ function renderPOs(pos) {
         <td>${po.supplier_id}</td>
         <td>${po.quantity}</td>
         <td>₹${po.price}</td>
-        <td><span class="status issued">ISSUED</span></td>
         <td>
-          <button onclick="viewPO(${po.id})">View</button>
+          <span class="status issued">ISSUED</span>
+        </td>
+        <td>
+          <button class="view-btn" onclick="viewPO(${po.id})">
+            View
+          </button>
         </td>
       </tr>
     `;
   });
 }
 
-/* NAV */
+/* =========================================================
+   NAVIGATION
+========================================================= */
 function viewPO(id) {
   window.location.href = `/po-detail.html?id=${id}`;
 }
 
 function goBack() {
   window.history.back();
-}
-
-/* STATUS */
-function showMessage(text, type) {
-  const box = document.getElementById("statusMessage");
-  box.textContent = text;
-  box.className = `status-message ${type}`;
-  box.style.display = "block";
 }

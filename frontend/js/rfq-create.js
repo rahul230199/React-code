@@ -1,43 +1,37 @@
 /* =========================================================
-   ENV
-========================================================= */
-const ENV = "local";
-const IS_LOCAL = ENV === "local";
-
-/* =========================================================
-   AUTH
+   AUTH HELPERS
 ========================================================= */
 function getUser() {
-  return JSON.parse(localStorage.getItem("user"));
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
 }
+
 function getToken() {
   return localStorage.getItem("token");
 }
 
-/* LOCAL MODE */
-if (IS_LOCAL && !getUser()) {
-  localStorage.setItem(
-    "user",
-    JSON.stringify({
-      id: 1,
-      email: "buyer.local@axonetworks.com",
-      role: "BUYER"
-    })
-  );
-  localStorage.setItem("token", "LOCAL_DEV_TOKEN");
-}
-
-/* PROD MODE */
-if (!IS_LOCAL && (!getUser() || !getToken())) {
-  window.location.href = "/login";
-}
-
 /* =========================================================
-   DOM READY
+   AUTH GUARD
 ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("rfqForm").addEventListener("submit", submitRFQ);
-  document.getElementById("saveDraftBtn").addEventListener("click", saveDraft);
+  const user = getUser();
+  const token = getToken();
+
+  if (!user || !token || user.role !== "BUYER") {
+    window.location.href = "/login";
+    return;
+  }
+
+  document
+    .getElementById("rfqForm")
+    .addEventListener("submit", submitRFQ);
+
+  document
+    .getElementById("saveDraftBtn")
+    .addEventListener("click", saveDraft);
 });
 
 /* =========================================================
@@ -45,21 +39,21 @@ document.addEventListener("DOMContentLoaded", () => {
 ========================================================= */
 function buildRFQPayload(status) {
   return {
-    buyer_id: getUser().id,
     part_name: value("partName"),
     part_id: value("partId"),
     total_quantity: Number(value("totalQuantity")),
     batch_quantity: Number(value("batchQuantity")) || null,
     target_price: Number(value("targetPrice")) || null,
     delivery_timeline: value("deliveryTimeline"),
-    material_specification: value("materialSpec"),
+    material_specification: value("materialSpec") || null,
     ppap_level: value("ppapLevel") || null,
     status,
     files: document.getElementById("rfqFiles").files
   };
 }
 
-const value = id => document.getElementById(id)?.value.trim();
+const value = id =>
+  document.getElementById(id)?.value.trim();
 
 /* =========================================================
    VALIDATION
@@ -81,13 +75,10 @@ async function saveDraft() {
   clearMessage();
 
   const payload = buildRFQPayload("draft");
-  payload.delivery_timeline ||= "TBD"; // draft safe
 
-  if (IS_LOCAL) {
-    showMessage("Draft saved successfully", "success");
-    redirectDashboard();
-    return;
-  }
+  // Drafts can be partial
+  payload.delivery_timeline =
+    payload.delivery_timeline || "TBD";
 
   await sendRFQ(payload);
 }
@@ -98,11 +89,9 @@ async function submitRFQ(e) {
 
   const payload = buildRFQPayload("active");
   const error = validateRFQ(payload);
-  if (error) return showMessage(error, "error");
 
-  if (IS_LOCAL) {
-    showMessage("RFQ submitted successfully", "success");
-    redirectDashboard();
+  if (error) {
+    showMessage(error, "error");
     return;
   }
 
@@ -110,17 +99,19 @@ async function submitRFQ(e) {
 }
 
 /* =========================================================
-   API
+   API CALL
 ========================================================= */
 async function sendRFQ(payload) {
   try {
     const formData = new FormData();
 
-    Object.entries(payload).forEach(([k, v]) => {
-      if (k === "files") {
-        [...v].forEach(f => formData.append("files", f));
+    Object.entries(payload).forEach(([key, value]) => {
+      if (key === "files") {
+        [...value].forEach(file =>
+          formData.append("files", file)
+        );
       } else {
-        formData.append(k, v);
+        formData.append(key, value);
       }
     });
 
@@ -133,7 +124,10 @@ async function sendRFQ(payload) {
     });
 
     const result = await res.json();
-    if (!result.success) throw new Error(result.message);
+
+    if (!result.success) {
+      throw new Error(result.message || "Request failed");
+    }
 
     showMessage(
       payload.status === "draft"
@@ -146,7 +140,10 @@ async function sendRFQ(payload) {
 
   } catch (err) {
     console.error(err);
-    showMessage(err.message || "Failed to submit RFQ", "error");
+    showMessage(
+      err.message || "Failed to submit RFQ",
+      "error"
+    );
   }
 }
 
@@ -155,16 +152,21 @@ async function sendRFQ(payload) {
 ========================================================= */
 function redirectDashboard() {
   setTimeout(() => {
-    window.location.href =
-      "/axo-networks/frontend/buyer-dashboard.html";
+    window.location.href = "/buyer-dashboard";
   }, 800);
 }
 
-function showMessage(text, type) {
+function showMessage(text, type = "error") {
   const box = document.getElementById("statusMessage");
+  if (!box) return;
+
   box.textContent = text;
   box.className = `status-message ${type}`;
   box.style.display = "block";
+
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 4000);
 }
 
 function clearMessage() {

@@ -1,101 +1,93 @@
 /* =========================================================
-   ENV MODE CONFIG
-========================================================= */
-const ENV = "local"; // "local" | "prod"
-const IS_LOCAL = ENV === "local";
-
-/* =========================================================
-   AUTH / USER
+   AUTH HELPERS
 ========================================================= */
 function getUser() {
-  return JSON.parse(localStorage.getItem("user"));
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
 }
 
 function getToken() {
   return localStorage.getItem("token");
 }
 
-/* ---------------- LOCAL MODE ---------------- */
-if (IS_LOCAL) {
-  if (!getUser()) {
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        id: 1,
-        email: "buyer.local@axonetworks.com",
-        role: "BUYER"
-      })
-    );
-    localStorage.setItem("token", "LOCAL_DEV_TOKEN");
-  }
-}
+/* =========================================================
+   AUTH GUARD (PRODUCTION)
+========================================================= */
+(function authGuard() {
+  const user = getUser();
+  const token = getToken();
 
-/* ---------------- PROD MODE ---------------- */
-if (!IS_LOCAL) {
-  if (!getUser() || !getToken()) {
+  if (!user || !token || user.role !== "BUYER") {
+    localStorage.clear();
     window.location.href = "/login";
   }
-}
-
-/* =========================================================
-   MOCK DATA (LOCAL ONLY)
-========================================================= */
-const MOCK_RFQS = [
-  { id: 101, buyer_id: 1, part_name: "Aluminium Housing", total_quantity: 5000, status: "draft" },
-  { id: 102, buyer_id: 1, part_name: "PCB Assembly", total_quantity: 12000, status: "active" },
-  { id: 103, buyer_id: 1, part_name: "Plastic Enclosure", total_quantity: 8000, status: "quoted" },
-  { id: 104, buyer_id: 1, part_name: "Metal Bracket", total_quantity: 3000, status: "po_issued" }
-];
+})();
 
 /* =========================================================
    INIT
 ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
   const user = getUser();
-  document.getElementById("userEmail").innerText = user.email;
+
+  const emailEl = document.getElementById("userEmail");
+  if (emailEl) emailEl.textContent = user.email;
 
   const createBtn = document.getElementById("createRfqBtn");
   if (createBtn) {
     createBtn.addEventListener("click", goToCreateRFQ);
   }
 
-  setTimeout(loadDashboard, IS_LOCAL ? 1200 : 0);
+  loadDashboard();
 });
 
 /* =========================================================
-   LOAD DASHBOARD
+   LOAD DASHBOARD (DB ONLY)
 ========================================================= */
 async function loadDashboard() {
   try {
     clearMessage();
 
-    let rfqs = IS_LOCAL
-      ? MOCK_RFQS.filter(r => r.buyer_id === getUser().id)
-      : await fetchRFQsFromDB();
+    const rfqs = await fetchRFQsFromDB();
 
     renderSummary(rfqs);
     renderPipeline(rfqs);
     renderTable(rfqs);
     hideSkeletons();
+
   } catch (err) {
-    console.error(err);
-    showMessage("Failed to load dashboard", "error");
+    console.error("Dashboard load error:", err);
+    showMessage("Failed to load RFQs", "error");
   }
 }
 
 /* =========================================================
-   API – PROD
+   API CALL
 ========================================================= */
 async function fetchRFQsFromDB() {
-  const buyerId = getUser().id;
-
-  const res = await fetch(`/api/rfqs/buyer/${buyerId}`, {
-    headers: { Authorization: `Bearer ${getToken()}` }
+  const res = await fetch("/api/rfqs", {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    }
   });
 
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      logout();
+      return [];
+    }
+    throw new Error("Failed to fetch RFQs");
+  }
+
   const result = await res.json();
-  if (!result.success) throw new Error(result.message);
-  return result.data;
+
+  if (!result.success) {
+    throw new Error(result.message || "API error");
+  }
+
+  return result.data || [];
 }
 
 /* =========================================================
@@ -106,7 +98,7 @@ function renderSummary(rfqs) {
     <div class="card"><h3>Total RFQs</h3><p>${rfqs.length}</p></div>
     <div class="card"><h3>Active RFQs</h3><p>${count(rfqs, "active")}</p></div>
     <div class="card"><h3>Quotes Received</h3><p>${count(rfqs, "quoted")}</p></div>
-    <div class="card"><h3>Purchase Orders</h3><p>${count(rfqs, "po_issued")}</p></div>
+    <div class="card"><h3>Purchase Orders</h3><p>${count(rfqs, "closed")}</p></div>
   `;
 }
 
@@ -121,7 +113,7 @@ function renderPipeline(rfqs) {
   setPipeline("draftCount", count(rfqs, "draft"));
   setPipeline("activeCount", count(rfqs, "active"));
   setPipeline("quotesCount", count(rfqs, "quoted"));
-  setPipeline("poCount", count(rfqs, "po_issued"));
+  setPipeline("poCount", count(rfqs, "closed"));
 }
 
 function setPipeline(id, value) {
@@ -155,12 +147,15 @@ function renderTable(rfqs) {
   tbody.innerHTML = "";
 
   if (!rfqs.length) {
-    tbody.innerHTML = `<tr><td colspan="5" class="empty">No RFQs found</td></tr>`;
+    tbody.innerHTML =
+      `<tr><td colspan="5" class="empty">No RFQs found</td></tr>`;
     return;
   }
 
   rfqs.forEach(rfq => {
-    tbody.innerHTML += `
+    tbody.insertAdjacentHTML(
+      "beforeend",
+      `
       <tr>
         <td>${rfq.id}</td>
         <td>${rfq.part_name}</td>
@@ -176,7 +171,8 @@ function renderTable(rfqs) {
           </button>
         </td>
       </tr>
-    `;
+      `
+    );
   });
 }
 
@@ -185,25 +181,23 @@ function mapStatusClass(status) {
     draft: "draft",
     active: "active",
     quoted: "submitted",
-    po_issued: "closed"
+    closed: "closed"
   }[status] || "draft";
 }
 
 function formatStatus(status) {
-  return status.replace("_", " ").toUpperCase();
+  return String(status).replace("_", " ").toUpperCase();
 }
 
 /* =========================================================
-   NAVIGATION
+   NAVIGATION (FIXED PATHS)
 ========================================================= */
 function viewRFQ(id) {
- window.location.href =
-  "/axo-networks/frontend/rfq-detail.html?id=" + id;
+  window.location.href = `/rfq-detail?id=${id}`;
 }
 
 function goToCreateRFQ() {
-  window.location.href =
-    "/axo-networks/frontend/rfq-create.html";
+  window.location.href = `/rfq-create`;
 }
 
 function logout() {
@@ -212,7 +206,7 @@ function logout() {
 }
 
 /* =========================================================
-   SKELETON
+   UI HELPERS
 ========================================================= */
 function hideSkeletons() {
   document.querySelectorAll(".skeleton").forEach(el => {
@@ -232,7 +226,9 @@ function showMessage(text, type = "error") {
   box.className = `status-message ${type}`;
   box.style.display = "block";
 
-  setTimeout(() => (box.style.display = "none"), 4000);
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 4000);
 }
 
 function clearMessage() {

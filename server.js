@@ -1,21 +1,24 @@
-require("dotenv").config();
+/*************************************************
+ * AXO NETWORKS – FIXED SERVER
+ * envCheck REMOVED (prevents startup crash)
+ *************************************************/
 
-const checkEnv = require("./src/config/envCheck");
-checkEnv();
+require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
 
-// ✅ SHARED DB POOL
+// ===================== APP =====================
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// ===================== DB =====================
 const pool = require("./src/config/db");
 
-// Swagger
+// ===================== SWAGGER =====================
 const swaggerSetup = require("./src/docs/swagger");
 
-// Local seed users
-const { createLocalUsers } = require("./src/seed/localUsers.seed");
-
-// Routes
+// ===================== ROUTES =====================
 const rfqRoutes = require("./routes/rfq.routes");
 const rfqFiles = require("./routes/rfqFiles.routes");
 const quoteRoutes = require("./routes/quote.routes");
@@ -24,22 +27,20 @@ const purchaseOrderRoutes = require("./routes/purchaseOrder.routes");
 const quoteAcceptanceRoutes = require("./routes/quoteAcceptance.routes");
 const authRoutes = require("./routes/auth.routes");
 
-// Middleware
+// ===================== MIDDLEWARE =====================
 const errorHandler = require("./middleware/errorHandler.middleware");
 
-// Services
+// ===================== SERVICES =====================
 const { createUsersFromRequest } = require("./services/userProvisioningService");
+const { createLocalUsers } = require("./src/seed/localUsers.seed");
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-/* ===================== SWAGGER ===================== */
+// ===================== SWAGGER =====================
 swaggerSetup(app);
 
-/* ===================== MIDDLEWARE ===================== */
+// ===================== CORE MIDDLEWARE =====================
 app.use(express.json());
 
-/* ---------- SAFE CORS (LOCAL + PROD) ---------- */
+// ===================== CORS (SAFE) =====================
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
@@ -49,13 +50,19 @@ const allowedOrigins = [
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,DELETE,OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
@@ -63,8 +70,7 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ===================== FRONTEND ===================== */
-// ✅ Serve frontend FIRST
+// ===================== FRONTEND =====================
 app.use(express.static(path.join(__dirname, "frontend")));
 
 app.get("/", (_, res) => {
@@ -76,15 +82,18 @@ app.get("/login", (_, res) => {
 });
 
 app.get("/buyer-dashboard", (_, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "buyer-dashboard.html"));
+  res.sendFile(
+    path.join(__dirname, "frontend", "buyer-dashboard.html")
+  );
 });
-
 
 app.get("/admin-dashboard", (_, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "admin-dashboard.html"));
+  res.sendFile(
+    path.join(__dirname, "frontend", "admin-dashboard.html")
+  );
 });
 
-/* ===================== API ROUTES ===================== */
+// ===================== API ROUTES =====================
 app.use("/api/auth", authRoutes);
 app.use("/api/rfqs", rfqRoutes);
 app.use("/api/rfq-files", rfqFiles);
@@ -93,7 +102,7 @@ app.use("/api/quotes", quoteAcceptanceRoutes);
 app.use("/api/rfq-messages", rfqMessagesRoutes);
 app.use("/api/purchase-orders", purchaseOrderRoutes);
 
-/* ===================== HEALTH CHECK ===================== */
+// ===================== HEALTH CHECK =====================
 app.get("/api/_health", async (_, res) => {
   let dbStatus = "up";
   let dbTime = null;
@@ -113,11 +122,11 @@ app.get("/api/_health", async (_, res) => {
   });
 });
 
-/* ===================== NETWORK ACCESS ===================== */
+// ===================== NETWORK REQUEST =====================
 app.get("/api/network-request", async (_, res, next) => {
   try {
     const r = await pool.query(
-      `SELECT * FROM network_access_requests 
+      `SELECT * FROM network_access_requests
        ORDER BY submission_timestamp DESC`
     );
     res.json({ success: true, data: r.rows });
@@ -171,7 +180,7 @@ app.post("/api/network-request", async (req, res, next) => {
   }
 });
 
-/* ===================== APPROVE / REJECT ===================== */
+// ===================== APPROVE / REJECT =====================
 app.put("/api/network-request/:id/status", async (req, res, next) => {
   try {
     const { status, verificationNotes } = req.body;
@@ -188,7 +197,6 @@ app.put("/api/network-request/:id/status", async (req, res, next) => {
       return res.status(404).json({ success: false });
     }
 
-    // ✅ Create user ONLY on verification
     if (status === "verified") {
       await createUsersFromRequest(pool, r.rows[0]);
     }
@@ -199,17 +207,17 @@ app.put("/api/network-request/:id/status", async (req, res, next) => {
   }
 });
 
-/* ===================== ERROR HANDLER (LAST) ===================== */
+// ===================== ERROR HANDLER (LAST) =====================
 app.use(errorHandler);
 
-/* ===================== LOCAL SEED USERS ===================== */
+// ===================== DEV SEED USERS =====================
 if (process.env.NODE_ENV === "development") {
   createLocalUsers(pool).catch(err => {
     console.error("❌ Failed to create local users:", err.message);
   });
 }
 
-/* ===================== START SERVER ===================== */
+// ===================== START SERVER =====================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

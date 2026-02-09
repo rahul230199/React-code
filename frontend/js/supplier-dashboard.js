@@ -1,104 +1,102 @@
 /* =========================================================
-   ENV CONFIG
-========================================================= */
-const ENV = "local"; // switch to "prod" later
-const IS_LOCAL = ENV === "local";
-
-/* =========================================================
-   AUTH
+   AUTH HELPERS
 ========================================================= */
 function getUser() {
-  return JSON.parse(localStorage.getItem("user"));
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
 }
 
-if (IS_LOCAL && !getUser()) {
-  localStorage.setItem("user", JSON.stringify({
-    id: 22,
-    email: "supplier.local@axonetworks.com",
-    role: "SUPPLIER"
-  }));
+function getToken() {
+  return localStorage.getItem("token");
 }
 
 /* =========================================================
-   MOCK DATA (LOCAL MODE)
-========================================================= */
-const RFQS = [
-  {
-    id: 601,
-    part_name: "Aluminium Housing",
-    quantity: 5000,
-    status: "supplier_action",
-    last_activity: "RFQ issued • 2 hours ago"
-  },
-  {
-    id: 602,
-    part_name: "Plastic Enclosure",
-    quantity: 8000,
-    status: "buyer_review",
-    last_activity: "Quote submitted • yesterday"
-  }
-];
-
-const POS = [
-  {
-    po_id: "PO-9301",
-    rfq_id: 600,
-    part_name: "Metal Bracket",
-    quantity: 3000,
-    accepted_date: "2026-02-08"
-  }
-];
-
-/* =========================================================
-   INIT
+   AUTH GUARD
 ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("userEmail").innerText = getUser().email;
+  const user = getUser();
+  const token = getToken();
+
+  if (!user || !token || user.role !== "SUPPLIER") {
+    window.location.href = "/login";
+    return;
+  }
+
+  document.getElementById("userEmail").innerText = user.email;
   loadDashboard();
-  setInterval(loadDashboard, 30000);
 });
+
+/* =========================================================
+   API HELPER
+========================================================= */
+async function api(url) {
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    }
+  });
+
+  const result = await res.json();
+  if (!result.success) {
+    throw new Error(result.message || "API error");
+  }
+
+  return result.data;
+}
 
 /* =========================================================
    LOAD DASHBOARD
 ========================================================= */
-function loadDashboard() {
-  renderActionStrip(RFQS);
-  renderSummary(RFQS, POS);
-  renderCharts(RFQS, POS);
-  renderRFQTable(RFQS);
-  renderPOTable(POS);
+async function loadDashboard() {
+  try {
+    const user = getUser();
+
+    const [rfqs, pos] = await Promise.all([
+      api("/api/rfqs/supplier"),
+      api(`/api/purchase-orders/supplier/${user.id}`)
+    ]);
+
+    renderActionStrip(rfqs);
+    renderSummary(rfqs, pos);
+    renderRFQTable(rfqs);
+    renderPOTable(pos);
+    renderCharts(rfqs, pos);
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Failed to load supplier dashboard");
+  }
 }
 
 /* =========================================================
    SUMMARY
 ========================================================= */
 function renderSummary(rfqs, pos) {
-  const supplierAction = rfqs.filter(r => r.status === "supplier_action").length;
-  const buyerReview = rfqs.filter(r => r.status === "buyer_review").length;
+  const supplierAction = rfqs.filter(r => r.status === "active").length;
+  const buyerReview = rfqs.filter(r => r.status === "quoted").length;
 
   document.getElementById("summarySection").innerHTML = `
     <div class="card">
-      <h3>RFQs Requiring Supplier Action</h3>
+      <h3>RFQs Requiring Action</h3>
       <p>${supplierAction}</p>
-      <span>Immediate review required</span>
     </div>
 
     <div class="card">
-      <h3>RFQs Pending Buyer Review</h3>
+      <h3>Quotes Submitted</h3>
       <p>${buyerReview}</p>
-      <span>Awaiting buyer decision</span>
     </div>
 
     <div class="card">
-      <h3>Purchase Orders Accepted</h3>
+      <h3>Purchase Orders</h3>
       <p>${pos.length}</p>
-      <span>Confirmed and active</span>
     </div>
 
     <div class="card">
       <h3>Total RFQs</h3>
-      <p>${rfqs.length + pos.length}</p>
-      <span>All requests</span>
+      <p>${rfqs.length}</p>
     </div>
   `;
 }
@@ -107,7 +105,7 @@ function renderSummary(rfqs, pos) {
    ACTION STRIP
 ========================================================= */
 function renderActionStrip(rfqs) {
-  const urgent = rfqs.filter(r => r.status === "supplier_action").length;
+  const urgent = rfqs.filter(r => r.status === "active").length;
   const strip = document.getElementById("actionStrip");
 
   if (!urgent) {
@@ -115,31 +113,41 @@ function renderActionStrip(rfqs) {
     return;
   }
 
-  strip.textContent = `${urgent} RFQ(s) require supplier action`;
+  strip.textContent = `${urgent} RFQ(s) require your quotation`;
   strip.classList.remove("hidden");
 }
 
 /* =========================================================
-   RFQ TABLE (ACTION-FIRST SORT)
+   RFQ TABLE
 ========================================================= */
 function renderRFQTable(rfqs) {
   const tbody = document.getElementById("rfqTableBody");
   tbody.innerHTML = "";
 
-  rfqs
-    .sort((a, b) => a.status === "supplier_action" ? -1 : 1)
-    .forEach(r => {
-      tbody.innerHTML += `
-        <tr data-status="${r.status}">
-          <td>${r.id}</td>
-          <td>${r.part_name}</td>
-          <td>${r.quantity}</td>
-          <td><span class="status ${r.status}">${labelStatus(r.status)}</span></td>
-          <td class="muted">${r.last_activity}</td>
-          <td><button onclick="openRFQ(${r.id})">Open</button></td>
-        </tr>
-      `;
-    });
+  if (!rfqs.length) {
+    tbody.innerHTML =
+      `<tr><td colspan="6">No RFQs available</td></tr>`;
+    return;
+  }
+
+  rfqs.forEach(r => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.id}</td>
+        <td>${r.part_name}</td>
+        <td>${r.total_quantity}</td>
+        <td>
+          <span class="status ${r.status}">
+            ${formatStatus(r.status)}
+          </span>
+        </td>
+        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+        <td>
+          <button onclick="openRFQ(${r.id})">Open</button>
+        </td>
+      </tr>
+    `;
+  });
 }
 
 /* =========================================================
@@ -150,120 +158,90 @@ function renderPOTable(pos) {
   tbody.innerHTML = "";
 
   if (!pos.length) {
-    tbody.innerHTML = `<tr><td colspan="6">No accepted purchase orders</td></tr>`;
+    tbody.innerHTML =
+      `<tr><td colspan="6">No purchase orders</td></tr>`;
     return;
   }
 
   pos.forEach(po => {
     tbody.innerHTML += `
       <tr>
-        <td>${po.po_id}</td>
+        <td>${po.id}</td>
         <td>${po.rfq_id}</td>
-        <td>${po.part_name}</td>
         <td>${po.quantity}</td>
-        <td>${po.accepted_date}</td>
-        <td><button>View</button></td>
+        <td>₹${po.price}</td>
+        <td>${new Date(po.created_at).toLocaleDateString()}</td>
+        <td>
+          <button onclick="openPO(${po.id})">View</button>
+        </td>
       </tr>
     `;
   });
 }
 
 /* =========================================================
-   STATUS LABELS
+   CHARTS (REAL DATA)
 ========================================================= */
-function labelStatus(status) {
-  if (status === "supplier_action") return "Supplier Action Required";
-  if (status === "buyer_review") return "Buyer Review Pending";
-  return "RFQ Open";
-}
-
-/* =========================================================
-   CHARTS – ENTERPRISE DECISION-ORIENTED
-========================================================= */
-let rfqChart, flowChart, conversionChart;
+let rfqChart, flowChart;
 
 function renderCharts(rfqs, pos) {
   rfqChart?.destroy();
   flowChart?.destroy();
-  conversionChart?.destroy();
 
-  const supplierAction = rfqs.filter(r => r.status === "supplier_action").length;
-  const buyerReview = rfqs.filter(r => r.status === "buyer_review").length;
-  const converted = pos.length;
-  const total = rfqs.length + pos.length;
+  const active = rfqs.filter(r => r.status === "active").length;
+  const quoted = rfqs.filter(r => r.status === "quoted").length;
+  const closed = rfqs.filter(r => r.status === "closed").length;
 
-  /* Supplier Workload */
   rfqChart = new Chart(rfqFunnelChart, {
     type: "bar",
     data: {
-      labels: ["Supplier Action Required", "Other RFQs"],
+      labels: ["Active", "Quoted", "Closed"],
       datasets: [{
-        data: [supplierAction, total - supplierAction],
-        backgroundColor: ["#dc2626", "#e5e7eb"],
-        borderRadius: 6,
-        barThickness: 26
-      }]
-    },
-    options: {
-      indexAxis: "y",
-      animation: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true } }
-    }
-  });
-
-  /* RFQ Flow */
-  flowChart = new Chart(winRateChart, {
-    type: "doughnut",
-    data: {
-      labels: ["Supplier Action", "Buyer Review", "Converted"],
-      datasets: [{
-        data: [supplierAction, buyerReview, converted],
+        data: [active, quoted, closed],
         backgroundColor: ["#f59e0b", "#6366f1", "#10b981"]
       }]
     },
     options: {
-      cutout: "70%",
-      animation: false,
-      plugins: { legend: { position: "bottom" } }
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
     }
   });
 
-  /* Conversion */
-  const rate = total ? Math.round((converted / total) * 100) : 0;
-
-  conversionChart = new Chart(actionLoadChart, {
+  flowChart = new Chart(winRateChart, {
     type: "doughnut",
     data: {
-      labels: ["Accepted", "Not Converted"],
+      labels: ["RFQs", "POs"],
       datasets: [{
-        data: [rate, 100 - rate],
-        backgroundColor: ["#1e3a8a", "#e5e7eb"]
+        data: [rfqs.length, pos.length],
+        backgroundColor: ["#e5e7eb", "#1e3a8a"]
       }]
     },
     options: {
-      cutout: "80%",
-      animation: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      cutout: "70%",
+      plugins: { legend: { position: "bottom" } }
     }
   });
-
-  const ctx = actionLoadChart.getContext("2d");
-  ctx.font = "600 22px Inter";
-  ctx.fillStyle = "#111827";
-  ctx.textAlign = "center";
-  ctx.fillText(`${rate}%`, actionLoadChart.width / 2, actionLoadChart.height / 2 + 6);
 }
 
 /* =========================================================
-   NAV
+   HELPERS
+========================================================= */
+function formatStatus(status) {
+  return status.replace("_", " ").toUpperCase();
+}
+
+/* =========================================================
+   NAVIGATION
 ========================================================= */
 function openRFQ(id) {
   window.location.href = `/supplier-rfq-detail.html?id=${id}`;
 }
 
-function logout() {
-  localStorage.clear();
-  window.location.reload();
+function openPO(id) {
+  window.location.href = `/po-detail.html?id=${id}`;
 }
 
+function logout() {
+  localStorage.clear();
+  window.location.href = "/login";
+}
