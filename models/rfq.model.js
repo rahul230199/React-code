@@ -1,6 +1,5 @@
 const pool = require("../src/config/db");
 
-
 /**
  * Create RFQ (Draft)
  */
@@ -15,7 +14,7 @@ const createRFQ = async (data) => {
     delivery_timeline,
     material_specification,
     ppap_level,
-    status,
+    status
   } = data;
 
   const query = `
@@ -45,7 +44,7 @@ const createRFQ = async (data) => {
     delivery_timeline,
     material_specification,
     ppap_level,
-    status || "draft",
+    status || "draft"
   ];
 
   const result = await pool.query(query, values);
@@ -68,6 +67,49 @@ const getRFQsByBuyer = async (buyer_id) => {
 };
 
 /**
+ * ✅ Get RFQs for Supplier Dashboard (REAL DATA)
+ */
+const getRFQsForSupplier = async (supplier_id) => {
+  const query = `
+    SELECT
+      r.id,
+      r.part_name,
+      r.part_id,
+      r.total_quantity,
+      r.batch_quantity,
+      r.target_price,
+      r.delivery_timeline,
+      r.material_specification,
+      r.ppap_level,
+      r.status AS rfq_status,
+      r.created_at,
+
+      q.id AS quote_id,
+      q.status AS quote_status,
+      q.price,
+      q.created_at AS quoted_at,
+
+      CASE
+        WHEN po.id IS NOT NULL THEN true
+        ELSE false
+      END AS has_po
+
+    FROM rfqs r
+    LEFT JOIN quotes q
+      ON q.rfq_id = r.id
+     AND q.supplier_id = $1
+
+    LEFT JOIN purchase_orders po
+      ON po.quote_id = q.id
+
+    ORDER BY r.created_at DESC;
+  `;
+
+  const result = await pool.query(query, [supplier_id]);
+  return result.rows;
+};
+
+/**
  * Get RFQ by ID
  */
 const getRFQById = async (rfq_id) => {
@@ -84,5 +126,7 @@ const getRFQById = async (rfq_id) => {
 module.exports = {
   createRFQ,
   getRFQsByBuyer,
-  getRFQById,
+  getRFQsForSupplier, // 🔥 REQUIRED
+  getRFQById
 };
+

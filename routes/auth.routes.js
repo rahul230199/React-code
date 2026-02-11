@@ -24,12 +24,11 @@ function generateRefreshToken(payload) {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("🔐 Login attempt:", email);
 
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password required",
+        message: "Email and password required"
       });
     }
 
@@ -41,20 +40,18 @@ router.post("/login", async (req, res) => {
     );
 
     if (!result.rows.length) {
-      console.log("❌ User not found");
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid credentials"
       });
     }
 
     const user = result.rows[0];
 
     if (user.status !== "active") {
-      console.log("❌ User inactive");
       return res.status(401).json({
         success: false,
-        message: "Account inactive",
+        message: "Account inactive"
       });
     }
 
@@ -64,24 +61,21 @@ router.post("/login", async (req, res) => {
     );
 
     if (!passwordMatch) {
-      console.log("❌ Password mismatch");
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid credentials"
       });
     }
 
     const accessToken = generateAccessToken({
       userId: user.id,
-      role: user.role,
+      role: user.role
     });
 
     const refreshToken = generateRefreshToken({
       userId: user.id,
-      role: user.role,
+      role: user.role
     });
-
-    console.log("✅ Login success:", user.email);
 
     res.json({
       success: true,
@@ -90,14 +84,14 @@ router.post("/login", async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
-      },
+        role: user.role
+      }
     });
   } catch (err) {
-   console.error("❌ LOGIN ERROR:", err.message);
-  return res.status(500).json({
-    success: false,
-    message: "Database connection failed"
+    console.error("❌ LOGIN ERROR:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Login failed"
     });
   }
 });
@@ -109,7 +103,7 @@ router.post("/refresh-token", (req, res) => {
   if (!refreshToken) {
     return res.status(400).json({
       success: false,
-      message: "Refresh token required",
+      message: "Refresh token required"
     });
   }
 
@@ -118,17 +112,17 @@ router.post("/refresh-token", (req, res) => {
 
     const newAccessToken = generateAccessToken({
       userId: decoded.userId,
-      role: decoded.role,
+      role: decoded.role
     });
 
     res.json({
       success: true,
-      token: newAccessToken,
+      token: newAccessToken
     });
   } catch {
     res.status(401).json({
       success: false,
-      message: "Invalid refresh token",
+      message: "Invalid refresh token"
     });
   }
 });

@@ -1,100 +1,70 @@
-❌ Missing environment variables:
-   - JWT_SECRET
-cation failed for user "postgres"
-oject/node_modules/pg-pool/index.js:45:11
+❌ Network request error: error: new row for relation "network_access_requests" violates check constraint "valid_role_in_ev"
+    at /home/ec2-user/AXO-Project/node_modules/pg-pool/index.js:45:11
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async /home/ec2-user/AXO-Project/routes/auth.routes.js:39:20 {
-  length: 104,
+    at async /home/ec2-user/AXO-Project/server.js:99:5 {
+  length: 464,
   severity: 'ERROR',
-  code: '42P01',
-  detail: undefined,
+  code: '23514',
+  detail: 'Failing row contains (14, Rahul, https://website.com, Bangalore, Karnataka, Rahul, manager, Rah2301@gmail.com, 92928383993, ["Manufacture finished EVs"], Battery, Battery, Bangalore, 50, ISO, OEMs, NA, 2026-02-10 12:30:50.798883, null, null, pending, null).',
   hint: undefined,
-  position: '65',
+  position: undefined,
   internalPosition: undefined,
   internalQuery: undefined,
   where: undefined,
-  schema: undefined,
-  table: undefined,
+  schema: 'public',
+  table: 'network_access_requests',
   column: undefined,
   dataType: undefined,
-  constraint: undefined,
-  file: 'parse_relation.c',
-  line: '1449',
-  routine: 'parserOpenTable'
+  constraint: 'valid_role_in_ev',
+  file: 'execMain.c',
+  line: '2109',
+  routine: 'ExecConstraints'
 }
-🔥 LOGIN ERROR: error: relation "users" does not exist
+❌ Network request error: error: new row for relation "network_access_requests" violates check constraint "valid_role_in_ev"
     at /home/ec2-user/AXO-Project/node_modules/pg-pool/index.js:45:11
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async /home/ec2-user/AXO-Project/routes/auth.routes.js:39:20 {
-  length: 104,
+    at async /home/ec2-user/AXO-Project/server.js:99:5 {
+  length: 464,
   severity: 'ERROR',
-  code: '42P01',
-  detail: undefined,
+  code: '23514',
+  detail: 'Failing row contains (15, Rahul, https://website.com, Bangalore, Karnataka, Rahul, manager, Rah2301@gmail.com, 92928383993, ["Manufacture finished EVs"], Battery, Battery, Bangalore, 50, ISO, OEMs, NA, 2026-02-10 12:31:05.034939, null, null, pending, null).',
   hint: undefined,
-  position: '65',
+  position: undefined,
   internalPosition: undefined,
   internalQuery: undefined,
   where: undefined,
-  schema: undefined,
-  table: undefined,
+  schema: 'public',
+  table: 'network_access_requests',
   column: undefined,
   dataType: undefined,
-  constraint: undefined,
-  file: 'parse_relation.c',
-  line: '1449',
-  routine: 'parserOpenTable'
+  constraint: 'valid_role_in_ev',
+  file: 'execMain.c',
+  line: '2109',
+  routine: 'ExecConstraints'
 }
-🔥 LOGIN ERROR: error: relation "users" does not exist
+❌ Network request error: error: new row for relation "network_access_requests" violates check constraint "valid_role_in_ev"
     at /home/ec2-user/AXO-Project/node_modules/pg-pool/index.js:45:11
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async /home/ec2-user/AXO-Project/routes/auth.routes.js:39:20 {
-  length: 104,
+    at async /home/ec2-user/AXO-Project/server.js:99:5 {
+  length: 464,
   severity: 'ERROR',
-  code: '42P01',
-  detail: undefined,
+  code: '23514',
+  detail: 'Failing row contains (16, Rahul, https://website.com, Bangalore, Karnataka, Rahul, manager, Rah2301@gmail.com, 92928383993, ["Manufacture finished EVs"], Battery, Battery, Bangalore, 50, ISO, OEMs, NA, 2026-02-10 12:31:16.800033, null, null, pending, null).',
   hint: undefined,
-  position: '65',
+  position: undefined,
   internalPosition: undefined,
   internalQuery: undefined,
   where: undefined,
-  schema: undefined,
-  table: undefined,
+  schema: 'public',
+  table: 'network_access_requests',
   column: undefined,
   dataType: undefined,
-  constraint: undefined,
-  file: 'parse_relation.c',
-  line: '1449',
-  routine: 'parserOpenTable'
+  constraint: 'valid_role_in_ev',
+  file: 'execMain.c',
+  line: '2109',
+  routine: 'ExecConstraints'
 }
-🔥 LOGIN ERROR: error: relation "users" does not exist
-    at /home/ec2-user/AXO-Project/node_modules/pg-pool/index.js:45:11
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async /home/ec2-user/AXO-Project/routes/auth.routes.js:39:20 {
-  length: 104,
-  severity: 'ERROR',
-  code: '42P01',
-  detail: undefined,
-  hint: undefined,
-  position: '65',
-  internalPosition: undefined,
-  internalQuery: undefined,
-  where: undefined,
-  schema: undefined,
-  table: undefined,
-  column: undefined,
-  dataType: undefined,
-  constraint: undefined,
-  file: 'parse_relation.c',
-  line: '1449',
-  routine: 'parserOpenTable'
-}
-🔥 LOGIN ERROR: error: relation "users" does not exist
-    at /home/ec2-user/AXO-Project/node_modules/pg-pool/index.js:45:11
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async /home/ec2-user/AXO-Project/routes/auth.routes.js:39:20 {
-  length: 104,
-  severity: 'ERROR',
-  code: '42P01',
+
   detail: undefined,
   hint: undefined,
   position: '65',

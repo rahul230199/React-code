@@ -8,12 +8,15 @@ const API_BASE_URL = "/api";
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Login page loaded");
 
-  // ✅ If already logged in, redirect safely
-  const user = getStoredUser();
-  const token = getToken();
+  try {
+    const user = getStoredUser();
+    const token = getToken();
 
-  if (user && token) {
-    redirectToDashboard(user);
+    if (user && token) {
+      redirectToDashboard(user);
+    }
+  } catch (e) {
+    console.warn("Auth check skipped:", e.message);
   }
 });
 
@@ -28,7 +31,6 @@ function redirectToDashboard(user) {
   } else if (role === "SUPPLIER") {
     window.location.href = "/supplier-dashboard";
   } else {
-    // BUYER
     window.location.href = "/buyer-dashboard";
   }
 }
@@ -36,6 +38,12 @@ function redirectToDashboard(user) {
 /* ===================== UI HELPERS ===================== */
 function showMessage(message, type = "error") {
   const status = document.getElementById("status");
+
+  if (!status) {
+    alert(message);
+    return;
+  }
+
   status.textContent = message;
   status.className = `status ${type}`;
   status.style.display = "block";
@@ -43,6 +51,8 @@ function showMessage(message, type = "error") {
 
 function clearMessage() {
   const status = document.getElementById("status");
+  if (!status) return;
+
   status.style.display = "none";
   status.textContent = "";
 }
@@ -50,6 +60,8 @@ function clearMessage() {
 function setLoading(isLoading) {
   const btn = document.getElementById("loginBtn");
   const btnText = document.getElementById("loginBtnText");
+
+  if (!btn || !btnText) return;
 
   btn.disabled = isLoading;
   btnText.innerHTML = isLoading
@@ -63,10 +75,12 @@ function validateEmail(email) {
 
 /* ===================== AUTH STORAGE ===================== */
 function storeAuthData(token, userData) {
+  if (!token || !userData) return null;
+
   const user = {
     id: userData.id,
     email: userData.email,
-    role: userData.role,
+    role: userData.role
   };
 
   localStorage.setItem("token", token);
@@ -93,14 +107,24 @@ function clearAuthData() {
 }
 
 /* ===================== LOGIN SUBMIT ===================== */
-document
-  .getElementById("loginForm")
-  .addEventListener("submit", async (e) => {
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     clearMessage();
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+    const emailEl = document.getElementById("email");
+    const passwordEl = document.getElementById("password");
+
+    if (!emailEl || !passwordEl) {
+      showMessage("Login form misconfigured");
+      return;
+    }
+
+    const email = emailEl.value.trim();
+    const password = passwordEl.value;
 
     if (!validateEmail(email)) {
       showMessage("Please enter a valid email address");
@@ -118,7 +142,7 @@ document
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password })
       });
 
       const result = await response.json();
@@ -131,16 +155,24 @@ document
 
       const user = storeAuthData(result.token, result.user);
 
+      if (!user) {
+        showMessage("Failed to save session");
+        setLoading(false);
+        return;
+      }
+
       showMessage("Login successful! Redirecting...", "success");
 
-      setTimeout(() => redirectToDashboard(user), 400);
+      setTimeout(() => redirectToDashboard(user), 300);
 
     } catch (err) {
       console.error("❌ Login error:", err);
       showMessage("Server error. Please try again.");
+    } finally {
       setLoading(false);
     }
   });
+});
 
 /* ===================== HEALTH CHECK (SILENT) ===================== */
 setTimeout(async () => {
@@ -150,3 +182,4 @@ setTimeout(async () => {
     console.warn("⚠️ API not reachable");
   }
 }, 1000);
+

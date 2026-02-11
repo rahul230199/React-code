@@ -2,160 +2,105 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>RFQ Details | AXO Networks</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="./styles/rfq-detail.css" />
+  <title>RFQ Detail | AXO Networks</title>
+  <link rel="stylesheet" href="./styles/buyerdashboard.css" />
 </head>
-
 <body>
 
-<!-- ================= HEADER ================= -->
-<header class="header">
-  <div class="header-left">
-    <h2 class="logo">AXO Networks</h2>
-    <span class="role-badge">Buyer</span>
-  </div>
+  <!-- HEADER -->
+  <header class="header">
+    <h2>RFQ Details</h2>
+    <div class="user-info">
+      <button onclick="goBack()">← Back</button>
+    </div>
+  </header>
 
-  <div class="header-actions">
-    <button class="ghost-btn btn" onclick="goBack()">← Back</button>
-  </div>
-</header>
+  <!-- RFQ SUMMARY -->
+  <section class="summary">
+    <div class="card">
+      <h3>Part Name</h3>
+      <p id="partName">-</p>
+    </div>
 
-<!-- ================= MAIN ================= -->
-<main class="rfq-detail">
+    <div class="card">
+      <h3>Total Quantity</h3>
+      <p id="totalQty">-</p>
+    </div>
 
-  <!-- ===== STATUS MESSAGE ===== -->
-  <div id="statusMessage" class="status-message"></div>
-
-  <!-- ===== PAGE TITLE ===== -->
-  <section class="page-head">
-    <h1>RFQ Details</h1>
-    <p>Review RFQ information, supplier quotes and messages</p>
-  </section>
-
-  <!-- ================= RFQ SUMMARY ================= -->
-  <section class="rfq-summary glass">
-    <div class="summary-grid">
-      <div class="summary-item">
-        <span class="label">RFQ ID</span>
-        <span id="rfqId" class="value skeleton"></span>
-      </div>
-      <div class="summary-item">
-        <span class="label">Part Name</span>
-        <span id="partName" class="value skeleton"></span>
-      </div>
-      <div class="summary-item">
-        <span class="label">Total Quantity</span>
-        <span id="totalQty" class="value skeleton"></span>
-      </div>
-      <div class="summary-item">
-        <span class="label">Status</span>
-        <span id="rfqStatus" class="status-badge skeleton"></span>
-      </div>
+    <div class="card">
+      <h3>Status</h3>
+      <p id="rfqStatus">-</p>
     </div>
   </section>
 
-  <!-- ================= RFQ DETAILS ================= -->
-  <section class="rfq-info glass">
-    <h3>RFQ Information</h3>
-    <div class="info-grid">
-      <div>
-        <label>Delivery Timeline</label>
-        <p id="deliveryTimeline" class="skeleton"></p>
-      </div>
-      <div>
-        <label>PPAP Level</label>
-        <p id="ppapLevel" class="skeleton"></p>
-      </div>
-      <div class="full">
-        <label>Material Specification</label>
-        <p id="materialSpec" class="skeleton" style="height:48px"></p>
-      </div>
+  <!-- RFQ DETAILS -->
+  <section class="table-section">
+    <div class="card">
+      <h3>RFQ Information</h3>
+
+      <p><b>Part ID:</b> <span id="partId">-</span></p>
+      <p><b>Batch Quantity:</b> <span id="batchQty">-</span></p>
+      <p><b>Delivery Timeline:</b> <span id="deliveryTimeline">-</span></p>
+      <p><b>Material Specification:</b> <span id="materialSpec">-</span></p>
+      <p><b>PPAP Level:</b> <span id="ppapLevel">-</span></p>
     </div>
   </section>
 
-  <!-- ================= FILES ================= -->
-  <section class="rfq-files glass">
-    <h3>Technical Files</h3>
-    <ul id="fileList">
-      <li class="file skeleton"></li>
-      <li class="file skeleton"></li>
-    </ul>
+  <!-- RFQ FILES -->
+  <section class="table-section">
+    <div class="card">
+      <h3>RFQ Files</h3>
+      <ul id="rfqFiles">
+        <li>No files uploaded</li>
+      </ul>
+    </div>
   </section>
 
-  <!-- ================= QUOTES ================= -->
-  <section class="rfq-quotes glass">
+  <!-- QUOTES -->
+  <section class="table-section">
     <h3>Supplier Quotes</h3>
-    <div id="quotesContainer">
-      <div class="quote-card skeleton"></div>
-      <div class="quote-card skeleton"></div>
-    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Supplier</th>
+          <th>Price</th>
+          <th>Batch Qty</th>
+          <th>Delivery</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="quotesTable">
+        <tr>
+          <td colspan="6">No quotes yet</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
-  <!-- ================= PURCHASE ORDER ================= -->
-<section id="poSection" class="glass" style="display:none;">
-  <h3>Purchase Order</h3>
 
-  <div class="po-grid">
-    <div>
-      <span class="label">PO ID</span>
-      <strong id="poId">—</strong>
-    </div>
+  <!-- MESSAGES -->
+  <section class="table-section">
+    <div class="card">
+      <h3>Messages</h3>
 
-    <div>
-      <span class="label">Quantity</span>
-      <strong id="poQty">—</strong>
-    </div>
+      <div id="messagesBox" style="max-height:200px; overflow-y:auto;">
+        <p>No messages yet</p>
+      </div>
 
-    <div>
-      <span class="label">Price</span>
-      <strong id="poPrice">—</strong>
-    </div>
+      <br />
 
-    <div>
-      <span class="label">Status</span>
-      <span class="status-badge success">ISSUED</span>
-    </div>
-  </div>
-</section>
-
-
-  <!-- ================= MESSAGES (FIXED) ================= -->
-  <section class="rfq-messages glass">
-    <h3>Messages</h3>
-
-    <!-- Chat area -->
-    <div id="messageList" class="chat-box">
-      <!-- messages injected by JS -->
-      <div class="chat-message skeleton"></div>
-      <div class="chat-message skeleton"></div>
-    </div>
-
-    <!-- Input -->
-    <div class="chat-input">
-      <input
-        type="text"
-        id="messageInput"
-        placeholder="Type a message…"
-        autocomplete="off"
-      />
-      <button class="btn primary" onclick="sendMessage()">
-        Send
-      </button>
+      <textarea id="messageInput" rows="3" placeholder="Type a message..."></textarea>
+      <br /><br />
+      <button onclick="sendMessage()">Send Message</button>
     </div>
   </section>
 
-</main>
-
-<!-- ================= SCRIPT ================= -->
+  <script>
+    function goBack() {
+      window.location.href = "buyer-dashboard.html";
+    }
+  </script>
 <script src="./js/rfq-detail.js"></script>
 
 </body>

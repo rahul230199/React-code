@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AXO Networks - Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="/styles/admin-dashboard.css">
+</head>
+
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo">
+            <span class="brand">AXO Networks</span>
+            <span class="divider">/</span>
+            <span class="page">Admin Dashboard</span>
+        </div>
+
+        <div class="header-actions">
+            <div class="user-info">
+                <div class="avatar">A</div>
+                <div>
+                    <div class="user-name">Admin</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="refreshData()">
+                <i class="fas fa-rotate"></i> Refresh
+            </button>
+
+            <button class="btn btn-primary" onclick="exportData()">
+                <i class="fas fa-download"></i> Export CSV
+            </button>
+
+            <button class="btn btn-danger" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" id="totalSubmissions">0</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value" id="pendingCount">0</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Approved</div>
+            <div class="stat-value" id="approvedCount">0</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Rejected</div>
+            <div class="stat-value" id="rejectedCount">0</div>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card">
+
+        <div class="card-header">
+            <h2>Recent Form Submissions</h2>
+
+            <div class="table-actions">
+                <div class="select-wrapper">
+                    <select id="statusFilter" onchange="filterByStatus()">
+                        <option value="ALL">All Status</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- VIEW MODAL -->
+<div id="viewModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div id="modalBody"></div>
+    </div>
+</div>
+<!-- STATUS CONFIRM MODAL -->
+<div id="statusModal" class="modal">
+  <div class="modal-content status-modal">
+    <h3 id="statusTitle">Confirm Action</h3>
+
+    <textarea
+      id="statusComment"
+      placeholder="Enter comment (mandatory)"
+      rows="4"
+    ></textarea>
+
+    <div class="status-actions">
+      <button class="btn btn-secondary" onclick="closeStatusModal()">
+        Cancel
+      </button>
+      <button class="btn btn-primary" id="confirmStatusBtn">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

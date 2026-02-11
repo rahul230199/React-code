@@ -13,19 +13,30 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
+function logout() {
+  localStorage.clear();
+  window.location.href = "/login.html";
+}
+
 /* =========================================================
-   AUTH GUARD
+   AUTH GUARD (FIXED – NO REDIRECT LOOP)
 ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
   const user = getUser();
   const token = getToken();
 
+  // 🔥 CRITICAL: do NOT run auth guard before DOMContentLoaded
   if (!user || !token || user.role !== "SUPPLIER") {
-    window.location.href = "/login";
+    console.warn("Auth failed, redirecting to login");
+    logout();
     return;
   }
 
-  document.getElementById("userEmail").innerText = user.email;
+  const emailEl = document.getElementById("userEmail");
+  if (emailEl) {
+    emailEl.textContent = user.email;
+  }
+
   loadDashboard();
 });
 
@@ -33,13 +44,26 @@ document.addEventListener("DOMContentLoaded", () => {
    API HELPER
 ========================================================= */
 async function api(url) {
+  const token = getToken();
+
+  if (!token) {
+    logout();
+    return;
+  }
+
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${getToken()}`
+      Authorization: `Bearer ${token}`
     }
   });
 
+  if (res.status === 401 || res.status === 403) {
+    logout();
+    return;
+  }
+
   const result = await res.json();
+
   if (!result.success) {
     throw new Error(result.message || "API error");
   }
@@ -66,27 +90,36 @@ async function loadDashboard() {
     renderCharts(rfqs, pos);
 
   } catch (err) {
-    console.error(err);
-    alert(err.message || "Failed to load supplier dashboard");
+    console.error("Dashboard load failed:", err.message);
+    alert("Failed to load supplier dashboard");
   }
+}
+
+/* =========================================================
+   STATUS DERIVATION (REAL DATA)
+========================================================= */
+function deriveSupplierStatus(r) {
+  if (r.has_po) return "po_received";
+  if (r.quote_id) return "quoted";
+  return "active";
 }
 
 /* =========================================================
    SUMMARY
 ========================================================= */
 function renderSummary(rfqs, pos) {
-  const supplierAction = rfqs.filter(r => r.status === "active").length;
-  const buyerReview = rfqs.filter(r => r.status === "quoted").length;
+  const rfqAction = rfqs.filter(r => !r.quote_id).length;
+  const quotesSubmitted = rfqs.filter(r => r.quote_id && !r.has_po).length;
 
   document.getElementById("summarySection").innerHTML = `
     <div class="card">
       <h3>RFQs Requiring Action</h3>
-      <p>${supplierAction}</p>
+      <p>${rfqAction}</p>
     </div>
 
     <div class="card">
       <h3>Quotes Submitted</h3>
-      <p>${buyerReview}</p>
+      <p>${quotesSubmitted}</p>
     </div>
 
     <div class="card">
@@ -105,15 +138,17 @@ function renderSummary(rfqs, pos) {
    ACTION STRIP
 ========================================================= */
 function renderActionStrip(rfqs) {
-  const urgent = rfqs.filter(r => r.status === "active").length;
+  const urgent = rfqs.filter(r => !r.quote_id).length;
   const strip = document.getElementById("actionStrip");
+
+  if (!strip) return;
 
   if (!urgent) {
     strip.classList.add("hidden");
     return;
   }
 
-  strip.textContent = `${urgent} RFQ(s) require your quotation`;
+  strip.textContent = `${urgent} RFQ(s) awaiting your quote`;
   strip.classList.remove("hidden");
 }
 
@@ -125,25 +160,28 @@ function renderRFQTable(rfqs) {
   tbody.innerHTML = "";
 
   if (!rfqs.length) {
-    tbody.innerHTML =
-      `<tr><td colspan="6">No RFQs available</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6">No RFQs available</td></tr>`;
     return;
   }
 
   rfqs.forEach(r => {
+    const status = deriveSupplierStatus(r);
+
     tbody.innerHTML += `
       <tr>
         <td>${r.id}</td>
         <td>${r.part_name}</td>
         <td>${r.total_quantity}</td>
         <td>
-          <span class="status ${r.status}">
-            ${formatStatus(r.status)}
+          <span class="status ${status}">
+            ${formatStatus(status)}
           </span>
         </td>
         <td>${new Date(r.created_at).toLocaleDateString()}</td>
         <td>
-          <button onclick="openRFQ(${r.id})">Open</button>
+          <button onclick="openRFQ(${r.id})">
+            ${r.quote_id ? "View" : "Quote"}
+          </button>
         </td>
       </tr>
     `;
@@ -158,8 +196,7 @@ function renderPOTable(pos) {
   tbody.innerHTML = "";
 
   if (!pos.length) {
-    tbody.innerHTML =
-      `<tr><td colspan="6">No purchase orders</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6">No purchase orders</td></tr>`;
     return;
   }
 
@@ -180,7 +217,7 @@ function renderPOTable(pos) {
 }
 
 /* =========================================================
-   CHARTS (REAL DATA)
+   CHARTS
 ========================================================= */
 let rfqChart, flowChart;
 
@@ -188,39 +225,45 @@ function renderCharts(rfqs, pos) {
   rfqChart?.destroy();
   flowChart?.destroy();
 
-  const active = rfqs.filter(r => r.status === "active").length;
-  const quoted = rfqs.filter(r => r.status === "quoted").length;
-  const closed = rfqs.filter(r => r.status === "closed").length;
+  const active = rfqs.filter(r => !r.quote_id).length;
+  const quoted = rfqs.filter(r => r.quote_id && !r.has_po).length;
+  const closed = rfqs.filter(r => r.has_po).length;
 
-  rfqChart = new Chart(rfqFunnelChart, {
-    type: "bar",
-    data: {
-      labels: ["Active", "Quoted", "Closed"],
-      datasets: [{
-        data: [active, quoted, closed],
-        backgroundColor: ["#f59e0b", "#6366f1", "#10b981"]
-      }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
+  rfqChart = new Chart(
+    document.getElementById("rfqFunnelChart"),
+    {
+      type: "bar",
+      data: {
+        labels: ["Active", "Quoted", "PO Received"],
+        datasets: [{
+          data: [active, quoted, closed],
+          backgroundColor: ["#f59e0b", "#6366f1", "#10b981"]
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
     }
-  });
+  );
 
-  flowChart = new Chart(winRateChart, {
-    type: "doughnut",
-    data: {
-      labels: ["RFQs", "POs"],
-      datasets: [{
-        data: [rfqs.length, pos.length],
-        backgroundColor: ["#e5e7eb", "#1e3a8a"]
-      }]
-    },
-    options: {
-      cutout: "70%",
-      plugins: { legend: { position: "bottom" } }
+  flowChart = new Chart(
+    document.getElementById("winRateChart"),
+    {
+      type: "doughnut",
+      data: {
+        labels: ["RFQs", "POs"],
+        datasets: [{
+          data: [rfqs.length, pos.length],
+          backgroundColor: ["#e5e7eb", "#1e3a8a"]
+        }]
+      },
+      options: {
+        cutout: "70%",
+        plugins: { legend: { position: "bottom" } }
+      }
     }
-  });
+  );
 }
 
 /* =========================================================
@@ -241,7 +284,3 @@ function openPO(id) {
   window.location.href = `/po-detail.html?id=${id}`;
 }
 
-function logout() {
-  localStorage.clear();
-  window.location.href = "/login";
-}

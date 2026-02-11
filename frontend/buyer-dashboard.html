@@ -3,121 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <title>Buyer Dashboard | AXO Networks</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="./styles/buyerdashboard.css" />
+  <link rel="stylesheet" href="/styles/buyerdashboard.css" />
 </head>
 <body>
 
-  <!-- ================= HEADER ================= -->
+  <!-- HEADER -->
   <header class="header">
-    <div class="header-left">
-      <h2 class="logo">AXO Networks</h2>
-      <span class="role-badge">Buyer</span>
-    </div>
-
+    <h2>AXO Networks – Buyer Dashboard</h2>
     <div class="user-info">
-      <span id="userEmail">buyer@axonetworks.com</span>
+      <span id="userEmail">buyer@email.com</span>
       <button onclick="logout()">Logout</button>
     </div>
   </header>
 
-  <!-- ================= MAIN ================= -->
-  <main class="dashboard">
-
-    <!-- ===== SUMMARY (SKELETON WRAPPED) ===== -->
-    <section class="summary" id="summarySection">
-      <div class="card">
-        <h3>Total RFQs</h3>
-        <p class="skeleton" style="height:32px;width:60px"></p>
-      </div>
-      <div class="card">
-        <h3>Active RFQs</h3>
-        <p class="skeleton" style="height:32px;width:60px"></p>
-      </div>
-      <div class="card">
-        <h3>Quotes Received</h3>
-        <p class="skeleton" style="height:32px;width:60px"></p>
-      </div>
-      <div class="card">
-        <h3>Purchase Orders</h3>
-        <p class="skeleton" style="height:32px;width:60px"></p>
-      </div>
-    </section>
-
-    <!-- ===== PIPELINE ===== -->
-    <section class="pipeline">
-  <h3>RFQ Pipeline</h3>
-
-  <div class="pipeline-track">
-    <div class="pipeline-step">
-      <span class="count skeleton" id="draftCount"></span>
-      <span class="label">Draft RFQs</span>
+  <!-- SUMMARY CARDS -->
+  <section class="summary">
+    <div class="card">
+      <h3>Total RFQs</h3>
+      <p id="totalRfqs">0</p>
     </div>
 
-    <div class="pipeline-step">
-      <span class="count skeleton" id="activeCount"></span>
-      <span class="label">Active RFQs</span>
+    <div class="card">
+      <h3>Active RFQs</h3>
+      <p id="activeRfqs">0</p>
     </div>
 
-    <div class="pipeline-step">
-      <span class="count skeleton" id="quotesCount"></span>
-      <span class="label">Quotes Received</span>
+    <div class="card">
+      <h3>Purchase Orders</h3>
+      <p id="totalPos">0</p>
     </div>
+  </section>
 
-    <div class="pipeline-step">
-      <span class="count skeleton" id="poCount"></span>
-      <span class="label">PO Issued</span>
-    </div>
-  </div>
-</section>
+  <!-- ACTION BAR -->
+  <section class="actions">
+    <button onclick="goToCreateRFQ()">+ Create RFQ</button>
+  </section>
 
-<section class="actions">
- <button
-  type="button"
-  class="primary-btn"
-  id="createRfqBtn"
->
-  + Create RFQ
-</button>
+  <!-- RFQ TABLE -->
+  <section class="table-section">
+    <h3>My RFQs</h3>
 
-</section>
-
-
-    <!-- ===== RFQ TABLE (SKELETON) ===== -->
-    <section class="table-section">
-      <h3>My RFQs</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>RFQ ID</th>
-            <th>Part Name</th>
-            <th>Total Qty</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="rfqTableBody">
-          <tr>
-            <td colspan="5">
-              <div class="skeleton" style="height:18px;width:100%"></div>
-              <div class="skeleton" style="height:18px;width:100%;margin-top:10px"></div>
-              <div class="skeleton" style="height:18px;width:100%;margin-top:10px"></div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-  </main>
+    <table>
+      <thead>
+        <tr>
+          <th>RFQ ID</th>
+          <th>Part Name</th>
+          <th>Total Qty</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="rfqTableBody">
+        <!-- Filled by JS -->
+        <tr>
+          <td colspan="5">Loading RFQs...</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 
   <script src="./js/buyer-dashboard.js"></script>
 </body>
