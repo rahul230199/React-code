@@ -1,16 +1,33 @@
-require("dotenv").config();
+/* =========================================================
+   AXO NETWORKS — MAIN SERVER
+   Clean • Stable • Production Ready
+========================================================= */
+
+const path = require("path");
+
+/* =========================================================
+   ENV CONFIG (AUTO SWITCH LOCAL / PRODUCTION)
+========================================================= */
+
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? ".env.production"
+    : ".env.local";
+
+require("dotenv").config({
+  path: path.resolve(__dirname, envFile),
+});
+
+console.log("🌍 Running Mode:", process.env.NODE_ENV || "local");
+
+/* =========================================================
+   IMPORTS
+========================================================= */
 
 const express = require("express");
-const path = require("path");
 const pool = require("./src/config/db");
 
-const { createUsersFromRequest } = require("./services/userProvisioningService");
-const {
-  authenticate,
-  authorizeAdmin
-} = require("./middleware/auth.middleware");
-
-// Routes
+// Route Files
 const authRoutes = require("./routes/auth.routes");
 const rfqRoutes = require("./routes/rfq.routes");
 const rfqFilesRoutes = require("./routes/rfqFiles.routes");
@@ -18,10 +35,10 @@ const quoteRoutes = require("./routes/quote.routes");
 const quoteAcceptanceRoutes = require("./routes/quoteAcceptance.routes");
 const rfqMessageRoutes = require("./routes/rfqMessage.routes");
 const purchaseOrderRoutes = require("./routes/purchaseOrder.routes");
+const networkRequestRoutes = require("./routes/networkRequest.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 
 /* =========================================================
    MIDDLEWARE
@@ -30,16 +47,16 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: "5mb" }));
 
 /* =========================================================
-   CORS
+   CORS (SAFE VERSION)
 ========================================================= */
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
     "Access-Control-Allow-Methods",
-    "GET,POST,PUT,DELETE,OPTIONS"
+    "GET, POST, PUT, DELETE, OPTIONS"
   );
-  res.setHeader(
+  res.header(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization"
   );
@@ -52,7 +69,7 @@ app.use((req, res, next) => {
 });
 
 /* =========================================================
-   API ROUTES (ALWAYS FIRST)
+   API ROUTES
 ========================================================= */
 
 app.use("/api/auth", authRoutes);
@@ -62,6 +79,7 @@ app.use("/api/quotes", quoteRoutes);
 app.use("/api/quotes", quoteAcceptanceRoutes);
 app.use("/api/rfq-messages", rfqMessageRoutes);
 app.use("/api/purchase-orders", purchaseOrderRoutes);
+app.use("/api/network-request", networkRequestRoutes);
 
 /* =========================================================
    HEALTH CHECK
@@ -70,134 +88,24 @@ app.use("/api/purchase-orders", purchaseOrderRoutes);
 app.get("/api/_health", async (_, res) => {
   try {
     const r = await pool.query("SELECT NOW()");
-    res.json({ success: true, dbTime: r.rows[0].now });
-  } catch {
-    res.status(500).json({ success: false });
-  }
-});
-
-/* =========================================================
-   NETWORK ACCESS (ADMIN PROTECTED)
-========================================================= */
-
-app.get(
-  "/api/network-request",
-  authenticate,
-  authorizeAdmin,
-  async (_, res) => {
-    try {
-      const r = await pool.query(
-        `SELECT * FROM network_access_requests
-         ORDER BY submission_timestamp DESC`
-      );
-      res.json({ success: true, data: r.rows });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false });
-    }
-  }
-);
-
-app.get(
-  "/api/network-request/:id",
-  authenticate,
-  authorizeAdmin,
-  async (req, res) => {
-    try {
-      const r = await pool.query(
-        "SELECT * FROM network_access_requests WHERE id=$1",
-        [req.params.id]
-      );
-
-      if (!r.rows.length) {
-        return res.status(404).json({ success: false });
-      }
-
-      res.json({ success: true, data: r.rows[0] });
-    } catch {
-      res.status(500).json({ success: false });
-    }
-  }
-);
-
-app.post("/api/network-request", async (req, res) => {
-  try {
-    const {
-      companyName,
-      website,
-      registeredAddress,
-      cityState,
-      contactName,
-      role,
-      email,
-      phone,
-      whatYouDo,
-      primaryProduct,
-      keyComponents,
-      manufacturingLocations,
-      monthlyCapacity,
-      certifications,
-      roleInEV,
-      whyJoinAXO
-    } = req.body;
-
-    const r = await pool.query(
-      `INSERT INTO network_access_requests (
-        company_name,
-        website,
-        registered_address,
-        city_state,
-        contact_name,
-        role,
-        email,
-        phone,
-        what_you_do,
-        primary_product,
-        key_components,
-        manufacturing_locations,
-        monthly_capacity,
-        certifications,
-        role_in_ev,
-        why_join_axo
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,
-        $10,$11,$12,$13,$14,$15,$16
-      ) RETURNING id`,
-      [
-        companyName,
-        website || null,
-        registeredAddress || null,
-        cityState,
-        contactName,
-        role,
-        email,
-        phone,
-        JSON.stringify(whatYouDo),
-        primaryProduct,
-        keyComponents,
-        manufacturingLocations,
-        monthlyCapacity,
-        certifications || null,
-        roleInEV,
-        whyJoinAXO
-      ]
-    );
-
-    res.json({ success: true, id: r.rows[0].id });
+    res.json({
+      success: true,
+      dbTime: r.rows[0].now,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Health check error:", err);
     res.status(500).json({ success: false });
   }
 });
 
 /* =========================================================
-   API FALLBACK
+   API 404 FALLBACK
 ========================================================= */
 
-app.use("/api", (_, res) => {
+app.use("/api", (req, res) => {
   res.status(404).json({
     success: false,
-    message: "Invalid API route"
+    message: "Invalid API route",
   });
 });
 
@@ -206,13 +114,10 @@ app.use("/api", (_, res) => {
 ========================================================= */
 
 const frontendPath = path.join(__dirname, "frontend");
-
 app.use(express.static(frontendPath));
 
 /* =========================================================
    CLEAN HTML ROUTING
-   /login → login.html
-   /buyer-dashboard → buyer-dashboard.html
 ========================================================= */
 
 app.get("/:page", (req, res, next) => {
@@ -230,10 +135,10 @@ app.get("/:page", (req, res, next) => {
 ========================================================= */
 
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
+  console.error("Unhandled server error:", err);
   res.status(500).json({
     success: false,
-    message: "Internal server error"
+    message: "Internal server error",
   });
 });
 

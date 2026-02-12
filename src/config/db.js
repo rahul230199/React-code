@@ -19,13 +19,15 @@ const pool = new Pool({
   connectionTimeoutMillis: 10000,
 });
 
-// ✅ DO NOT KILL SERVER
 (async () => {
   try {
     const res = await pool.query("SELECT NOW()");
-    console.log("✅ PostgreSQL connected at:", res.rows[0].now);
+    console.log(
+      `✅ PostgreSQL (${process.env.NODE_ENV || "local"}) connected at:`,
+      res.rows[0].now
+    );
   } catch (err) {
-    console.error("⚠️ PostgreSQL connection failed (server will still run)");
+    console.error("❌ PostgreSQL connection failed");
     console.error(err.message);
   }
 })();
@@ -36,7 +38,6 @@ pool.on("connect", () => {
 
 pool.on("error", (err) => {
   console.error("❌ PostgreSQL pool error:", err.message);
-  // ❌ NO process.exit here
 });
 
 module.exports = pool;

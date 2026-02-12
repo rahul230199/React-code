@@ -1,291 +1,348 @@
-let allRequests = [];
-let currentStatusId = null;
-let currentStatusValue = null;
+/* ======================================================
+   AXO NETWORKS — EV STARTUP ADMIN DASHBOARD
+   Clean • Production Safe • Fully Synced with Backend
+====================================================== */
 
-/* =====================================================
-   INIT
-===================================================== */
-document.addEventListener("DOMContentLoaded", () => {
-  injectNotificationContainer();
-  loadDashboard();
-});
+const App = (() => {
 
-/* =====================================================
-   NOTIFICATIONS
-===================================================== */
-function injectNotificationContainer() {
-  if (document.getElementById("notification")) return;
+  let allRequests = [];
+  let filteredRequests = [];
+  let activeRequest = null;
 
-  const div = document.createElement("div");
-  div.id = "notification";
-  Object.assign(div.style, {
-    position: "fixed",
-    top: "20px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    padding: "12px 20px",
-    borderRadius: "12px",
-    fontWeight: "600",
-    fontSize: "14px",
-    zIndex: "9999",
-    display: "none",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.15)"
-  });
-  document.body.appendChild(div);
-}
+  /* ================= INIT ================= */
 
-function showNotification(message, type = "error") {
-  const note = document.getElementById("notification");
-  if (!note) return;
-
-  note.textContent = message;
-  note.style.display = "block";
-  note.style.background = type === "success" ? "#DCFCE7" : "#FEE2E2";
-  note.style.color = type === "success" ? "#166534" : "#991B1B";
-
-  setTimeout(() => (note.style.display = "none"), 4000);
-}
-
-/* =====================================================
-   SKELETON CONTROL
-===================================================== */
-function showSkeletons() {
-  const statsSkeleton = document.getElementById("statsSkeleton");
-  const statsGrid = document.getElementById("statsGrid");
-  const tableSkeleton = document.getElementById("tableSkeleton");
-  const table = document.getElementById("dataTable");
-  const emptyState = document.getElementById("emptyState");
-
-  if (statsSkeleton) statsSkeleton.style.display = "grid";
-  if (statsGrid) statsGrid.style.display = "none";
-  if (tableSkeleton) tableSkeleton.style.display = "block";
-  if (table) table.style.display = "none";
-  if (emptyState) emptyState.style.display = "none";
-}
-
-function hideSkeletons() {
-  const statsSkeleton = document.getElementById("statsSkeleton");
-  const statsGrid = document.getElementById("statsGrid");
-  const tableSkeleton = document.getElementById("tableSkeleton");
-
-  if (statsSkeleton) statsSkeleton.style.display = "none";
-  if (statsGrid) statsGrid.style.display = "grid";
-  if (tableSkeleton) tableSkeleton.style.display = "none";
-}
-
-/* =====================================================
-   LOAD DASHBOARD
-===================================================== */
-async function loadDashboard() {
-  showSkeletons();
-
-  try {
-    const res = await fetch("/api/network-request");
-    if (!res.ok) throw new Error();
-
-    const json = await res.json();
-    if (!json.success) throw new Error();
-
-    allRequests = json.data || [];
-  } catch {
-    allRequests = [];
-    showNotification("API not reachable", "error");
+  function init() {
+    bindTopbar();
+    bindFilters();
+    bindGlobalEvents();
+    injectNotification();
+    loadDashboard();
   }
 
-  hideSkeletons();
-  renderStats(allRequests);
-  renderTable(allRequests);
-}
+  /* ================= API ================= */
 
-/* =====================================================
-   STATS
-===================================================== */
-function renderStats(data) {
-  document.getElementById("totalSubmissions").textContent = data.length;
-  document.getElementById("pendingCount").textContent =
-    data.filter(r => r.status === "pending").length;
-  document.getElementById("approvedCount").textContent =
-    data.filter(r => r.status === "verified").length;
-  document.getElementById("rejectedCount").textContent =
-    data.filter(r => r.status === "rejected").length;
-}
+  async function loadDashboard() {
+    try {
+      const token = getToken();
+      if (!token) return redirectLogin();
 
-/* =====================================================
-   TABLE
-===================================================== */
-function renderTable(data) {
-  const tbody = document.getElementById("tableBody");
-  const emptyState = document.getElementById("emptyState");
-  const table = document.getElementById("dataTable");
+      const res = await fetch("/api/network-request", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-  tbody.innerHTML = "";
+      if (res.status === 401) return redirectLogin();
+      if (!res.ok) throw new Error("API failed");
 
-  if (!data.length) {
-    emptyState.style.display = "block";
-    table.style.display = "none";
-    return;
+      const json = await res.json();
+
+      allRequests = json.data || [];
+      filteredRequests = [...allRequests];
+
+      renderAll();
+
+    } catch (err) {
+      showNotification("Unable to connect to server");
+    }
   }
 
-  emptyState.style.display = "none";
-  table.style.display = "table";
+  async function updateStatus(newStatus) {
+    if (!activeRequest) return;
 
-  data.forEach(req => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td data-label="ID">${req.id}</td>
-      <td data-label="Company">${req.company_name || "-"}</td>
-      <td data-label="Contact">${req.contact_name || "-"}</td>
-      <td data-label="Email">${req.email || "-"}</td>
-      <td data-label="Phone">${req.phone || "-"}</td>
-      <td data-label="Type">${req.primary_product || "-"}</td>
-      <td data-label="Status">${renderStatus(req.status)}</td>
-      <td data-label="Submitted">${formatDate(req.submission_timestamp)}</td>
-      <td data-label="Actions">${renderActions(req)}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
+    try {
+      const token = getToken();
 
-/* =====================================================
-   STATUS BADGE
-===================================================== */
-function renderStatus(status) {
-  if (status === "pending") return `<span class="badge pending">Pending</span>`;
-  if (status === "verified") return `<span class="badge approved">Approved</span>`;
-  if (status === "rejected") return `<span class="badge rejected">Rejected</span>`;
-  return "-";
-}
+      const res = await fetch(
+        `/api/network-request/${activeRequest.id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        }
+      );
 
-/* =====================================================
-   ACTIONS
-===================================================== */
-function renderActions(item) {
-  let html = `<button class="btn btn-secondary" onclick="viewRequest(${item.id})">View</button>`;
-  if (item.status === "pending") {
-    html += `
-      <button class="btn btn-primary" onclick="openStatusModal(${item.id}, 'verified')">Approve</button>
-      <button class="btn btn-danger" onclick="openStatusModal(${item.id}, 'rejected')">Reject</button>
-    `;
+      const json = await res.json();
+
+      if (!res.ok) {
+        showNotification(json.message || "Update failed");
+        return;
+      }
+
+      showNotification("Status updated", "success");
+      closeModal();
+      loadDashboard();
+
+    } catch {
+      showNotification("Failed to update status");
+    }
   }
-  return html;
-}
 
-/* =====================================================
-   VIEW MODAL
-===================================================== */
-function viewRequest(id) {
-  const item = allRequests.find(r => r.id === id);
-  if (!item) return;
+  /* ================= RENDER ================= */
 
-  document.getElementById("modalBody").innerHTML = `
-    <h3>${item.company_name}</h3>
-    <p><b>Email:</b> ${item.email}</p>
-    <p><b>Phone:</b> ${item.phone}</p>
-  `;
-  document.getElementById("viewModal").style.display = "flex";
-}
+  function renderAll() {
+    renderStats(filteredRequests);
+    renderTable(filteredRequests);
+  }
 
-function closeModal() {
-  document.getElementById("viewModal").style.display = "none";
-}
+  function renderStats(data) {
+    setText("totalSubmissions", data.length);
+    setText("pendingCount", data.filter(r => r.status === "pending").length);
+    setText("approvedCount", data.filter(r => r.status === "verified").length);
+    setText("rejectedCount", data.filter(r => r.status === "rejected").length);
+  }
 
-/* =====================================================
-   STATUS MODAL
-===================================================== */
-function openStatusModal(id, status) {
-  currentStatusId = id;
-  currentStatusValue = status;
+  function renderTable(data) {
+    const tbody = document.getElementById("tableBody");
+    const empty = document.getElementById("emptyState");
+    const table = document.getElementById("dataTable");
 
-  document.getElementById("statusComment").value = "";
-  document.getElementById("statusTitle").textContent =
-    status === "verified" ? "Approve Request" : "Reject Request";
+    if (!tbody) return;
 
-  document.getElementById("statusModal").style.display = "flex";
-  document.getElementById("confirmStatusBtn").onclick = submitStatusChange;
-}
+    tbody.innerHTML = "";
 
-function closeStatusModal() {
-  document.getElementById("statusModal").style.display = "none";
-}
+    if (!data.length) {
+      empty.style.display = "block";
+      table.style.display = "none";
+      return;
+    }
 
-/* =====================================================
-   SUBMIT STATUS
-===================================================== */
-async function submitStatusChange() {
-  const comment = document.getElementById("statusComment").value.trim();
-  if (!comment) return showNotification("Comment is required", "error");
+    empty.style.display = "none";
+    table.style.display = "table";
 
-  try {
-    const res = await fetch(`/api/network-request/${currentStatusId}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: currentStatusValue,
-        verificationNotes: comment
-      })
+    const fragment = document.createDocumentFragment();
+
+    data.forEach(req => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td data-label="ID">${req.id}</td>
+        <td data-label="Company">${req.company_name || "-"}</td>
+        <td data-label="Contact">${req.contact_name || "-"}</td>
+        <td data-label="Email">${req.email || "-"}</td>
+        <td data-label="Phone">${req.phone || "-"}</td>
+        <td data-label="Product">${req.primary_product || "-"}</td>
+        <td data-label="Status">${renderStatus(req.status)}</td>
+        <td data-label="Submitted">${formatDate(req.submission_timestamp)}</td>
+        <td data-label="Actions">
+          <button class="btn-action" data-id="${req.id}" data-action="view">
+            View Details
+          </button>
+        </td>
+      `;
+
+      fragment.appendChild(tr);
     });
 
-    if (!res.ok) throw new Error();
-
-    showNotification("Status updated successfully", "success");
-    closeStatusModal();
-    loadDashboard();
-  } catch {
-    showNotification("Failed to update status", "error");
+    tbody.appendChild(fragment);
   }
-}
 
-/* =====================================================
-   FILTER
-===================================================== */
-function filterByStatus() {
-  const value = document.getElementById("statusFilter").value;
-  const map = {
-    ALL: null,
-    PENDING: "pending",
-    APPROVED: "verified",
-    REJECTED: "rejected"
-  };
+  function renderStatus(status) {
+    if (status === "pending")
+      return `<span class="badge pending">Pending</span>`;
+    if (status === "verified")
+      return `<span class="badge approved">Approved</span>`;
+    if (status === "rejected")
+      return `<span class="badge rejected">Rejected</span>`;
+    return "-";
+  }
 
-  renderTable(map[value]
-    ? allRequests.filter(r => r.status === map[value])
-    : allRequests
-  );
-}
+  /* ================= MODAL ================= */
 
-/* =====================================================
-   UTILS
-===================================================== */
-function formatDate(d) {
-  return d ? new Date(d).toLocaleDateString() : "-";
-}
+  function openViewModal(id) {
+    const item = allRequests.find(r => r.id == id);
+    if (!item) return showNotification("No data found");
 
-/* =====================================================
-   HEADER ACTIONS
-===================================================== */
-function refreshData() {
-  loadDashboard();
-}
+    activeRequest = item;
 
-function exportData() {
-  if (!allRequests.length) return showNotification("No data to export", "error");
+    const modalBody = document.getElementById("modalBody");
+    const modal = document.getElementById("viewModal");
 
-  const headers = Object.keys(allRequests[0]);
-  const csv = [
-    headers.join(","),
-    ...allRequests.map(r =>
-      headers.map(h => `"${String(r[h] ?? "").replace(/"/g, '""')}"`).join(",")
-    )
-  ].join("\n");
+    modalBody.innerHTML = `
+      <h3 style="margin-bottom:15px;">${item.company_name}</h3>
+      <p><strong>Contact:</strong> ${item.contact_name || "-"}</p>
+      <p><strong>Email:</strong> ${item.email || "-"}</p>
+      <p><strong>Phone:</strong> ${item.phone || "-"}</p>
+      <p><strong>Product:</strong> ${item.primary_product || "-"}</p>
+      <p><strong>Status:</strong> ${item.status}</p>
+      <p><strong>Submitted:</strong> ${formatDate(item.submission_timestamp)}</p>
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "axo-network-requests.csv";
-  a.click();
-}
+      ${item.status === "pending" ? `
+        <div class="modal-actions">
+          <button class="btn btn-approve" data-action="approve">
+            Approve
+          </button>
+          <button class="btn btn-reject" data-action="reject">
+            Reject
+          </button>
+        </div>
+      ` : ""}
+    `;
 
-function logout() {
-  localStorage.clear();
-  window.location.href = "/portal-login";
-}
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("viewModal");
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+    activeRequest = null;
+  }
+
+  /* ================= FILTER ================= */
+
+  function applyFilters() {
+    const status = getValue("statusFilter");
+    const search = getValue("searchInput").toLowerCase();
+    const start = getValue("startDate");
+    const end = getValue("endDate");
+
+    filteredRequests = allRequests.filter(r => {
+
+      if (status !== "ALL") {
+        const map = {
+          PENDING: "pending",
+          APPROVED: "verified",
+          REJECTED: "rejected"
+        };
+        if (r.status !== map[status]) return false;
+      }
+
+      if (search) {
+        if (
+          !r.company_name?.toLowerCase().includes(search) &&
+          !r.email?.toLowerCase().includes(search)
+        ) return false;
+      }
+
+      if (start && new Date(r.submission_timestamp) < new Date(start + "T00:00:00"))
+        return false;
+
+      if (end && new Date(r.submission_timestamp) > new Date(end + "T23:59:59"))
+        return false;
+
+      return true;
+    });
+
+    renderAll();
+  }
+
+  /* ================= EVENTS ================= */
+
+  function bindTopbar() {
+    document.getElementById("refreshBtn")?.addEventListener("click", loadDashboard);
+    document.getElementById("exportBtn")?.addEventListener("click", exportData);
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+  }
+
+  function bindFilters() {
+    ["statusFilter", "searchInput", "startDate", "endDate"]
+      .forEach(id => {
+        document.getElementById(id)
+          ?.addEventListener("input", applyFilters);
+      });
+  }
+
+  function bindGlobalEvents() {
+
+    document.addEventListener("click", e => {
+
+      const action = e.target.dataset.action;
+      const id = e.target.dataset.id;
+
+      if (action === "view") openViewModal(id);
+      if (action === "approve") updateStatus("verified");
+      if (action === "reject") updateStatus("rejected");
+
+      if (e.target.classList.contains("modal-close") ||
+          e.target.closest(".modal-close"))
+        closeModal();
+
+      if (e.target.id === "viewModal")
+        closeModal();
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeModal();
+    });
+  }
+
+  /* ================= UTIL ================= */
+
+  function injectNotification() {
+    if (document.getElementById("notification")) return;
+
+    const div = document.createElement("div");
+    div.id = "notification";
+    div.style.cssText = `
+      position:fixed;top:20px;left:50%;transform:translateX(-50%);
+      padding:12px 20px;border-radius:10px;font-weight:600;
+      z-index:9999;display:none;box-shadow:0 10px 25px rgba(0,0,0,0.15)
+    `;
+    document.body.appendChild(div);
+  }
+
+  function showNotification(msg, type = "error") {
+    const note = document.getElementById("notification");
+    note.textContent = msg;
+    note.style.display = "block";
+    note.style.background = type === "success" ? "#DCFCE7" : "#FEE2E2";
+    note.style.color = type === "success" ? "#166534" : "#991B1B";
+    setTimeout(() => note.style.display = "none", 3000);
+  }
+
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  function redirectLogin() {
+    localStorage.clear();
+    window.location.href = "/portal-login";
+  }
+
+  function logout() {
+    redirectLogin();
+  }
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function getValue(id) {
+    return document.getElementById(id)?.value || "";
+  }
+
+  function formatDate(d) {
+    return d ? new Date(d).toLocaleDateString() : "-";
+  }
+
+  function exportData() {
+    if (!filteredRequests.length)
+      return showNotification("No data to export");
+
+    const headers = Object.keys(filteredRequests[0]);
+
+    const csv = [
+      headers.join(","),
+      ...filteredRequests.map(r =>
+        headers.map(h =>
+          `"${String(r[h] ?? "").replace(/"/g, '""')}"`
+        ).join(",")
+      )
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "axo-requests.csv";
+    a.click();
+  }
+
+  return { init };
+
+})();
+
+document.addEventListener("DOMContentLoaded", App.init);
