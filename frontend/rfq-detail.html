@@ -11,152 +11,151 @@
 
 <body>
 
-  <!-- ================= TOPBAR ================= -->
-  <header class="topbar">
-    <div class="logo">AXO Networks</div>
+<header class="topbar">
+  <div class="logo">AXO Networks</div>
 
-    <div class="topbar-right">
-      <span id="userEmail"></span>
-      <button class="secondary-btn" onclick="goBack()">Back</button>
-      <button class="logout-btn" onclick="logout()">Logout</button>
+  <div class="topbar-right">
+    <span id="userEmail"></span>
+    <button class="secondary-btn" onclick="goBack()">Back</button>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<main class="page-wrapper">
+
+  <!-- ================= HEADER ================= -->
+  <section class="rfq-header-card">
+    <div>
+      <h1 id="rfqPartName">Loading...</h1>
+      <p class="rfq-meta">
+        RFQ ID: <span id="rfqId">-</span>
+        • Created: <span id="rfqCreated">-</span>
+      </p>
     </div>
-  </header>
 
-  <!-- ================= MAIN ================= -->
-  <main class="page-wrapper">
+    <div>
+      <span id="rfqStatus" class="status-badge">DRAFT</span>
+    </div>
+  </section>
 
-    <!-- ===== HEADER INFO ===== -->
-    <section class="rfq-header-card">
+  <!-- ================= LIFECYCLE ACTION BAR ================= -->
+  <section id="lifecycleSection" class="lifecycle-card hidden">
 
-      <div class="rfq-header-left">
-        <h1 id="rfqPartName">Loading...</h1>
-        <p class="rfq-meta">
-          RFQ ID: <span id="rfqId">-</span>
-          • Created: <span id="rfqCreated">-</span>
-        </p>
+    <h3>RFQ Lifecycle Controls</h3>
+
+    <!-- Assign Suppliers -->
+    <div id="assignSection" class="assign-section hidden">
+      <h4>Select Suppliers</h4>
+      <div id="supplierList" class="supplier-list">
+        Loading suppliers...
       </div>
+      <button id="assignBtn" class="primary-btn">
+        Assign Selected Suppliers
+      </button>
+    </div>
 
-      <div class="rfq-header-right">
-        <span id="rfqStatus" class="status-badge">DRAFT</span>
+    <!-- Publish -->
+    <div id="publishSection" class="hidden">
+      <button id="publishBtn" class="primary-btn">
+        Publish RFQ
+      </button>
+    </div>
+
+    <!-- Close -->
+    <div id="closeSection" class="hidden">
+      <button id="closeBtn" class="danger-btn">
+        Close RFQ
+      </button>
+    </div>
+
+  </section>
+
+  <!-- ================= DETAILS ================= -->
+  <section class="rfq-details-grid">
+
+    <div class="detail-card">
+      <h3>Basic Information</h3>
+      <div class="detail-row"><span>Part ID</span><strong id="detailPartId">-</strong></div>
+      <div class="detail-row"><span>Total Quantity</span><strong id="detailTotalQty">-</strong></div>
+      <div class="detail-row"><span>Batch Quantity</span><strong id="detailBatchQty">-</strong></div>
+      <div class="detail-row"><span>Target Price</span><strong id="detailTargetPrice">-</strong></div>
+    </div>
+
+    <div class="detail-card">
+      <h3>Technical Specifications</h3>
+      <div class="detail-row"><span>Delivery Timeline</span><strong id="detailDelivery">-</strong></div>
+      <div class="detail-row"><span>PPAP Level</span><strong id="detailPpap">-</strong></div>
+      <div class="detail-row full-width">
+        <span>Material Specification</span>
+        <p id="detailMaterial" class="material-text">-</p>
       </div>
+    </div>
 
-    </section>
+  </section>
 
-    <!-- ===== RFQ DETAILS GRID ===== -->
-    <section class="rfq-details-grid">
+  <!-- ===== SUPPLIER QUOTE SECTION ===== -->
+<section id="supplierQuoteSection" class="quote-form-card hidden">
+  <h3>Submit Your Quote</h3>
 
-      <!-- BASIC INFO -->
-      <div class="detail-card">
-        <h3>Basic Information</h3>
+  <div class="quote-form-grid">
+    <input type="number" id="quotePrice" placeholder="Price" />
+    <input type="number" id="quoteBatchQty" placeholder="Batch Quantity" />
+    <input type="text" id="quoteDelivery" placeholder="Delivery Timeline" />
+    <textarea id="quoteMaterial" placeholder="Material Specification"></textarea>
+    <textarea id="quoteCertifications" placeholder="Certifications"></textarea>
+  </div>
 
-        <div class="detail-row">
-          <span>Part ID</span>
-          <strong id="detailPartId">-</strong>
-        </div>
+  <button id="submitQuoteBtn" class="primary-btn">
+    Submit Quote
+  </button>
+</section>
 
-        <div class="detail-row">
-          <span>Total Quantity</span>
-          <strong id="detailTotalQty">-</strong>
-        </div>
+  <!-- ================= FILES ================= -->
+  <section class="rfq-files-card">
+    <h3>Technical Documents</h3>
+    <ul id="rfqFilesList" class="files-list"></ul>
+  </section>
 
-        <div class="detail-row">
-          <span>Batch Quantity</span>
-          <strong id="detailBatchQty">-</strong>
-        </div>
+  <!-- ================= QUOTES ================= -->
+  <section class="rfq-quotes-card">
+    <div class="quotes-header">
+      <h3>Supplier Quotes</h3>
+      <span id="quoteCount" class="quote-count">0 Quotes</span>
+    </div>
 
-        <div class="detail-row">
-          <span>Target Price</span>
-          <strong id="detailTargetPrice">-</strong>
-        </div>
-      </div>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Supplier</th>
+            <th>Price</th>
+            <th>Batch Qty</th>
+            <th>Delivery</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="quotesTableBody"></tbody>
+      </table>
+    </div>
+  </section>
 
-      <!-- TECHNICAL INFO -->
-      <div class="detail-card">
-        <h3>Technical Specifications</h3>
+  <!-- ================= MESSAGES ================= -->
+  <section class="rfq-message-card">
+    <h3>Communication</h3>
 
-        <div class="detail-row">
-          <span>Delivery Timeline</span>
-          <strong id="detailDelivery">-</strong>
-        </div>
+    <div id="messagesContainer" class="messages-container"></div>
 
-        <div class="detail-row">
-          <span>PPAP Level</span>
-          <strong id="detailPpap">-</strong>
-        </div>
+    <div class="message-input-row">
+      <textarea id="messageInput"
+        placeholder="Type message..."
+      ></textarea>
+      <button id="sendMessageBtn" class="primary-btn">Send</button>
+    </div>
+  </section>
 
-        <div class="detail-row full-width">
-          <span>Material Specification</span>
-          <p id="detailMaterial" class="material-text">-</p>
-        </div>
-      </div>
+</main>
 
-    </section>
-
-    <!-- ===== FILES SECTION ===== -->
-    <section class="rfq-files-card">
-      <h3>Technical Documents</h3>
-
-      <ul id="rfqFilesList" class="files-list">
-        <li class="loading-row">Loading files...</li>
-      </ul>
-    </section>
-
-    <!-- ===== QUOTES SECTION ===== -->
-    <section class="rfq-quotes-card">
-
-      <div class="quotes-header">
-        <h3>Supplier Quotes</h3>
-        <span id="quoteCount" class="quote-count">0 Quotes</span>
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Supplier</th>
-              <th>Price</th>
-              <th>Batch Qty</th>
-              <th>Delivery</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody id="quotesTableBody">
-            <tr>
-              <td colspan="6" class="loading-row">
-                Loading quotes...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    </section>
-
-    <!-- ===== MESSAGE SECTION (PREPARED) ===== -->
-    <section class="rfq-message-card">
-      <h3>Communication</h3>
-
-      <div id="messagesContainer" class="messages-container">
-        <div class="loading-row">Loading messages...</div>
-      </div>
-
-      <div class="message-input-row">
-        <textarea id="messageInput"
-          placeholder="Type message to supplier..."
-        ></textarea>
-
-        <button id="sendMessageBtn" class="primary-btn">
-          Send
-        </button>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- JS -->
-  <script src="./js/rfq-detail.js"></script>
-
+<script src="./js/rfq-detail.js"></script>
 </body>
 </html>

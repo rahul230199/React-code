@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const quoteController = require("../src/controllers/quote.controller");
+
 const {
   authenticate,
   authorizeBuyer,
@@ -13,13 +14,14 @@ const {
 ====================================================== */
 
 /**
- * Submit Quote (Supplier only)
+ * Submit or Update Quote
  * POST /api/quotes
+ * Role: supplier OR both
  */
 router.post(
   "/",
   authenticate,
-  authorizeSupplier,
+  authorizeSupplier, // must support supplier + both
   quoteController.submitQuote
 );
 
@@ -45,6 +47,7 @@ router.get(
 /**
  * Get single quote
  * GET /api/quotes/:id
+ * Role-based access handled in controller
  */
 router.get(
   "/:id",

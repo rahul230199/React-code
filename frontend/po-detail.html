@@ -2,80 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PO Details | AXO Networks</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Purchase Order | AXO Networks</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="./styles/po-detail.css" />
 </head>
 
 <body>
 
-<header class="header">
-  <div class="header-left">
-    <h2 class="logo">AXO Networks</h2>
-    <span class="role-badge">Buyer</span>
+<header class="topbar">
+  <div class="logo">AXO Networks</div>
+  <div class="topbar-right">
+    <span id="userEmail"></span>
+    <button onclick="goBack()" class="secondary-btn">Back</button>
+    <button onclick="logout()" class="logout-btn">Logout</button>
   </div>
-
-  <button class="ghost-btn" onclick="goBack()">← Back</button>
 </header>
 
-<main class="po-detail">
+<main class="container">
 
-  <!-- STATUS MESSAGE -->
-  <div id="statusMessage" class="status-message"></div>
-
-  <!-- PAGE TITLE -->
-  <section class="page-head">
-    <h1>Purchase Order</h1>
-    <p>Final confirmed purchase order</p>
+  <section class="po-header">
+    <h1>Purchase Order #<span id="poId">-</span></h1>
+    <span id="poStatus" class="status-badge">-</span>
   </section>
 
-  <!-- PO SUMMARY -->
-  <section class="glass">
-    <div class="summary-grid">
-      <div>
-        <label>PO ID</label>
-        <p id="poId" class="skeleton"></p>
+  <section class="po-grid">
+
+    <div class="card">
+      <h3>Order Information</h3>
+      <div class="row">
+        <span>RFQ ID</span>
+        <strong id="rfqId">-</strong>
       </div>
-      <div>
-        <label>RFQ ID</label>
-        <p id="rfqId" class="skeleton"></p>
+      <div class="row">
+        <span>Part Name</span>
+        <strong id="partName">-</strong>
       </div>
-      <div>
-        <label>Supplier</label>
-        <p id="supplier" class="skeleton"></p>
+      <div class="row">
+        <span>Quantity</span>
+        <strong id="quantity">-</strong>
       </div>
-      <div>
-        <label>Status</label>
-        <span id="poStatus" class="status-badge skeleton"></span>
+      <div class="row">
+        <span>Price</span>
+        <strong id="price">-</strong>
       </div>
     </div>
+
+    <div class="card">
+      <h3>Part Specifications</h3>
+      <div class="row">
+        <span>Material</span>
+        <strong id="material">-</strong>
+      </div>
+      <div class="row">
+        <span>Delivery Timeline</span>
+        <strong id="delivery">-</strong>
+      </div>
+    </div>
+
   </section>
 
-  <!-- PO DETAILS -->
-  <section class="glass">
-    <div class="detail-grid">
-      <div>
-        <label>Quantity</label>
-        <p id="quantity" class="skeleton"></p>
-      </div>
-      <div>
-        <label>Final Price</label>
-        <p id="price" class="skeleton"></p>
-      </div>
-      <div>
-        <label>Created On</label>
-        <p id="createdAt" class="skeleton"></p>
-      </div>
-    </div>
+  <!-- ===== PROGRESS TIMELINE ===== -->
+<section class="po-timeline-card">
+  <h3>Order Progress</h3>
+
+  <div class="timeline" id="poTimeline">
+    <!-- JS will render steps -->
+  </div>
+</section>
+
+  <section id="lifecycleSection" class="card hidden">
+    <h3>Order Lifecycle</h3>
+    <div id="lifecycleButtons" class="lifecycle-actions"></div>
   </section>
 
 </main>
 
 <script src="./js/po-detail.js"></script>
+
 </body>
 </html>

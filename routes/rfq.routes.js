@@ -13,7 +13,7 @@ const {
 ====================================================== */
 
 /**
- * Create RFQ (Buyer only)
+ * Create RFQ (Draft)
  * POST /api/rfqs
  */
 router.post(
@@ -31,12 +31,51 @@ router.get(
   "/",
   authenticate,
   authorizeBuyer,
-  (req, res, next) => {
-    // Force buyer_id from JWT only (security)
-    req.query.buyer_id = req.user.id;
-    next();
-  },
   rfqController.getRFQsByBuyer
+);
+
+/**
+ * Assign Suppliers to RFQ
+ * POST /api/rfqs/:id/assign-suppliers
+ */
+router.post(
+  "/:id/assign-suppliers",
+  authenticate,
+  authorizeBuyer,
+  rfqController.assignSuppliersToRFQ
+);
+
+/**
+ * Publish RFQ (Make Active)
+ * PUT /api/rfqs/:id/publish
+ */
+router.put(
+  "/:id/publish",
+  authenticate,
+  authorizeBuyer,
+  rfqController.publishRFQ
+);
+
+/**
+ * Close RFQ
+ * PUT /api/rfqs/:id/close
+ */
+router.put(
+  "/:id/close",
+  authenticate,
+  authorizeBuyer,
+  rfqController.closeRFQ
+);
+
+/**
+ * Award RFQ (Select Supplier)
+ * PUT /api/rfqs/:id/award
+ */
+router.put(
+  "/:id/award",
+  authenticate,
+  authorizeBuyer,
+  rfqController.awardRFQ
 );
 
 /* ======================================================
@@ -44,7 +83,7 @@ router.get(
 ====================================================== */
 
 /**
- * Get RFQs for Supplier Dashboard
+ * Get RFQs assigned to Supplier
  * GET /api/rfqs/supplier
  */
 router.get(
@@ -60,7 +99,6 @@ router.get(
 
 /**
  * Get RFQ by ID
- * GET /api/rfqs/:id
  */
 router.get(
   "/:id",

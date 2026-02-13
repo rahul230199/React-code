@@ -1,8 +1,6 @@
 /* =========================================================
-   AXO RFQ DETAIL – ENTERPRISE PRODUCTION JS
+   AXO RFQ DETAIL – FULL LIFECYCLE + QUOTE ENGINE
 ========================================================= */
-
-/* ================= AUTH ================= */
 
 function getUser() {
   try { return JSON.parse(localStorage.getItem("user")); }
@@ -13,261 +11,214 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
-/* ================= AUTH GUARD ================= */
-
 (function authGuard() {
   const user = getUser();
   const token = getToken();
-
   if (!user || !token) {
     window.location.href = "/frontend/login.html";
   }
 })();
 
-/* ================= GLOBAL STATE ================= */
-
 let rfqId = null;
 let currentUser = getUser();
-
-/* =========================================================
-   INIT
-========================================================= */
+let currentRFQ = null;
+let existingSupplierQuote = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("userEmail").textContent = currentUser.email;
 
   rfqId = getRFQIdFromURL();
-  if (!rfqId) return showError("Invalid RFQ ID");
+  if (!rfqId) return;
 
   await loadRFQDetails();
   await loadFiles();
   await loadQuotes();
   await loadMessages();
 
+  setupLifecycleButtons();
+  setupQuoteButton();
+
   document
     .getElementById("sendMessageBtn")
-    .addEventListener("click", sendMessage);
+    ?.addEventListener("click", sendMessage);
 });
 
 /* =========================================================
-   LOAD RFQ CORE DETAILS
+   LOAD RFQ DETAILS
 ========================================================= */
 
 async function loadRFQDetails() {
 
-  try {
-    const res = await fetchAPI(`/api/rfqs/${rfqId}`);
+  const rfq = await fetchAPI(`/api/rfqs/${rfqId}`);
+  currentRFQ = rfq;
 
-    const rfq = res;
+  setText("rfqPartName", rfq.part_name);
+  setText("rfqId", rfq.id);
+  setText("rfqCreated", formatDate(rfq.created_at));
 
-    setText("rfqPartName", rfq.part_name);
-    setText("rfqId", rfq.id);
-    setText("rfqCreated", formatDate(rfq.created_at));
+  setText("detailPartId", rfq.part_id);
+  setText("detailTotalQty", rfq.total_quantity);
+  setText("detailBatchQty", rfq.batch_quantity);
+  setText("detailTargetPrice", rfq.target_price || "-");
+  setText("detailDelivery", rfq.delivery_timeline);
+  setText("detailPpap", rfq.ppap_level);
+  setText("detailMaterial", rfq.material_specification);
 
-    setText("detailPartId", rfq.part_id);
-    setText("detailTotalQty", rfq.total_quantity);
-    setText("detailBatchQty", rfq.batch_quantity);
-    setText("detailTargetPrice", rfq.target_price || "-");
-    setText("detailDelivery", rfq.delivery_timeline);
-    setText("detailPpap", rfq.ppap_level);
-    setText("detailMaterial", rfq.material_specification);
+  setStatusBadge(rfq.status);
 
-    setStatusBadge(rfq.status);
-
-  } catch {
-    showError("Unable to load RFQ details.");
-  }
+  controlLifecycleUI(rfq.status);
+  controlSupplierQuoteUI(rfq.status);
 }
 
 /* =========================================================
-   LOAD FILES
+   SUPPLIER QUOTE UI CONTROL
+========================================================= */
+
+async function controlSupplierQuoteUI(status) {
+
+  const section = document.getElementById("supplierQuoteSection");
+
+  if (!section) return;
+
+  if (
+    (currentUser.role === "supplier" || currentUser.role === "both") &&
+    status === "active"
+  ) {
+
+    // Check assignment
+    try {
+      await fetchAPI(`/api/rfqs/${rfqId}`); // access already validated
+      section.classList.remove("hidden");
+
+      await loadExistingSupplierQuote();
+
+    } catch {
+      section.classList.add("hidden");
+    }
+
+  } else {
+    section.classList.add("hidden");
+  }
+}
+
+async function loadExistingSupplierQuote() {
+
+  const quotes = await fetchAPI(`/api/quotes/rfq/${rfqId}`);
+
+  existingSupplierQuote = quotes.find(
+    q => q.supplier_id === currentUser.id
+  );
+
+  if (existingSupplierQuote) {
+
+    document.getElementById("quotePrice").value = existingSupplierQuote.price;
+    document.getElementById("quoteBatchQty").value = existingSupplierQuote.batch_quantity;
+    document.getElementById("quoteDelivery").value = existingSupplierQuote.delivery_timeline;
+    document.getElementById("quoteMaterial").value = existingSupplierQuote.material_specification;
+    document.getElementById("quoteCertifications").value = existingSupplierQuote.certifications;
+
+    if (existingSupplierQuote.status === "accepted") {
+      document.getElementById("submitQuoteBtn").disabled = true;
+    }
+  }
+}
+
+function setupQuoteButton() {
+  document.getElementById("submitQuoteBtn")
+    ?.addEventListener("click", submitQuote);
+}
+
+async function submitQuote() {
+
+  const payload = {
+    rfq_id: rfqId,
+    price: Number(document.getElementById("quotePrice").value),
+    batch_quantity: Number(document.getElementById("quoteBatchQty").value),
+    delivery_timeline: document.getElementById("quoteDelivery").value,
+    material_specification: document.getElementById("quoteMaterial").value,
+    certifications: document.getElementById("quoteCertifications").value
+  };
+
+  if (!payload.price || !payload.batch_quantity) {
+    alert("Price and Batch Quantity required");
+    return;
+  }
+
+  await fetchAPI("/api/quotes", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+  alert("Quote submitted successfully");
+  await loadQuotes();
+}
+
+/* =========================================================
+   REST OF ORIGINAL LOGIC (FILES, QUOTES, MESSAGES)
 ========================================================= */
 
 async function loadFiles() {
-
-  try {
-    const files = await fetchAPI(`/api/rfq-files/${rfqId}`);
-
-    const list = document.getElementById("rfqFilesList");
-    list.innerHTML = "";
-
-    if (!files.length) {
-      list.innerHTML = "<li>No documents uploaded</li>";
-      return;
-    }
-
-    files.forEach(file => {
-
-      const li = document.createElement("li");
-
-      li.innerHTML = `
-        <a href="${escapeHTML(file.file_url)}" target="_blank">
-          ${escapeHTML(file.file_name)}
-        </a>
-      `;
-
-      list.appendChild(li);
-    });
-
-  } catch {
-    showError("Unable to load files.");
-  }
+  const files = await fetchAPI(`/api/rfq-files/${rfqId}`);
+  const list = document.getElementById("rfqFilesList");
+  list.innerHTML = files.length
+    ? files.map(f =>
+        `<li><a href="${escapeHTML(f.file_url)}" target="_blank">
+          ${escapeHTML(f.file_name)}
+        </a></li>`
+      ).join("")
+    : "<li>No documents uploaded</li>";
 }
-
-/* =========================================================
-   LOAD QUOTES
-========================================================= */
 
 async function loadQuotes() {
+  const quotes = await fetchAPI(`/api/quotes/rfq/${rfqId}`);
+  const tbody = document.getElementById("quotesTableBody");
+  const countLabel = document.getElementById("quoteCount");
 
-  try {
-    const quotes = await fetchAPI(`/api/quotes/rfq/${rfqId}`);
+  countLabel.textContent = `${quotes.length} Quotes`;
 
-    const tbody = document.getElementById("quotesTableBody");
-    const countLabel = document.getElementById("quoteCount");
-
-    tbody.innerHTML = "";
-    countLabel.textContent = `${quotes.length} Quotes`;
-
-    if (!quotes.length) {
-      tbody.innerHTML =
-        `<tr><td colspan="6">No quotes submitted yet</td></tr>`;
-      return;
-    }
-
-    quotes.forEach(quote => {
-
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${escapeHTML(quote.supplier_id)}</td>
-        <td>${escapeHTML(quote.price)}</td>
-        <td>${escapeHTML(quote.batch_quantity)}</td>
-        <td>${escapeHTML(quote.delivery_timeline)}</td>
-        <td>${escapeHTML(quote.status)}</td>
-        <td>
-          ${renderQuoteAction(quote)}
-        </td>
-      `;
-
-      tbody.appendChild(row);
-    });
-
-  } catch {
-    showError("Unable to load quotes.");
-  }
+  tbody.innerHTML = quotes.length
+    ? quotes.map(q => `
+        <tr>
+          <td>${escapeHTML(q.supplier_email || q.supplier_id)}</td>
+          <td>${escapeHTML(q.price)}</td>
+          <td>${escapeHTML(q.batch_quantity)}</td>
+          <td>${escapeHTML(q.delivery_timeline)}</td>
+          <td>${escapeHTML(q.status)}</td>
+          <td>${renderQuoteAction(q)}</td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="6">No quotes submitted yet</td></tr>`;
 }
 
-/* =========================================================
-   LOAD MESSAGES
-========================================================= */
+function renderQuoteAction(q) {
+  if (currentUser.role !== "buyer") return "-";
+  if (q.status === "accepted") return "Accepted";
+
+  return `<button class="primary-btn"
+    onclick="acceptQuote(${q.id}, ${q.supplier_id}, ${q.price})">
+    Accept
+  </button>`;
+}
 
 async function loadMessages() {
-
-  try {
-    const messages = await fetchAPI(`/api/rfq-messages/${rfqId}`);
-
-    const container = document.getElementById("messagesContainer");
-    container.innerHTML = "";
-
-    if (!messages.length) {
-      container.innerHTML = "<div>No messages yet</div>";
-      return;
-    }
-
-    messages.forEach(msg => {
-
-      const div = document.createElement("div");
-      div.className = "message-row";
-
-      div.innerHTML = `
-        <strong>User ${escapeHTML(msg.sender_id)}</strong>
-        <p>${escapeHTML(msg.message)}</p>
-      `;
-
-      container.appendChild(div);
-    });
-
-  } catch {
-    showError("Unable to load messages.");
-  }
+  const messages = await fetchAPI(`/api/rfq-messages/${rfqId}`);
+  const container = document.getElementById("messagesContainer");
+  container.innerHTML = messages.length
+    ? messages.map(m => `
+        <div class="message-row">
+          <strong>User ${escapeHTML(m.sender_id)}</strong>
+          <p>${escapeHTML(m.message)}</p>
+        </div>
+      `).join("")
+    : "<div>No messages yet</div>";
 }
 
 /* =========================================================
-   ACCEPT QUOTE
-========================================================= */
-
-function renderQuoteAction(quote) {
-
-  if (currentUser.role.toLowerCase() !== "buyer") return "-";
-  if (quote.status === "accepted") return "Accepted";
-
-  return `
-    <button class="primary-btn"
-      onclick="acceptQuote(${quote.id}, ${quote.supplier_id}, ${quote.price})">
-      Accept
-    </button>
-  `;
-}
-
-async function acceptQuote(quoteId, supplierId, price) {
-
-  try {
-    await fetchAPI("/api/purchase-orders", {
-      method: "POST",
-      body: JSON.stringify({
-        rfq_id: rfqId,
-        quote_id: quoteId,
-        buyer_id: currentUser.id,
-        supplier_id: supplierId,
-        quantity: 1,
-        price: price
-      })
-    });
-
-    await loadQuotes();
-
-  } catch {
-    showError("Unable to accept quote.");
-  }
-}
-
-/* =========================================================
-   SEND MESSAGE
-========================================================= */
-
-async function sendMessage() {
-
-  const input = document.getElementById("messageInput");
-  const text = input.value.trim();
-
-  if (!text) return;
-
-  try {
-
-    await fetchAPI("/api/rfq-messages", {
-      method: "POST",
-      body: JSON.stringify({
-        rfq_id: rfqId,
-        message: sanitize(text)
-      })
-    });
-
-    input.value = "";
-    await loadMessages();
-
-  } catch {
-    showError("Message failed to send.");
-  }
-}
-
-/* =========================================================
-   API WRAPPER
+   UTIL
 ========================================================= */
 
 async function fetchAPI(url, options = {}) {
-
   const response = await fetch(url, {
     method: options.method || "GET",
     headers: {
@@ -282,23 +233,16 @@ async function fetchAPI(url, options = {}) {
     return;
   }
 
-  if (!response.ok) {
-    throw new Error("Network error");
-  }
+  if (!response.ok) throw new Error("Network error");
 
   const data = await response.json();
   if (!data.success) throw new Error(data.message);
 
-  return data.data || data;
+  return data.data;
 }
 
-/* =========================================================
-   HELPERS
-========================================================= */
-
 function getRFQIdFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("id");
+  return new URLSearchParams(window.location.search).get("id");
 }
 
 function setText(id, value) {
@@ -319,18 +263,6 @@ function formatDate(date) {
 function escapeHTML(str) {
   return String(str).replace(/[<>&"']/g, "");
 }
-
-function sanitize(str) {
-  return String(str).replace(/[<>&"']/g, "");
-}
-
-function showError(message) {
-  console.error(message);
-}
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
 
 function goBack() {
   window.location.href = "/frontend/buyer-dashboard.html";

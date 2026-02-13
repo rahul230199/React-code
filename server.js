@@ -4,6 +4,7 @@
 ========================================================= */
 
 const path = require("path");
+const express = require("express");
 
 /* =========================================================
    ENV CONFIG (AUTO SWITCH LOCAL / PRODUCTION)
@@ -19,12 +20,12 @@ require("dotenv").config({
 });
 
 console.log("🌍 Running Mode:", process.env.NODE_ENV || "local");
+console.log("📦 Using ENV File:", envFile);
 
 /* =========================================================
    IMPORTS
 ========================================================= */
 
-const express = require("express");
 const pool = require("./src/config/db");
 
 // Route Files
@@ -36,9 +37,10 @@ const quoteAcceptanceRoutes = require("./routes/quoteAcceptance.routes");
 const rfqMessageRoutes = require("./routes/rfqMessage.routes");
 const purchaseOrderRoutes = require("./routes/purchaseOrder.routes");
 const networkRequestRoutes = require("./routes/networkRequest.routes");
+const buyerDashboardRoutes = require("./routes/buyerDashboard.routes");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 /* =========================================================
    MIDDLEWARE
@@ -80,6 +82,7 @@ app.use("/api/quotes", quoteAcceptanceRoutes);
 app.use("/api/rfq-messages", rfqMessageRoutes);
 app.use("/api/purchase-orders", purchaseOrderRoutes);
 app.use("/api/network-request", networkRequestRoutes);
+app.use("/api/buyer", buyerDashboardRoutes);
 
 /* =========================================================
    HEALTH CHECK
@@ -114,20 +117,48 @@ app.use("/api", (req, res) => {
 ========================================================= */
 
 const frontendPath = path.join(__dirname, "frontend");
+
+// Serve static files
 app.use(express.static(frontendPath));
 
 /* =========================================================
-   CLEAN HTML ROUTING
+   CLEAN PAGE ROUTING
+   Enables:
+   /login
+   /buyer-dashboard
+   /rfq-create
+   etc.
 ========================================================= */
 
 app.get("/:page", (req, res, next) => {
   if (req.params.page.startsWith("api")) return next();
 
-  const filePath = path.join(frontendPath, `${req.params.page}.html`);
+  const filePath = path.join(
+    frontendPath,
+    `${req.params.page}.html`
+  );
 
   res.sendFile(filePath, (err) => {
     if (err) next();
   });
+});
+
+/* =========================================================
+   ROOT ROUTE
+========================================================= */
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "login.html"));
+});
+
+/* =========================================================
+   GLOBAL 404 (HTML)
+========================================================= */
+
+app.use((req, res) => {
+  res.status(404).sendFile(
+    path.join(frontendPath, "404.html")
+  );
 });
 
 /* =========================================================
@@ -136,10 +167,17 @@ app.get("/:page", (req, res, next) => {
 
 app.use((err, req, res, next) => {
   console.error("Unhandled server error:", err);
-  res.status(500).json({
-    success: false,
-    message: "Internal server error",
-  });
+
+  if (req.originalUrl.startsWith("/api")) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+
+  res.status(500).sendFile(
+    path.join(frontendPath, "500.html")
+  );
 });
 
 /* =========================================================
@@ -147,5 +185,5 @@ app.use((err, req, res, next) => {
 ========================================================= */
 
 app.listen(PORT, () => {
-  console.log(`🚀 AXO API running on port ${PORT}`);
+  console.log(`🚀 AXO Server running on http://localhost:${PORT}`);
 });

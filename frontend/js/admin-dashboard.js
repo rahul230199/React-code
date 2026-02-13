@@ -1,17 +1,17 @@
-/* ======================================================
-   AXO NETWORKS — EV STARTUP ADMIN DASHBOARD
-   Clean • Production Safe • Fully Synced with Backend
-====================================================== */
+/* =========================================================
+   AXO NETWORKS — ENTERPRISE ADMIN DASHBOARD (FINAL)
+========================================================= */
 
-const App = (() => {
+const AdminApp = (() => {
 
   let allRequests = [];
   let filteredRequests = [];
   let activeRequest = null;
+  let pendingStatusAction = null;
 
   /* ================= INIT ================= */
-
   function init() {
+    enforceAuth();
     bindTopbar();
     bindFilters();
     bindGlobalEvents();
@@ -19,68 +19,45 @@ const App = (() => {
     loadDashboard();
   }
 
-  /* ================= API ================= */
+  /* ================= AUTH ================= */
+  function enforceAuth() {
+    const user = getUser();
+    const token = getToken();
 
+    if (!user || !token || user.role?.toLowerCase() !== "admin") {
+      clearSession();
+      window.location.href = "/login";
+      return;
+    }
+
+    setText("adminName", user.email);
+    setText("adminRole", "Administrator");
+  }
+
+  /* ================= LOAD ================= */
   async function loadDashboard() {
     try {
-      const token = getToken();
-      if (!token) return redirectLogin();
-
       const res = await fetch("/api/network-request", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${getToken()}` }
       });
 
-      if (res.status === 401) return redirectLogin();
-      if (!res.ok) throw new Error("API failed");
+      if (res.status === 401 || res.status === 403) {
+        return logout();
+      }
 
-      const json = await res.json();
+      const result = await res.json();
 
-      allRequests = json.data || [];
+      allRequests = result.data || [];
       filteredRequests = [...allRequests];
 
       renderAll();
 
-    } catch (err) {
-      showNotification("Unable to connect to server");
-    }
-  }
-
-  async function updateStatus(newStatus) {
-    if (!activeRequest) return;
-
-    try {
-      const token = getToken();
-
-      const res = await fetch(
-        `/api/network-request/${activeRequest.id}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ status: newStatus })
-        }
-      );
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        showNotification(json.message || "Update failed");
-        return;
-      }
-
-      showNotification("Status updated", "success");
-      closeModal();
-      loadDashboard();
-
     } catch {
-      showNotification("Failed to update status");
+      showNotification("Failed to load data");
     }
   }
 
   /* ================= RENDER ================= */
-
   function renderAll() {
     renderStats(filteredRequests);
     renderTable(filteredRequests);
@@ -98,8 +75,6 @@ const App = (() => {
     const empty = document.getElementById("emptyState");
     const table = document.getElementById("dataTable");
 
-    if (!tbody) return;
-
     tbody.innerHTML = "";
 
     if (!data.length) {
@@ -111,64 +86,122 @@ const App = (() => {
     empty.style.display = "none";
     table.style.display = "table";
 
-    const fragment = document.createDocumentFragment();
-
     data.forEach(req => {
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
-        <td data-label="ID">${req.id}</td>
-        <td data-label="Company">${req.company_name || "-"}</td>
-        <td data-label="Contact">${req.contact_name || "-"}</td>
-        <td data-label="Email">${req.email || "-"}</td>
-        <td data-label="Phone">${req.phone || "-"}</td>
-        <td data-label="Product">${req.primary_product || "-"}</td>
-        <td data-label="Status">${renderStatus(req.status)}</td>
-        <td data-label="Submitted">${formatDate(req.submission_timestamp)}</td>
-        <td data-label="Actions">
-          <button class="btn-action" data-id="${req.id}" data-action="view">
-            View Details
+        <td>${escapeHTML(req.id)}</td>
+        <td>${escapeHTML(req.company_name)}</td>
+        <td>${escapeHTML(req.contact_name)}</td>
+        <td>${escapeHTML(req.email)}</td>
+        <td>${escapeHTML(req.phone)}</td>
+        <td>${escapeHTML(req.primary_product)}</td>
+        <td>${renderStatus(req.status)}</td>
+        <td>${formatDate(req.submission_timestamp)}</td>
+        <td>
+          <button class="btn-action"
+            data-id="${req.id}"
+            data-action="view">
+            View
           </button>
         </td>
       `;
 
-      fragment.appendChild(tr);
+      tbody.appendChild(tr);
     });
-
-    tbody.appendChild(fragment);
   }
 
   function renderStatus(status) {
-    if (status === "pending")
-      return `<span class="badge pending">Pending</span>`;
-    if (status === "verified")
-      return `<span class="badge approved">Approved</span>`;
-    if (status === "rejected")
-      return `<span class="badge rejected">Rejected</span>`;
-    return "-";
+    const map = {
+      pending: "badge pending",
+      verified: "badge approved",
+      rejected: "badge rejected"
+    };
+
+    return `<span class="${map[status]}">${status}</span>`;
   }
 
-  /* ================= MODAL ================= */
-
+  /* ================= VIEW MODAL ================= */
   function openViewModal(id) {
-    const item = allRequests.find(r => r.id == id);
-    if (!item) return showNotification("No data found");
+   const item = allRequests.find(r => r.id == id);
+  if (!item) return showNotification("No data found");
 
-    activeRequest = item;
+  activeRequest = item;
 
-    const modalBody = document.getElementById("modalBody");
-    const modal = document.getElementById("viewModal");
+  const modalBody = document.getElementById("modalBody");
+  const modal = document.getElementById("viewModal");
 
-    modalBody.innerHTML = `
-      <h3 style="margin-bottom:15px;">${item.company_name}</h3>
-      <p><strong>Contact:</strong> ${item.contact_name || "-"}</p>
-      <p><strong>Email:</strong> ${item.email || "-"}</p>
-      <p><strong>Phone:</strong> ${item.phone || "-"}</p>
-      <p><strong>Product:</strong> ${item.primary_product || "-"}</p>
-      <p><strong>Status:</strong> ${item.status}</p>
-      <p><strong>Submitted:</strong> ${formatDate(item.submission_timestamp)}</p>
+  // Support both camelCase and snake_case
+  const companyName = item.company_name || item.companyName || "-";
+  const website = item.website || "-";
+  const registeredAddress = item.registered_address || item.registeredAddress || "-";
+  const cityState = item.city_state || item.cityState || "-";
+  const contactName = item.contact_name || item.contactName || "-";
+  const email = item.email || "-";
+  const phone = item.phone || "-";
+  const primaryProduct = item.primary_product || item.primaryProduct || "-";
+  const keyComponents = item.key_components || item.keyComponents || "-";
+  const manufacturingLocations = item.manufacturing_locations || item.manufacturingLocations || "-";
+  const monthlyCapacity = item.monthly_capacity || item.monthlyCapacity || "-";
+  const certifications = item.certifications || "-";
+  const roleInEV = item.role_in_ev || item.roleInEV || "-";
+  const whyJoinAXO = item.why_join_axo || item.whyJoinAXO || "-";
+  const submittedOn = item.submission_timestamp || item.created_at || "-";
+  const status = item.status || "-";
 
-      ${item.status === "pending" ? `
+  modalBody.innerHTML = `
+    <div class="modal-header-section">
+      <h2>${escapeHTML(companyName)}</h2>
+      <span class="status-pill ${status}">
+        ${escapeHTML(status)}
+      </span>
+    </div>
+
+    <div class="modal-grid">
+
+      <div class="modal-section">
+        <h4>Company Information</h4>
+        <p><strong>Website:</strong> ${escapeHTML(website)}</p>
+        <p><strong>Registered Address:</strong> ${escapeHTML(registeredAddress)}</p>
+        <p><strong>City / State:</strong> ${escapeHTML(cityState)}</p>
+      </div>
+
+      <div class="modal-section">
+        <h4>Contact Details</h4>
+        <p><strong>Contact Person:</strong> ${escapeHTML(contactName)}</p>
+        <p><strong>Email:</strong> ${escapeHTML(email)}</p>
+        <p><strong>Phone:</strong> ${escapeHTML(phone)}</p>
+      </div>
+
+      <div class="modal-section">
+        <h4>Business Details</h4>
+        <p><strong>Primary Product:</strong> ${escapeHTML(primaryProduct)}</p>
+        <p><strong>Key Components:</strong> ${escapeHTML(keyComponents)}</p>
+        <p><strong>Manufacturing Locations:</strong> ${escapeHTML(manufacturingLocations)}</p>
+        <p><strong>Monthly Capacity:</strong> ${escapeHTML(monthlyCapacity)}</p>
+        <p><strong>Certifications:</strong> ${escapeHTML(certifications)}</p>
+      </div>
+
+      <div class="modal-section">
+        <h4>EV Role & Intent</h4>
+        <p><strong>Role in EV:</strong> ${escapeHTML(roleInEV)}</p>
+        <p><strong>Why Join AXO:</strong></p>
+        <div class="modal-text-block">
+          ${escapeHTML(whyJoinAXO)}
+        </div>
+      </div>
+
+      <div class="modal-section full-width">
+        <h4>Submission Metadata</h4>
+        <p><strong>Submitted On:</strong> ${formatDate(submittedOn)}</p>
+        <p><strong>Status:</strong> ${escapeHTML(status)}</p>
+      </div>
+
+    </div>
+
+    ${
+      status === "pending"
+        ? `
         <div class="modal-actions">
           <button class="btn btn-approve" data-action="approve">
             Approve
@@ -177,74 +210,73 @@ const App = (() => {
             Reject
           </button>
         </div>
-      ` : ""}
-    `;
+      `
+        : ""
+    }
+  `;
 
-    modal.style.display = "flex";
-    document.body.style.overflow = "hidden";
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
   }
 
   function closeModal() {
-    const modal = document.getElementById("viewModal");
-    modal.style.display = "none";
+    document.getElementById("viewModal").style.display = "none";
     document.body.style.overflow = "auto";
-    activeRequest = null;
   }
 
-  /* ================= FILTER ================= */
+  /* ================= STATUS MODAL ================= */
+  function openStatusModal(status) {
+    pendingStatusAction = status;
 
-  function applyFilters() {
-    const status = getValue("statusFilter");
-    const search = getValue("searchInput").toLowerCase();
-    const start = getValue("startDate");
-    const end = getValue("endDate");
+    document.getElementById("statusTitle").textContent =
+      status === "verified" ? "Approve Supplier" : "Reject Supplier";
 
-    filteredRequests = allRequests.filter(r => {
+    document.getElementById("statusComment").value = "";
+    document.getElementById("statusModal").style.display = "flex";
+  }
 
-      if (status !== "ALL") {
-        const map = {
-          PENDING: "pending",
-          APPROVED: "verified",
-          REJECTED: "rejected"
-        };
-        if (r.status !== map[status]) return false;
-      }
+  function closeStatusModal() {
+    document.getElementById("statusModal").style.display = "none";
+    pendingStatusAction = null;
+  }
 
-      if (search) {
-        if (
-          !r.company_name?.toLowerCase().includes(search) &&
-          !r.email?.toLowerCase().includes(search)
-        ) return false;
-      }
+  async function confirmStatusUpdate() {
+    const comment = document.getElementById("statusComment").value.trim();
 
-      if (start && new Date(r.submission_timestamp) < new Date(start + "T00:00:00"))
-        return false;
+    if (comment.length < 5) {
+      return showNotification("Comment required (min 5 characters)");
+    }
 
-      if (end && new Date(r.submission_timestamp) > new Date(end + "T23:59:59"))
-        return false;
+    await updateStatus(pendingStatusAction, comment);
+    closeStatusModal();
+  }
 
-      return true;
-    });
+  async function updateStatus(status, comment) {
+    if (!activeRequest) return;
 
-    renderAll();
+    try {
+      await fetch(
+        `/api/network-request/${activeRequest.id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`
+          },
+          body: JSON.stringify({ status, comment })
+        }
+      );
+
+      closeModal();
+      loadDashboard();
+      showNotification("Status updated", "success");
+
+    } catch {
+      showNotification("Update failed");
+    }
   }
 
   /* ================= EVENTS ================= */
-
-  function bindTopbar() {
-    document.getElementById("refreshBtn")?.addEventListener("click", loadDashboard);
-    document.getElementById("exportBtn")?.addEventListener("click", exportData);
-    document.getElementById("logoutBtn")?.addEventListener("click", logout);
-  }
-
-  function bindFilters() {
-    ["statusFilter", "searchInput", "startDate", "endDate"]
-      .forEach(id => {
-        document.getElementById(id)
-          ?.addEventListener("input", applyFilters);
-      });
-  }
-
   function bindGlobalEvents() {
 
     document.addEventListener("click", e => {
@@ -253,62 +285,64 @@ const App = (() => {
       const id = e.target.dataset.id;
 
       if (action === "view") openViewModal(id);
-      if (action === "approve") updateStatus("verified");
-      if (action === "reject") updateStatus("rejected");
+      if (action === "approve") openStatusModal("verified");
+      if (action === "reject") openStatusModal("rejected");
 
-      if (e.target.classList.contains("modal-close") ||
-          e.target.closest(".modal-close"))
-        closeModal();
-
-      if (e.target.id === "viewModal")
-        closeModal();
+      if (e.target.id === "viewModal") closeModal();
+      if (e.target.id === "statusModal") closeStatusModal();
     });
 
-    document.addEventListener("keydown", e => {
-      if (e.key === "Escape") closeModal();
-    });
+    document.getElementById("modalCloseBtn")
+      ?.addEventListener("click", closeModal);
+
+    document.getElementById("cancelStatusBtn")
+      ?.addEventListener("click", closeStatusModal);
+
+    document.getElementById("confirmStatusBtn")
+      ?.addEventListener("click", confirmStatusUpdate);
+  }
+
+  function bindTopbar() {
+    document.getElementById("logoutBtn")
+      ?.addEventListener("click", logout);
+  }
+
+  function bindFilters() {
+    document.getElementById("searchInput")
+      ?.addEventListener("input", applyFilters);
+  }
+
+  function applyFilters() {
+    const search = getValue("searchInput").toLowerCase();
+
+    filteredRequests = allRequests.filter(r =>
+      r.company_name.toLowerCase().includes(search) ||
+      r.email.toLowerCase().includes(search)
+    );
+
+    renderAll();
   }
 
   /* ================= UTIL ================= */
-
-  function injectNotification() {
-    if (document.getElementById("notification")) return;
-
-    const div = document.createElement("div");
-    div.id = "notification";
-    div.style.cssText = `
-      position:fixed;top:20px;left:50%;transform:translateX(-50%);
-      padding:12px 20px;border-radius:10px;font-weight:600;
-      z-index:9999;display:none;box-shadow:0 10px 25px rgba(0,0,0,0.15)
-    `;
-    document.body.appendChild(div);
-  }
-
-  function showNotification(msg, type = "error") {
-    const note = document.getElementById("notification");
-    note.textContent = msg;
-    note.style.display = "block";
-    note.style.background = type === "success" ? "#DCFCE7" : "#FEE2E2";
-    note.style.color = type === "success" ? "#166534" : "#991B1B";
-    setTimeout(() => note.style.display = "none", 3000);
+  function getUser() {
+    return JSON.parse(localStorage.getItem("user"));
   }
 
   function getToken() {
     return localStorage.getItem("token");
   }
 
-  function redirectLogin() {
+  function clearSession() {
     localStorage.clear();
-    window.location.href = "/portal-login";
   }
 
   function logout() {
-    redirectLogin();
+    clearSession();
+    window.location.href = "/login";
   }
 
-  function setText(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
+  function setText(id, val) {
+    document.getElementById(id).textContent = val;
   }
 
   function getValue(id) {
@@ -316,33 +350,39 @@ const App = (() => {
   }
 
   function formatDate(d) {
-    return d ? new Date(d).toLocaleDateString() : "-";
+    return d ? new Date(d).toLocaleString() : "-";
   }
 
-  function exportData() {
-    if (!filteredRequests.length)
-      return showNotification("No data to export");
+  function escapeHTML(str) {
+    return String(str || "").replace(/[<>&"']/g, "");
+  }
 
-    const headers = Object.keys(filteredRequests[0]);
+  function injectNotification() {
+    if (document.getElementById("notification")) return;
 
-    const csv = [
-      headers.join(","),
-      ...filteredRequests.map(r =>
-        headers.map(h =>
-          `"${String(r[h] ?? "").replace(/"/g, '""')}"`
-        ).join(",")
-      )
-    ].join("\n");
+    const div = document.createElement("div");
+    div.id = "notification";
+    div.style.cssText =
+      "position:fixed;top:20px;left:50%;transform:translateX(-50%);" +
+      "padding:12px 20px;border-radius:8px;font-weight:600;" +
+      "z-index:9999;display:none;";
+    document.body.appendChild(div);
+  }
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "axo-requests.csv";
-    a.click();
+  function showNotification(msg, type = "error") {
+    const note = document.getElementById("notification");
+    note.textContent = msg;
+    note.style.display = "block";
+    note.style.background =
+      type === "success" ? "#DCFCE7" : "#FEE2E2";
+    note.style.color =
+      type === "success" ? "#166534" : "#991B1B";
+
+    setTimeout(() => note.style.display = "none", 3000);
   }
 
   return { init };
 
 })();
 
-document.addEventListener("DOMContentLoaded", App.init);
+document.addEventListener("DOMContentLoaded", AdminApp.init);

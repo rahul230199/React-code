@@ -1,159 +1,327 @@
 const purchaseOrderModel = require("../../models/purchaseOrder.model");
 const pool = require("../config/db");
 
-/**
- * Buyer accepts quote → Create Purchase Order
- */
+/* =========================================================
+   CREATE PURCHASE ORDER (ACCEPT QUOTE)
+   Buyer Only
+========================================================= */
 const createPurchaseOrder = async (req, res) => {
-  try {
-    const buyerId = req.user.id;
 
-    const {
-      rfq_id,
-      quote_id,
-      quantity,
-      price,
-    } = req.body;
+  const client = await pool.connect();
+
+  try {
+
+    const buyerId = req.user.id;
+    const { rfq_id, quote_id, quantity, price } = req.body;
 
     if (!rfq_id || !quote_id || !quantity || !price) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields",
+        message: "Missing required fields"
       });
     }
 
-    // 🔒 Verify RFQ belongs to buyer
-    const rfqCheck = await pool.query(
-      "SELECT buyer_id FROM rfqs WHERE id = $1",
+    await client.query("BEGIN");
+
+    /* ---------------- Lock RFQ ---------------- */
+    const rfqResult = await client.query(
+      `SELECT id, buyer_id, status
+       FROM rfqs
+       WHERE id = $1
+       FOR UPDATE`,
       [rfq_id]
     );
 
-    if (!rfqCheck.rows.length) {
+    if (!rfqResult.rows.length) {
+      await client.query("ROLLBACK");
       return res.status(404).json({
         success: false,
-        message: "RFQ not found",
+        message: "RFQ not found"
       });
     }
 
-    if (rfqCheck.rows[0].buyer_id !== buyerId) {
+    const rfq = rfqResult.rows[0];
+
+    if (rfq.buyer_id !== buyerId) {
+      await client.query("ROLLBACK");
       return res.status(403).json({
         success: false,
-        message: "You do not own this RFQ",
+        message: "You do not own this RFQ"
       });
     }
 
-    // 🔒 Verify Quote exists and matches RFQ
-    const quoteCheck = await pool.query(
-      "SELECT supplier_id FROM quotes WHERE id = $1 AND rfq_id = $2",
+    if (rfq.status !== "active") {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: "RFQ is not active"
+      });
+    }
+
+    /* ---------------- Lock Quote ---------------- */
+    const quoteResult = await client.query(
+      `SELECT id, supplier_id
+       FROM quotes
+       WHERE id = $1
+       AND rfq_id = $2
+       FOR UPDATE`,
       [quote_id, rfq_id]
     );
 
-    if (!quoteCheck.rows.length) {
+    if (!quoteResult.rows.length) {
+      await client.query("ROLLBACK");
       return res.status(404).json({
         success: false,
-        message: "Quote not found for this RFQ",
+        message: "Quote not found for this RFQ"
       });
     }
 
-    const supplierId = quoteCheck.rows[0].supplier_id;
+    const quote = quoteResult.rows[0];
 
-    // 🔒 Prevent duplicate PO for same quote
-    const existingPO = await pool.query(
-      "SELECT id FROM purchase_orders WHERE quote_id = $1",
+    /* ---------------- Prevent duplicate PO ---------------- */
+    const existingPO = await client.query(
+      `SELECT id FROM purchase_orders WHERE quote_id = $1`,
       [quote_id]
     );
 
     if (existingPO.rows.length) {
+      await client.query("ROLLBACK");
       return res.status(400).json({
         success: false,
-        message: "Purchase Order already exists for this quote",
+        message: "Purchase Order already exists"
       });
     }
 
-    const po = await purchaseOrderModel.createPurchaseOrder({
-      rfq_id,
-      quote_id,
-      buyer_id: buyerId,
-      supplier_id: supplierId,
-      quantity,
-      price,
-    });
+    /* ---------------- Create PO ---------------- */
+    const poResult = await client.query(
+      `INSERT INTO purchase_orders (
+        rfq_id,
+        quote_id,
+        buyer_id,
+        supplier_id,
+        quantity,
+        price,
+        status
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,'issued')
+      RETURNING *`,
+      [
+        rfq_id,
+        quote_id,
+        buyerId,
+        quote.supplier_id,
+        quantity,
+        price
+      ]
+    );
+
+    const purchaseOrder = poResult.rows[0];
+
+    /* ---------------- Update quote statuses ---------------- */
+    await client.query(
+      `UPDATE quotes SET status = 'accepted' WHERE id = $1`,
+      [quote_id]
+    );
+
+    await client.query(
+      `UPDATE quotes
+       SET status = 'rejected'
+       WHERE rfq_id = $1
+       AND id != $2`,
+      [rfq_id, quote_id]
+    );
+
+    /* ---------------- Update RFQ ---------------- */
+    await client.query(
+      `UPDATE rfqs
+       SET status = 'awarded'
+       WHERE id = $1`,
+      [rfq_id]
+    );
+
+    await client.query("COMMIT");
 
     return res.status(201).json({
       success: true,
-      message: "Purchase Order issued",
-      data: po,
+      message: "Purchase Order issued successfully",
+      data: purchaseOrder
     });
 
   } catch (error) {
+
+    await client.query("ROLLBACK");
+
     console.error("Create PO error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to create purchase order",
+      message: "Failed to create purchase order"
     });
+
+  } finally {
+    client.release();
   }
 };
 
-/**
- * Buyer PO list
- */
+
+/* =========================================================
+   UPDATE PO STATUS (ENTERPRISE LIFECYCLE ENGINE)
+   PUT /api/purchase-orders/:id/status
+========================================================= */
+const updatePOStatus = async (req, res) => {
+
+  const client = await pool.connect();
+
+  try {
+
+    const poId = parseInt(req.params.id);
+    const { status } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    if (isNaN(poId) || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request"
+      });
+    }
+
+    const lifecycle = {
+      issued: ["confirmed"],
+      confirmed: ["in_production"],
+      in_production: ["shipped"],
+      shipped: ["delivered"],
+      delivered: ["completed"],
+      completed: [],
+      cancelled: []
+    };
+
+    await client.query("BEGIN");
+
+    const poResult = await client.query(
+      `SELECT id, buyer_id, supplier_id, status
+       FROM purchase_orders
+       WHERE id = $1
+       FOR UPDATE`,
+      [poId]
+    );
+
+    if (!poResult.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        success: false,
+        message: "Purchase order not found"
+      });
+    }
+
+    const po = poResult.rows[0];
+    const currentStatus = po.status;
+
+    /* ---------- Role Validation ---------- */
+
+    // Supplier controls production flow
+    if (["confirmed","in_production","shipped","delivered"].includes(status)) {
+      if (po.supplier_id !== userId) {
+        await client.query("ROLLBACK");
+        return res.status(403).json({
+          success: false,
+          message: "Only supplier can update this stage"
+        });
+      }
+    }
+
+    // Buyer controls completion
+    if (status === "completed") {
+      if (po.buyer_id !== userId) {
+        await client.query("ROLLBACK");
+        return res.status(403).json({
+          success: false,
+          message: "Only buyer can complete PO"
+        });
+      }
+    }
+
+    /* ---------- Transition Validation ---------- */
+
+    if (!lifecycle[currentStatus]?.includes(status)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: `Invalid transition from ${currentStatus} to ${status}`
+      });
+    }
+
+    const updateResult = await client.query(
+      `UPDATE purchase_orders
+       SET status = $1
+       WHERE id = $2
+       RETURNING *`,
+      [status, poId]
+    );
+
+    await client.query("COMMIT");
+
+    return res.json({
+      success: true,
+      message: "PO status updated successfully",
+      data: updateResult.rows[0]
+    });
+
+  } catch (error) {
+
+    await client.query("ROLLBACK");
+
+    console.error("Update PO status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update PO status"
+    });
+
+  } finally {
+    client.release();
+  }
+};
+
+
+/* =========================================================
+   GETTERS
+========================================================= */
 const getPOsByBuyer = async (req, res) => {
   try {
-    const buyerId = req.user.id;
-
-    const pos = await purchaseOrderModel.getPOsByBuyer(buyerId);
-
-    return res.status(200).json({
-      success: true,
-      data: pos,
-    });
-
+    const pos = await purchaseOrderModel.getPOsByBuyer(req.user.id);
+    return res.json({ success: true, data: pos });
   } catch (error) {
-    console.error("Get buyer POs error:", error);
-
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch POs",
+      message: "Failed to fetch POs"
     });
   }
 };
 
-/**
- * Supplier PO list
- */
 const getPOsBySupplier = async (req, res) => {
   try {
-    const supplierId = req.user.id;
-
-    const pos = await purchaseOrderModel.getPOsBySupplier(supplierId);
-
-    return res.status(200).json({
-      success: true,
-      data: pos,
-    });
-
+    const pos = await purchaseOrderModel.getPOsBySupplier(req.user.id);
+    return res.json({ success: true, data: pos });
   } catch (error) {
-    console.error("Get supplier POs error:", error);
-
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch POs",
+      message: "Failed to fetch POs"
     });
   }
 };
 
-/**
- * Get PO details
- */
 const getPOById = async (req, res) => {
   try {
+
     const id = parseInt(req.params.id);
 
     if (isNaN(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid PO ID",
+        message: "Invalid PO ID"
       });
     }
 
@@ -162,59 +330,41 @@ const getPOById = async (req, res) => {
     if (!po) {
       return res.status(404).json({
         success: false,
-        message: "Purchase order not found",
+        message: "Purchase order not found"
       });
     }
 
     const userId = req.user.id;
     const role = req.user.role;
 
-    // Admin can view all
-    if (role === "admin") {
-      return res.status(200).json({
-        success: true,
-        data: po,
+    if (role !== "admin" &&
+        po.buyer_id !== userId &&
+        po.supplier_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied"
       });
     }
 
-    // Buyer can view own PO
-    if (role === "buyer" || role === "both") {
-      if (po.buyer_id !== userId) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
-    }
-
-    // Supplier can view own PO
-    if (role === "supplier" || role === "both") {
-      if (po.supplier_id !== userId) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: po,
-    });
+    return res.json({ success: true, data: po });
 
   } catch (error) {
-    console.error("Get PO error:", error);
-
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch purchase order",
+      message: "Failed to fetch purchase order"
     });
   }
 };
 
+
+/* =========================================================
+   EXPORTS
+========================================================= */
 module.exports = {
   createPurchaseOrder,
+  updatePOStatus,
   getPOsByBuyer,
   getPOsBySupplier,
-  getPOById,
+  getPOById
 };

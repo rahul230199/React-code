@@ -1,5 +1,5 @@
 /* =========================================================
-   AXO RFQ CREATE – ENTERPRISE PRODUCTION JS
+   AXO RFQ CREATE – ENTERPRISE VERSION
 ========================================================= */
 
 /* ================= AUTH HELPERS ================= */
@@ -34,17 +34,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("userEmail").textContent = user.email;
 
   const form = document.getElementById("rfqForm");
-  const draftBtn = document.getElementById("saveDraftBtn");
-
-  form.addEventListener("submit", (e) => handleSubmit(e, "submitted"));
-  draftBtn.addEventListener("click", (e) => handleSubmit(e, "draft"));
+  form.addEventListener("submit", handleSubmit);
 });
 
 /* =========================================================
-   MAIN SUBMIT HANDLER
+   MAIN SUBMIT (CREATE DRAFT ONLY)
 ========================================================= */
 
-async function handleSubmit(event, status) {
+async function handleSubmit(event) {
 
   event.preventDefault();
 
@@ -52,7 +49,7 @@ async function handleSubmit(event, status) {
 
   clearErrors();
 
-  const formData = collectFormData(status);
+  const formData = collectFormData();
 
   if (!validateForm(formData)) return;
 
@@ -74,20 +71,17 @@ async function handleSubmit(event, status) {
       return;
     }
 
-    if (!response.ok) {
-      throw new Error("Server error");
-    }
-
     const result = await response.json();
 
-    if (!result.success) {
-      throw new Error(result.message || "Submission failed");
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Creation failed");
     }
 
-    window.location.href = "/frontend/buyer-dashboard.html";
+    // 🚀 Redirect to RFQ detail page for supplier assignment
+    window.location.href = `/frontend/rfq-detail.html?id=${result.data.id}`;
 
   } catch (error) {
-    showFormError("Unable to submit RFQ. Please try again.");
+    showFormError("Unable to create RFQ draft. Please try again.");
   } finally {
     isSubmitting = false;
     setLoadingState(false);
@@ -98,7 +92,7 @@ async function handleSubmit(event, status) {
    DATA COLLECTION
 ========================================================= */
 
-function collectFormData(status) {
+function collectFormData() {
 
   return {
     part_name: sanitize(document.getElementById("part_name").value),
@@ -108,8 +102,7 @@ function collectFormData(status) {
     target_price: document.getElementById("target_price").value || null,
     delivery_timeline: sanitize(document.getElementById("delivery_timeline").value),
     material_specification: sanitize(document.getElementById("material_specification").value),
-    ppap_level: document.getElementById("ppap_level").value,
-    status
+    ppap_level: document.getElementById("ppap_level").value
   };
 }
 
@@ -196,15 +189,15 @@ function setLoadingState(loading) {
 
   if (loading) {
     submitBtn.disabled = true;
-    submitBtn.textContent = "Submitting...";
+    submitBtn.textContent = "Creating Draft...";
   } else {
     submitBtn.disabled = false;
-    submitBtn.textContent = "Submit RFQ";
+    submitBtn.textContent = "Create RFQ Draft";
   }
 }
 
 /* =========================================================
-   SECURITY SANITIZATION
+   SANITIZATION
 ========================================================= */
 
 function sanitize(value) {

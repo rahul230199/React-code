@@ -1,92 +1,126 @@
-// ============================================
-// LOGIN SYSTEM (PRODUCTION SAFE, ROLE SAFE)
-// ============================================
+/* =========================================================
+   AXO NETWORKS — ENTERPRISE LOGIN MODULE
+   Clean • Secure • Predictable • Role Safe
+========================================================= */
 
 const API_BASE_URL = "/api";
 
-/* ===================== PAGE LOAD ===================== */
+/* =========================================================
+   INIT
+========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Login page loaded");
-
-  try {
-    const user = getStoredUser();
-    const token = getToken();
-
-    if (user && token) {
-      redirectToDashboard(user);
-    }
-  } catch (e) {
-    console.warn("Auth check skipped:", e.message);
-  }
+  initLogin();
 });
 
-/* ===================== REDIRECT ===================== */
-function redirectToDashboard(user) {
-  if (!user || !user.role) return;
+function initLogin() {
+  const existingUser = getStoredUser();
+  const token = getToken();
 
-  const role = user.role.toUpperCase();
-
-  if (role === "ADMIN") {
-    window.location.href = "/admin-dashboard";
-  } else if (role === "SUPPLIER") {
-    window.location.href = "/supplier-dashboard";
-  } else {
-    window.location.href = "/buyer-dashboard";
-  }
-}
-
-/* ===================== UI HELPERS ===================== */
-function showMessage(message, type = "error") {
-  const status = document.getElementById("status");
-
-  if (!status) {
-    alert(message);
+  // If session already exists → redirect
+  if (existingUser && token) {
+    redirectByRole(existingUser.role);
     return;
   }
 
-  status.textContent = message;
-  status.className = `status ${type}`;
-  status.style.display = "block";
+  bindLoginForm();
 }
 
-function clearMessage() {
-  const status = document.getElementById("status");
-  if (!status) return;
+/* =========================================================
+   LOGIN FORM BINDING
+========================================================= */
+function bindLoginForm() {
+  const form = document.getElementById("loginForm");
+  if (!form) return;
 
-  status.style.display = "none";
-  status.textContent = "";
+  form.addEventListener("submit", handleLoginSubmit);
 }
 
-function setLoading(isLoading) {
-  const btn = document.getElementById("loginBtn");
-  const btnText = document.getElementById("loginBtnText");
+/* =========================================================
+   LOGIN HANDLER
+========================================================= */
+async function handleLoginSubmit(event) {
+  event.preventDefault();
+  clearMessage();
 
-  if (!btn || !btnText) return;
+  const email = getValue("email");
+  const password = getValue("password");
 
-  btn.disabled = isLoading;
-  btnText.innerHTML = isLoading
-    ? '<span class="spinner"></span> Signing in...'
-    : "Sign In";
+  if (!validateEmail(email)) {
+    return showMessage("Enter a valid email address");
+  }
+
+  if (!password) {
+    return showMessage("Password is required");
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (!response.ok) {
+      const errorData = await safeParseJSON(response);
+      throw new Error(errorData?.message || "Invalid credentials");
+    }
+
+    const result = await response.json();
+
+    if (!result.success || !result.token || !result.user) {
+      throw new Error(result.message || "Authentication failed");
+    }
+
+    const user = storeSession(result.token, result.user);
+
+    showMessage("Login successful. Redirecting...", "success");
+
+    setTimeout(() => {
+      redirectByRole(user.role);
+    }, 400);
+
+  } catch (error) {
+    console.error("Login failed:", error.message);
+    showMessage(error.message || "Server error");
+  } finally {
+    setLoading(false);
+  }
 }
 
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+/* =========================================================
+   ROLE REDIRECT (STANDARDIZED)
+========================================================= */
+function redirectByRole(role) {
+  if (!role) return;
+
+  const normalized = role.toLowerCase();
+
+  const routes = {
+    admin: "/admin-dashboard",
+    supplier: "/supplier-dashboard",
+    buyer: "/buyer-dashboard",
+    both: "/buyer-dashboard"
+  };
+
+  window.location.href = routes[normalized] || "/login";
 }
 
-/* ===================== AUTH STORAGE ===================== */
-function storeAuthData(token, userData) {
-  if (!token || !userData) return null;
-
-  const user = {
+/* =========================================================
+   SESSION STORAGE
+========================================================= */
+function storeSession(token, userData) {
+  const sessionUser = {
     id: userData.id,
     email: userData.email,
-    role: userData.role
+    role: userData.role?.toLowerCase()
   };
 
   localStorage.setItem("token", token);
-  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("user", JSON.stringify(sessionUser));
 
-  return user;
+  return sessionUser;
 }
 
 function getStoredUser() {
@@ -101,85 +135,58 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
-function clearAuthData() {
+function clearSession() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
 }
 
-/* ===================== LOGIN SUBMIT ===================== */
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("loginForm");
-  if (!form) return;
+/* =========================================================
+   UI HELPERS
+========================================================= */
+function showMessage(message, type = "error") {
+  const status = document.getElementById("status");
+  if (!status) return;
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    clearMessage();
+  status.textContent = message;
+  status.className = `status ${type}`;
+  status.style.display = "block";
+}
 
-    const emailEl = document.getElementById("email");
-    const passwordEl = document.getElementById("password");
+function clearMessage() {
+  const status = document.getElementById("status");
+  if (!status) return;
 
-    if (!emailEl || !passwordEl) {
-      showMessage("Login form misconfigured");
-      return;
-    }
+  status.textContent = "";
+  status.style.display = "none";
+}
 
-    const email = emailEl.value.trim();
-    const password = passwordEl.value;
+function setLoading(isLoading) {
+  const btn = document.getElementById("loginBtn");
+  const btnText = document.getElementById("loginBtnText");
 
-    if (!validateEmail(email)) {
-      showMessage("Please enter a valid email address");
-      return;
-    }
+  if (!btn || !btnText) return;
 
-    if (!password) {
-      showMessage("Please enter your password");
-      return;
-    }
+  btn.disabled = isLoading;
+  btnText.innerHTML = isLoading
+    ? `<span class="spinner"></span> Signing in...`
+    : "Sign In";
+}
 
-    setLoading(true);
+function getValue(id) {
+  return document.getElementById(id)?.value.trim() || "";
+}
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
-      const result = await response.json();
-
-      if (!result.success || !result.token || !result.user) {
-        showMessage(result.message || "Invalid credentials");
-        setLoading(false);
-        return;
-      }
-
-      const user = storeAuthData(result.token, result.user);
-
-      if (!user) {
-        showMessage("Failed to save session");
-        setLoading(false);
-        return;
-      }
-
-      showMessage("Login successful! Redirecting...", "success");
-
-      setTimeout(() => redirectToDashboard(user), 300);
-
-    } catch (err) {
-      console.error("❌ Login error:", err);
-      showMessage("Server error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  });
-});
-
-/* ===================== HEALTH CHECK (SILENT) ===================== */
-setTimeout(async () => {
+/* =========================================================
+   SAFE JSON PARSER
+========================================================= */
+async function safeParseJSON(response) {
   try {
-    await fetch("/api/_health");
+    return await response.json();
   } catch {
-    console.warn("⚠️ API not reachable");
+    return null;
   }
-}, 1000);
-
+}

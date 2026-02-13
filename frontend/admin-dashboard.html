@@ -46,8 +46,8 @@
       <div class="user-profile">
         <div class="avatar">A</div>
         <div class="user-info">
-          <span class="user-name">Admin</span>
-          <small>Administrator</small>
+          <span class="user-name" id="adminName">Admin</span>
+              <small id="adminRole">Administrator</small>
         </div>
         <button class="icon-btn" id="logoutBtn">
           <i class="fas fa-sign-out-alt"></i>
@@ -203,7 +203,7 @@
 <!-- View Modal -->
 <div id="viewModal" class="modal" style="display:none;">
   <div class="modal-content">
-    <button class="modal-close" onclick="closeModal()">
+    <button class="modal-close" id="modalCloseBtn">
       <i class="fas fa-times"></i>
     </button>
     <div id="modalBody"></div>
@@ -219,8 +219,9 @@
     </textarea>
 
     <div class="modal-actions">
-      <button class="btn btn-secondary"
-        onclick="closeStatusModal()">Cancel</button>
+      <button class="btn btn-secondary" id="cancelStatusBtn">
+  Cancel
+</button>
 
       <button class="btn btn-primary"
         id="confirmStatusBtn">Confirm</button>

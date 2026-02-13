@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const purchaseOrderController = require("../src/controllers/purchaseOrder.controller");
+
 const {
   authenticate,
   authorizeBuyer,
@@ -34,6 +35,7 @@ router.get(
   purchaseOrderController.getPOsByBuyer
 );
 
+
 /* ======================================================
    SUPPLIER ROUTES
 ====================================================== */
@@ -48,6 +50,22 @@ router.get(
   authorizeSupplier,
   purchaseOrderController.getPOsBySupplier
 );
+
+
+/* ======================================================
+   LIFECYCLE ROUTE (CRITICAL)
+====================================================== */
+
+/**
+ * Update PO Status
+ * PUT /api/purchase-orders/:id/status
+ */
+router.put(
+  "/:id/status",
+  authenticate,
+  purchaseOrderController.updatePOStatus
+);
+
 
 /* ======================================================
    SHARED ROUTES

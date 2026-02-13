@@ -1,26 +1,51 @@
 const quoteModel = require("../../models/quote.model");
 const pool = require("../config/db");
+const {
+  sendQuoteNotificationToBuyer
+} = require("../../services/emailService");
 
-/**
- * Supplier submits a quote
- * POST /quotes
- */
+/* =========================================================
+   SUBMIT OR UPDATE QUOTE (Supplier Only)
+   POST /api/quotes
+========================================================= */
 const submitQuote = async (req, res) => {
+
+  const client = await pool.connect();
+
   try {
+
+    if (!["supplier", "both"].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only suppliers can submit quotes"
+      });
+    }
+
     const supplierId = req.user.id;
+    const { rfq_id } = req.body;
 
-    const payload = {
-      ...req.body,
-      supplier_id: supplierId
-    };
+    if (!rfq_id) {
+      return res.status(400).json({
+        success: false,
+        message: "RFQ ID required"
+      });
+    }
 
-    // Optional: prevent quoting own RFQ
-    const rfqCheck = await pool.query(
-      "SELECT buyer_id, status FROM rfqs WHERE id = $1",
-      [payload.rfq_id]
+    await client.query("BEGIN");
+
+    /* -----------------------------------------------------
+       CHECK RFQ EXISTS
+    ----------------------------------------------------- */
+    const rfqCheck = await client.query(
+      `SELECT id, buyer_id, status
+       FROM rfqs
+       WHERE id = $1
+       FOR UPDATE`,
+      [rfq_id]
     );
 
     if (!rfqCheck.rows.length) {
+      await client.query("ROLLBACK");
       return res.status(404).json({
         success: false,
         message: "RFQ not found"
@@ -29,46 +54,116 @@ const submitQuote = async (req, res) => {
 
     const rfq = rfqCheck.rows[0];
 
+    /* -----------------------------------------------------
+       PREVENT QUOTING OWN RFQ
+    ----------------------------------------------------- */
     if (rfq.buyer_id === supplierId) {
+      await client.query("ROLLBACK");
       return res.status(403).json({
         success: false,
         message: "You cannot quote your own RFQ"
       });
     }
 
-    if (rfq.status === "draft") {
+    /* -----------------------------------------------------
+       RFQ MUST BE ACTIVE
+    ----------------------------------------------------- */
+    if (rfq.status !== "active") {
+      await client.query("ROLLBACK");
       return res.status(400).json({
         success: false,
-        message: "Cannot quote draft RFQ"
+        message: "RFQ is not open for quoting"
       });
     }
 
-    const quote = await quoteModel.createQuote(payload);
+    /* -----------------------------------------------------
+       CHECK SUPPLIER ASSIGNMENT
+    ----------------------------------------------------- */
+    const assigned = await quoteModel.checkSupplierAccess(
+      rfq_id,
+      supplierId
+    );
 
-    return res.status(201).json({
+    if (!assigned) {
+      await client.query("ROLLBACK");
+      return res.status(403).json({
+        success: false,
+        message: "You are not assigned to this RFQ"
+      });
+    }
+
+    /* -----------------------------------------------------
+       CREATE OR UPDATE QUOTE
+    ----------------------------------------------------- */
+    const quote = await quoteModel.createOrUpdateQuote({
+      ...req.body,
+      supplier_id: supplierId
+    });
+
+    await client.query("COMMIT");
+
+    /* -----------------------------------------------------
+       SEND EMAIL TO BUYER (NON-BLOCKING)
+    ----------------------------------------------------- */
+    try {
+      const buyerResult = await pool.query(
+        `SELECT email FROM users WHERE id = $1`,
+        [rfq.buyer_id]
+      );
+
+      if (buyerResult.rows.length) {
+        const buyerEmail = buyerResult.rows[0].email;
+
+        await sendQuoteNotificationToBuyer(
+          buyerEmail,
+          rfq_id,
+          req.user.email
+        );
+      }
+    } catch (emailError) {
+      console.error("Quote email notification failed:", emailError);
+      // Do not fail main request
+    }
+
+    return res.status(200).json({
       success: true,
       message: "Quote submitted successfully",
-      data: quote,
+      data: quote
     });
 
   } catch (error) {
+
+    await client.query("ROLLBACK");
+
     console.error("Submit quote error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to submit quote",
+      message: error.message || "Failed to submit quote"
     });
+
+  } finally {
+    client.release();
   }
 };
 
-/**
- * Buyer views quotes for RFQ
- * GET /quotes/rfq/:rfq_id
- */
+
+/* =========================================================
+   GET QUOTES FOR RFQ (Buyer Only)
+   GET /api/quotes/rfq/:rfq_id
+========================================================= */
 const getQuotesByRFQ = async (req, res) => {
+
   try {
+
+    if (req.user.role !== "buyer") {
+      return res.status(403).json({
+        success: false,
+        message: "Only buyers can view RFQ quotes"
+      });
+    }
+
     const rfqId = parseInt(req.params.rfq_id);
-    const buyerId = req.user.id;
 
     if (isNaN(rfqId)) {
       return res.status(400).json({
@@ -77,9 +172,8 @@ const getQuotesByRFQ = async (req, res) => {
       });
     }
 
-    // Verify ownership
     const rfqCheck = await pool.query(
-      "SELECT buyer_id FROM rfqs WHERE id = $1",
+      `SELECT buyer_id FROM rfqs WHERE id = $1`,
       [rfqId]
     );
 
@@ -90,7 +184,7 @@ const getQuotesByRFQ = async (req, res) => {
       });
     }
 
-    if (rfqCheck.rows[0].buyer_id !== buyerId) {
+    if (rfqCheck.rows[0].buyer_id !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: "Access denied"
@@ -101,25 +195,29 @@ const getQuotesByRFQ = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: quotes,
+      data: quotes
     });
 
   } catch (error) {
+
     console.error("Get quotes error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch quotes",
+      message: "Failed to fetch quotes"
     });
   }
 };
 
-/**
- * Get single quote
- * GET /quotes/:id
- */
+
+/* =========================================================
+   GET SINGLE QUOTE (Role Based Access)
+   GET /api/quotes/:id
+========================================================= */
 const getQuoteById = async (req, res) => {
+
   try {
+
     const quoteId = parseInt(req.params.id);
 
     if (isNaN(quoteId)) {
@@ -134,35 +232,32 @@ const getQuoteById = async (req, res) => {
     if (!quote) {
       return res.status(404).json({
         success: false,
-        message: "Quote not found",
+        message: "Quote not found"
       });
     }
 
     const userId = req.user.id;
     const role = req.user.role;
 
-    // Admin can see all
+    /* ---------------- ADMIN ---------------- */
     if (role === "admin") {
-      return res.status(200).json({
-        success: true,
-        data: quote,
-      });
+      return res.json({ success: true, data: quote });
     }
 
-    // Supplier can see own quote
-    if (role === "supplier" || role === "both") {
+    /* ---------------- SUPPLIER ---------------- */
+    if (["supplier", "both"].includes(role)) {
       if (quote.supplier_id !== userId) {
         return res.status(403).json({
           success: false,
-          message: "Access denied",
+          message: "Access denied"
         });
       }
     }
 
-    // Buyer can see if RFQ belongs to them
+    /* ---------------- BUYER ---------------- */
     if (role === "buyer") {
       const rfqCheck = await pool.query(
-        "SELECT buyer_id FROM rfqs WHERE id = $1",
+        `SELECT buyer_id FROM rfqs WHERE id = $1`,
         [quote.rfq_id]
       );
 
@@ -172,28 +267,30 @@ const getQuoteById = async (req, res) => {
       ) {
         return res.status(403).json({
           success: false,
-          message: "Access denied",
+          message: "Access denied"
         });
       }
     }
 
-    return res.status(200).json({
+    return res.json({
       success: true,
-      data: quote,
+      data: quote
     });
 
   } catch (error) {
+
     console.error("Get quote error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch quote",
+      message: "Failed to fetch quote"
     });
   }
 };
 
+
 module.exports = {
   submitQuote,
   getQuotesByRFQ,
-  getQuoteById,
+  getQuoteById
 };

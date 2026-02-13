@@ -1,136 +1,266 @@
 /* =========================================================
-   AUTH HELPERS
+   AXO PO DETAIL – ENTERPRISE LIFECYCLE ENGINE
 ========================================================= */
+
+/* ================= AUTH HELPERS ================= */
+
 function getUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem("user")); }
+  catch { return null; }
 }
 
 function getToken() {
   return localStorage.getItem("token");
 }
 
-/* =========================================================
-   PO ID FROM URL
-========================================================= */
-const params = new URLSearchParams(window.location.search);
-const PO_ID = params.get("id");
-
-if (!PO_ID) {
-  showMessage("Invalid purchase order reference", "error");
+function logout() {
+  localStorage.clear();
+  window.location.href = "/frontend/login.html";
 }
 
-/* =========================================================
-   INIT
-========================================================= */
+/* ================= AUTH GUARD ================= */
+
 document.addEventListener("DOMContentLoaded", () => {
-  if (!getUser() || !getToken()) {
-    window.location.href = "/login";
+  const user = getUser();
+  const token = getToken();
+
+  if (!user || !token) {
+    logout();
     return;
   }
 
-  loadPODetail();
+  document.getElementById("userEmail").textContent = user.email;
+
+  const poId = getPOIdFromURL();
+  if (!poId) {
+    alert("Invalid PO ID");
+    return;
+  }
+
+  loadPO(poId);
 });
 
 /* =========================================================
-   LOAD PO DETAILS (DB ONLY)
+   LOAD PO DETAILS
 ========================================================= */
-async function loadPODetail() {
-  try {
-    clearMessage();
 
-    const po = await fetchPO();
+let currentPO = null;
+
+async function loadPO(poId) {
+  try {
+    const po = await api(`/api/purchase-orders/${poId}`);
+    currentPO = po;
+
     renderPO(po);
-    hideSkeletons();
+    renderLifecycleControls(po);
 
   } catch (err) {
     console.error(err);
-    showMessage("Failed to load purchase order details", "error");
+    alert("Failed to load purchase order");
   }
+  renderTimeline(po.status);
 }
 
 /* =========================================================
-   API CALL
+   RENDER CORE DETAILS
 ========================================================= */
-async function fetchPO() {
-  const res = await fetch(`/api/purchase-orders/${PO_ID}`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`
-    }
-  });
 
-  const result = await res.json();
-
-  if (!result.success) {
-    throw new Error(result.message || "Failed to fetch PO");
-  }
-
-  return result.data;
-}
-
-/* =========================================================
-   RENDER
-========================================================= */
 function renderPO(po) {
   setText("poId", po.id);
   setText("rfqId", po.rfq_id);
-  setText("supplier", po.supplier_id);
+  setText("partName", po.part_name);
   setText("quantity", po.quantity);
-  setText("price", `₹${po.price}`);
-  setText("createdAt", formatDate(po.created_at));
+  setText("price", `₹ ${po.price}`);
+  setText("material", po.material_specification || "-");
+  setText("delivery", po.delivery_timeline || "-");
 
-  const statusEl = document.getElementById("poStatus");
-  statusEl.textContent = po.status.toUpperCase();
-  statusEl.classList.remove("skeleton");
+  setStatusBadge(po.status);
+}
+
+/* =========================================================
+   LIFECYCLE ENGINE
+========================================================= */
+
+function renderLifecycleControls(po) {
+
+  const section = document.getElementById("lifecycleSection");
+  const container = document.getElementById("lifecycleButtons");
+  const user = getUser();
+
+  container.innerHTML = "";
+  section.classList.remove("hidden");
+
+  const nextActions = getAllowedNextActions(po.status, user, po);
+
+  if (!nextActions.length) {
+    container.innerHTML = "<p>No actions available</p>";
+    return;
+  }
+
+  nextActions.forEach(status => {
+    const btn = document.createElement("button");
+    btn.className = "primary-btn";
+    btn.textContent = formatStatus(status);
+    btn.onclick = () => updateStatus(status);
+    container.appendChild(btn);
+  });
+}
+
+/* =========================================================
+   STATUS TRANSITION LOGIC
+========================================================= */
+
+function getAllowedNextActions(currentStatus, user, po) {
+
+  const transitions = {
+    issued: ["confirmed"],
+    confirmed: ["in_production"],
+    in_production: ["shipped"],
+    shipped: ["delivered"],
+    delivered: ["completed"],
+    completed: []
+  };
+
+  const next = transitions[currentStatus] || [];
+
+  return next.filter(status => {
+
+    // Supplier controls production flow
+    if (["confirmed", "in_production", "shipped", "delivered"].includes(status)) {
+      return po.supplier_id === user.id;
+    }
+
+    // Buyer controls completion
+    if (status === "completed") {
+      return po.buyer_id === user.id;
+    }
+
+    return false;
+  });
+}
+
+/* =========================================================
+   UPDATE STATUS
+========================================================= */
+
+async function updateStatus(newStatus) {
+
+  if (!confirm(`Confirm change to ${newStatus}?`)) return;
+
+  try {
+    await api(`/api/purchase-orders/${currentPO.id}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status: newStatus })
+    });
+
+    await loadPO(currentPO.id);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update status");
+  }
+}
+
+/* =========================================================
+   API WRAPPER
+========================================================= */
+
+async function api(url, options = {}) {
+
+  const response = await fetch(url, {
+    method: options.method || "GET",
+    headers: {
+      "Authorization": `Bearer ${getToken()}`,
+      "Content-Type": "application/json"
+    },
+    body: options.body
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    logout();
+    return;
+  }
+
+  if (!response.ok) {
+    throw new Error("Network error");
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.message);
+  }
+
+  return data.data;
 }
 
 /* =========================================================
    HELPERS
 ========================================================= */
+
+function getPOIdFromURL() {
+  return new URLSearchParams(window.location.search).get("id");
+}
+
 function setText(id, value) {
   const el = document.getElementById(id);
-  if (!el) return;
-
-  el.textContent = value;
-  el.classList.remove("skeleton");
+  if (el) el.textContent = value;
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return "-";
-  return new Date(dateStr).toLocaleDateString();
+function setStatusBadge(status) {
+  const badge = document.getElementById("poStatus");
+  badge.textContent = formatStatus(status);
+  badge.className = `status-badge ${status}`;
 }
 
-function hideSkeletons() {
-  document.querySelectorAll(".skeleton").forEach(el => {
-    el.classList.add("fade-out");
-    setTimeout(() => el.remove(), 300);
-  });
+function formatStatus(status) {
+  return status.replace("_", " ").toUpperCase();
 }
 
 function goBack() {
-  window.history.back();
+  const user = getUser();
+  if (user.role === "buyer") {
+    window.location.href = "/frontend/buyer-po.html";
+  } else {
+    window.location.href = "/frontend/supplier-dashboard.html";
+  }
 }
 
-/* =========================================================
-   STATUS MESSAGE (TOP CENTER)
-========================================================= */
-function showMessage(text, type = "error") {
-  const box = document.getElementById("statusMessage");
-  if (!box) return;
+function renderTimeline(status) {
 
-  box.textContent = text;
-  box.className = `status-message ${type}`;
-  box.style.display = "block";
+  const steps = [
+    "issued",
+    "confirmed",
+    "in_production",
+    "shipped",
+    "delivered",
+    "completed"
+  ];
 
-  setTimeout(() => {
-    box.style.display = "none";
-  }, 4000);
-}
+  const container = document.getElementById("poTimeline");
+  container.innerHTML = "";
 
-function clearMessage() {
-  const box = document.getElementById("statusMessage");
-  if (box) box.style.display = "none";
+  const currentIndex = steps.indexOf(status);
+
+  steps.forEach((step, index) => {
+
+    const div = document.createElement("div");
+    div.className = "timeline-step";
+
+    if (index < currentIndex) {
+      div.classList.add("completed");
+    }
+
+    if (index === currentIndex) {
+      div.classList.add("active");
+    }
+
+    div.innerHTML = `
+      <div class="timeline-circle">${index + 1}</div>
+      <div class="timeline-label">
+        ${step.replace("_", " ").toUpperCase()}
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
 }
