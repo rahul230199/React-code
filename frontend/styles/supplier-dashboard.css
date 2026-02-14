@@ -1,27 +1,26 @@
 /* =========================================================
-   ROOT VARIABLES (ENTERPRISE TUNED)
+   ROOT SYSTEM
 ========================================================= */
 :root {
   --primary: #1e3a8a;
   --primary-light: #3b82f6;
-  --secondary: #10b981;
+  --success: #10b981;
 
-  --foreground: #111827;
-  --foreground-light: #374151;
-  --muted: #6b7280;
+  --text-dark: #111827;
+  --text-light: #6b7280;
 
-  --bg: #f8fafc;
-  --card: #ffffff;
+  --bg-page: #f4f6fb;
+  --bg-card: #ffffff;
   --border: #e5e7eb;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
 
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 20px rgba(0,0,0,0.06);
+  --shadow-sm: 0 6px 16px rgba(0,0,0,0.05);
+  --shadow-md: 0 14px 40px rgba(0,0,0,0.08);
 
-  --transition: all 0.2s ease;
+  --transition: all 0.28s ease;
 }
 
 /* =========================================================
@@ -35,21 +34,18 @@
 
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--foreground);
+  background: var(--bg-page);
+  color: var(--text-dark);
+  line-height: 1.6;
 }
 
 /* =========================================================
-   HEADER (CLEAN / ENTERPRISE)
+   HEADER
 ========================================================= */
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
   background: #ffffff;
   border-bottom: 1px solid var(--border);
-  padding: 14px 18px;
-
+  padding: 18px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -58,18 +54,17 @@ body {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 .logo {
-  font-family: "Outfit", sans-serif;
+  font-size: 22px;
   font-weight: 600;
-  font-size: 18px;
 }
 
 .role-badge {
-  font-size: 11px;
-  padding: 4px 10px;
+  font-size: 12px;
+  padding: 6px 14px;
   border-radius: 999px;
   background: var(--primary-light);
   color: #fff;
@@ -78,263 +73,260 @@ body {
 .user-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
 }
 
-.truncate {
-  max-width: 160px;
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.user-info span {
+  font-size: 14px;
+  color: var(--text-light);
 }
 
-.ghost-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  padding: 7px 12px;
+.user-info button {
+  padding: 8px 18px;
   border-radius: 999px;
-  font-size: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
   cursor: pointer;
+  transition: var(--transition);
 }
 
-.ghost-btn:hover {
-  background: var(--foreground);
+.user-info button:hover {
+  background: var(--primary);
   color: #fff;
+  border-color: var(--primary);
+  transform: translateY(-2px);
 }
 
 /* =========================================================
-   MAIN LAYOUT
+   TABS
+========================================================= */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  padding: 22px 0 0;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 0;
+  color: var(--text-light);
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+}
+
+.tab-btn:hover {
+  color: var(--primary);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+}
+
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+/* =========================================================
+   TAB PANELS WITH ANIMATION
+========================================================= */
+.tab-panel {
+  display: none;
+  animation: fadeSlide 0.4s ease forwards;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Animation */
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   MAIN CONTAINER (CENTERED)
 ========================================================= */
 .dashboard {
   max-width: 1280px;
-  margin: auto;
-  padding: 24px 16px 80px;
+  margin: 0 auto;
+  padding: 60px 30px 120px;
 }
 
 /* =========================================================
-   PAGE HEAD
+   CARDS
 ========================================================= */
-.page-head {
-  margin-bottom: 18px;
-}
-
-.page-head h1 {
-  font-family: "Outfit", sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.page-head p {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-/* =========================================================
-   ACTION STRIP (SYSTEM NOTICE)
-========================================================= */
-.action-strip {
-  background: #fef2f2;
-  color: #991b1b;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  margin-bottom: 16px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.action-strip.hidden {
-  display: none;
-}
-
-/* =========================================================
-   SUMMARY CARDS (EXECUTIVE STYLE)
-========================================================= */
-.summary {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
 .card {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--bg-card);
   border-radius: var(--radius-md);
-  padding: 18px;
+  padding: 26px;
   box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-md);
 }
 
 .card h3 {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--foreground-light);
+  color: var(--text-light);
 }
 
 .card p {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 600;
-  margin-top: 6px;
-}
-
-.card span {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--muted);
+  margin-top: 12px;
 }
 
 /* =========================================================
-   CHARTS (CALM / ANALYTICAL)
+   SUMMARY GRID
+========================================================= */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 30px;
+  margin-bottom: 60px;
+}
+
+/* =========================================================
+   CHART SECTION
 ========================================================= */
 .charts-section {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 18px;
-  margin: 28px 0;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 40px;
+  margin-bottom: 70px;
 }
 
 .chart-card {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--bg-card);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 24px;
   box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+.chart-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
 .chart-card h3 {
-  font-size: 13px;
+  font-size: 16px;
+  margin-bottom: 18px;
   font-weight: 600;
-  margin-bottom: 10px;
-  color: var(--foreground-light);
 }
 
 /* =========================================================
-   TABLES (RFQ + PO — SAME STYLE)
+   TABLE SECTION
 ========================================================= */
 .table-section {
-  margin-top: 28px;
+  margin-bottom: 70px;
 }
 
 .table-section h3 {
-  font-family: "Outfit", sans-serif;
-  font-size: 16px;
-  margin-bottom: 12px;
-}
-
-.table-wrap {
-  overflow-x: auto;
-  border-radius: var(--radius-lg);
+  font-size: 20px;
+  margin-bottom: 22px;
+  font-weight: 600;
 }
 
 table {
   width: 100%;
-  min-width: 700px;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: #ffffff;
+  border-collapse: collapse;
+  background: var(--bg-card);
   border-radius: var(--radius-lg);
+  overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 
 thead th {
   background: #f9fafb;
-  color: var(--foreground-light);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 14px 16px;
+  padding: 18px;
   text-align: left;
   border-bottom: 1px solid var(--border);
 }
 
 tbody td {
-  padding: 16px;
-  font-size: 13px;
+  padding: 18px;
+  font-size: 14px;
   border-bottom: 1px solid var(--border);
-  vertical-align: middle;
+}
+
+tbody tr {
+  transition: var(--transition);
+}
+
+tbody tr:hover {
+  background: #f9fafb;
+  transform: scale(1.01);
 }
 
 tbody tr:last-child td {
   border-bottom: none;
 }
 
-tbody tr:hover {
-  background: #f9fafb;
-}
-
-/* =========================================================
-   STATUS BADGES (PROFESSIONAL TERMS)
-========================================================= */
-.status {
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-/* Supplier Action Required */
-.status.supplier_action {
-  background: #eef2ff;
-  color: #1e3a8a;
-}
-
-/* Buyer Review Pending */
-.status.buyer_review {
-  background: #f5f3ff;
-  color: #4c1d95;
-}
-
-/* Purchase Order Issued */
-.status.po {
-  background: #ecfdf5;
-  color: #065f46;
-}
-
-/* =========================================================
-   ACTION BUTTONS
-========================================================= */
 table button {
   background: var(--primary);
   color: #fff;
-  border: none;
-  padding: 7px 14px;
+  padding: 8px 22px;
   border-radius: 999px;
-  font-size: 12px;
+  border: none;
+  font-size: 13px;
   cursor: pointer;
+  transition: var(--transition);
 }
 
 table button:hover {
-  opacity: 0.9;
-}
-
-/* =========================================================
-   MISC
-========================================================= */
-.muted {
-  color: var(--muted);
-  font-size: 12px;
+  background: var(--primary-light);
+  transform: translateY(-2px);
 }
 
 /* =========================================================
    RESPONSIVE
 ========================================================= */
-@media (min-width: 768px) {
-  .summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
+@media (max-width: 768px) {
 
-@media (min-width: 1024px) {
-  .summary {
-    grid-template-columns: repeat(4, 1fr);
+  .dashboard {
+    padding: 40px 20px 80px;
+  }
+
+  .tabs {
+    gap: 30px;
+  }
+
+  .card p {
+    font-size: 24px;
   }
 
   .charts-section {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
   }
 }
 

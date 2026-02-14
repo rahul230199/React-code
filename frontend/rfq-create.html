@@ -4,102 +4,73 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Create RFQ | AXO Networks</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles/rfq-create.css" />
+  <link rel="stylesheet" href="/styles/rfq-create.css" />
+  <style>
+    /* Remove any header/back button styles when embedded */
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .embedded .topbar {
+      display: none;
+    }
+  </style>
 </head>
-
-<body>
-
-  <!-- ================= TOP BAR ================= -->
-  <header class="topbar">
-    <div class="logo">AXO Networks</div>
-
-    <div class="topbar-right">
-      <span id="userEmail"></span>
-      <button class="secondary-btn" onclick="goBack()">Back</button>
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-  </header>
-
-  <!-- ================= MAIN ================= -->
-  <main class="page-wrapper">
-
+<body class="embedded">
+  <!-- ===== NO HEADER OR BACK BUTTON HERE ===== -->
+  <!-- Just the form content -->
+  <main class="page-wrapper" style="margin-top: 0;">
     <div class="page-header">
       <h1>Create New RFQ</h1>
-      <p class="subtitle">
-        Submit detailed part requirements for supplier quotations.
-      </p>
+      <p class="subtitle">Submit detailed part requirements for supplier quotations.</p>
     </div>
 
-    <!-- ================= FORM ================= -->
     <form id="rfqForm" class="rfq-form" novalidate>
-
-      <!-- ===== SECTION 1: BASIC INFO ===== -->
+      <!-- Rest of your form stays exactly the same -->
       <section class="form-section">
         <h2>Basic Information</h2>
-
         <div class="form-grid">
-
           <div class="form-group">
             <label for="part_name">Part Name *</label>
             <input type="text" id="part_name" name="part_name" required />
-            <span class="error-text"></span>
           </div>
-
           <div class="form-group">
             <label for="part_id">Part ID / Code *</label>
             <input type="text" id="part_id" name="part_id" required />
-            <span class="error-text"></span>
           </div>
-
         </div>
       </section>
 
-      <!-- ===== SECTION 2: QUANTITY & PRICING ===== -->
       <section class="form-section">
         <h2>Quantity & Pricing</h2>
-
         <div class="form-grid">
-
           <div class="form-group">
             <label for="total_quantity">Total Quantity *</label>
             <input type="number" id="total_quantity" name="total_quantity" min="1" required />
-            <span class="error-text"></span>
           </div>
-
           <div class="form-group">
             <label for="batch_quantity">Batch Quantity *</label>
             <input type="number" id="batch_quantity" name="batch_quantity" min="1" required />
-            <span class="error-text"></span>
           </div>
-
           <div class="form-group">
             <label for="target_price">Target Price (Optional)</label>
             <input type="number" step="0.01" id="target_price" name="target_price" />
           </div>
-
           <div class="form-group">
             <label for="delivery_timeline">Delivery Timeline *</label>
             <input type="text" id="delivery_timeline" name="delivery_timeline" placeholder="e.g. 6-8 Weeks" required />
-            <span class="error-text"></span>
           </div>
-
         </div>
       </section>
 
-      <!-- ===== SECTION 3: TECHNICAL DETAILS ===== -->
       <section class="form-section">
         <h2>Technical Specifications</h2>
-
         <div class="form-grid">
-
           <div class="form-group full-width">
             <label for="material_specification">Material Specification *</label>
             <textarea id="material_specification" name="material_specification" rows="4" required></textarea>
-            <span class="error-text"></span>
           </div>
-
           <div class="form-group">
             <label for="ppap_level">PPAP Level *</label>
             <select id="ppap_level" name="ppap_level" required>
@@ -110,41 +81,26 @@
               <option value="Level 4">Level 4</option>
               <option value="Level 5">Level 5</option>
             </select>
-            <span class="error-text"></span>
           </div>
-
         </div>
       </section>
 
-      <!-- ===== SECTION 4: FILE UPLOAD ===== -->
       <section class="form-section">
         <h2>Technical Drawings / Documents</h2>
-
         <div class="form-group full-width">
           <label for="rfq_files">Upload Files (PDF / STEP / DOCX)</label>
           <input type="file" id="rfq_files" name="rfq_files" multiple />
-          <small class="helper-text">
-            Max 10MB per file. Allowed formats: PDF, STEP, DOCX.
-          </small>
+          <small class="helper-text">Max 10MB per file. Allowed formats: PDF, STEP, DOCX.</small>
         </div>
       </section>
 
-      <!-- ===== ACTIONS ===== -->
       <div class="form-actions">
-        <button type="button" class="secondary-btn" id="saveDraftBtn">
-          Save as Draft
-        </button>
-
-        <button type="submit" class="primary-btn">
-          Submit RFQ
-        </button>
+        <button type="button" class="secondary-btn" id="saveDraftBtn">Save as Draft</button>
+        <button type="submit" class="primary-btn">Submit RFQ</button>
       </div>
-
     </form>
-
   </main>
 
-  <!-- JS -->
-  <script src="./js/rfq-create.js"></script>
+  <script src="/js/rfq-create.js"></script>
 </body>
 </html>

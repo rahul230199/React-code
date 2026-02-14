@@ -19,7 +19,7 @@ require("dotenv").config({
   path: path.resolve(__dirname, envFile),
 });
 
-console.log("🌍 Running Mode:", process.env.NODE_ENV || "local");
+console.log("🌍 Running Mode:", process.env.NODE_ENV || "production");
 console.log("📦 Using ENV File:", envFile);
 
 /* =========================================================

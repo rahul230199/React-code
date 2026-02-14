@@ -1,284 +1,196 @@
 /* =========================================================
-   AXO BUYER DASHBOARD – ENTERPRISE COMMAND CENTER
+   AUTH HELPERS
 ========================================================= */
-
-/* ================= AUTH ================= */
-
 function getUser() {
-  try { return JSON.parse(localStorage.getItem("user")); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
 }
 
 function getToken() {
   return localStorage.getItem("token");
 }
 
-(function authGuard() {
-  const user = getUser();
-  const token = getToken();
-  if (!user || !token || user.role?.toLowerCase() !== "buyer") {
-    logout();
-  }
-})();
-
-/* ================= GLOBAL STATE ================= */
-
-let dashboardData = null;
-let pieChart = null;
-let barChart = null;
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  window.location.href = "/portal-login";
+}
 
 /* =========================================================
    INIT
 ========================================================= */
+document.addEventListener("DOMContentLoaded", () => {
 
-document.addEventListener("DOMContentLoaded", async () => {
+  const user = getUser();
+  const token = getToken();
 
-  document.getElementById("userEmail").textContent = getUser().email;
-
-  showSkeletons();
-  await loadDashboard();
-});
-
-/* =========================================================
-   LOAD DASHBOARD (ONE API ONLY)
-========================================================= */
-
-async function loadDashboard() {
-
-  try {
-
-    const data = await fetchAPI("/api/buyer/dashboard");
-
-    dashboardData = data;
-
-    hideSkeletons();
-
-    renderStats(data.stats);
-    renderTable(data.rfqs);
-    renderCharts(data.rfqs);
-    renderRecentQuotes(data.recent_quotes);
-
-  } catch (err) {
-
-    hideSkeletons();
-    showError("Unable to load dashboard data.");
-
-  }
-}
-
-/* =========================================================
-   API WRAPPER
-========================================================= */
-
-async function fetchAPI(url) {
-
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`
-    }
-  });
-
-  if (response.status === 401 || response.status === 403) {
+  if (!user || !token || user.role !== "buyer") {
     logout();
     return;
   }
 
-  if (!response.ok) throw new Error("Network error");
+  const emailEl = document.getElementById("userEmail");
+  if (emailEl) emailEl.textContent = user.email;
 
-  const result = await response.json();
+  initTabs();            // 🔥 TAB SYSTEM INIT
+  initCreateButton();    // 🔥 BUTTON INIT
+  loadDashboard();       // 🔥 LOAD DATA
+});
 
-  if (!result.success) throw new Error(result.message);
+/* =========================================================
+   TAB SYSTEM
+========================================================= */
+function initTabs() {
 
-  return result.data;
+  const tabButtons = document.querySelectorAll(".tab-btn");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+
+  if (!tabButtons.length) return;
+
+  tabButtons.forEach(button => {
+    button.addEventListener("click", () => {
+
+      const targetId = button.getAttribute("data-tab");
+
+      // Remove active
+      tabButtons.forEach(btn => btn.classList.remove("active"));
+      tabPanels.forEach(panel => panel.classList.remove("active"));
+
+      // Activate selected
+      button.classList.add("active");
+
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) {
+        targetPanel.classList.add("active");
+      }
+    });
+  });
 }
 
 /* =========================================================
-   STATS
+   CREATE RFQ BUTTON
 ========================================================= */
-
-function renderStats(stats) {
-
-  setStat("totalRfqs", stats.total_rfqs);
-  setStat("draftRfqs", stats.draft_rfqs);
-  setStat("activeRfqs", stats.active_rfqs);
-  setStat("closedRfqs", stats.closed_rfqs);
-  setStat("totalQuotes", stats.total_quotes);
-  setStat("totalPos", stats.total_pos);
+function initCreateButton() {
+  const createBtn = document.getElementById("createRfqBtn");
+  if (createBtn) {
+    createBtn.addEventListener("click", goToCreateRFQ);
+  }
 }
 
-function setStat(id, value) {
+/* =========================================================
+   LOAD DASHBOARD
+========================================================= */
+async function loadDashboard() {
+  try {
+
+    const res = await fetch("/api/buyer/dashboard", {
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
+    });
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        return;
+      }
+      throw new Error("Failed to fetch dashboard");
+    }
+
+    const result = await res.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "API error");
+    }
+
+    const data = result.data || {};
+    const rfqs = data.rfqs || [];
+
+    renderSummary(rfqs);
+    renderPipeline(rfqs);
+    renderTable(rfqs);
+
+  } catch (err) {
+    console.error("Dashboard error:", err);
+  }
+}
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+function renderSummary(rfqs) {
+  const section = document.getElementById("summarySection");
+  if (!section) return;
+
+  section.innerHTML = `
+    <div class="card"><h3>Total RFQs</h3><p>${rfqs.length}</p></div>
+    <div class="card"><h3>Active RFQs</h3><p>${count(rfqs, "active")}</p></div>
+    <div class="card"><h3>Quotes Received</h3><p>${count(rfqs, "quoted")}</p></div>
+    <div class="card"><h3>Purchase Orders</h3><p>${count(rfqs, "closed")}</p></div>
+  `;
+}
+
+function count(arr, status) {
+  return arr.filter(r => r.status === status).length;
+}
+
+/* =========================================================
+   PIPELINE
+========================================================= */
+function renderPipeline(rfqs) {
+  setPipeline("draftCount", count(rfqs, "draft"));
+  setPipeline("activeCount", count(rfqs, "active"));
+  setPipeline("quotesCount", count(rfqs, "quoted"));
+  setPipeline("poCount", count(rfqs, "closed"));
+}
+
+function setPipeline(id, value) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.textContent = value ?? 0;
+  el.textContent = value;
 }
 
 /* =========================================================
-   RFQ TABLE
+   TABLE
 ========================================================= */
-
 function renderTable(rfqs) {
-
   const tbody = document.getElementById("rfqTableBody");
+  if (!tbody) return;
+
   tbody.innerHTML = "";
 
   if (!rfqs.length) {
     tbody.innerHTML =
-      `<tr><td colspan="7">No RFQs found</td></tr>`;
+      `<tr><td colspan="5">No RFQs found</td></tr>`;
     return;
   }
 
   rfqs.forEach(rfq => {
-
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${escapeHTML(rfq.id)}</td>
-      <td>${escapeHTML(rfq.part_name)}</td>
-      <td>${escapeHTML(rfq.total_quantity)}</td>
-      <td>${rfq.assigned_count || 0}</td>
-      <td>${rfq.quote_count || 0}</td>
-      <td>
-        <span class="status ${rfq.status}">
-          ${rfq.status.toUpperCase()}
-        </span>
-      </td>
-      <td>
-        <button class="primary-btn"
-          onclick="viewRFQ(${rfq.id})">
-          View
-        </button>
-      </td>
-    `;
-
-    tbody.appendChild(row);
+    tbody.insertAdjacentHTML(
+      "beforeend",
+      `
+      <tr>
+        <td>${rfq.id}</td>
+        <td>${rfq.part_name}</td>
+        <td>${rfq.total_quantity}</td>
+        <td>${rfq.status.toUpperCase()}</td>
+        <td>
+          <button onclick="viewRFQ(${rfq.id})">
+            View
+          </button>
+        </td>
+      </tr>
+      `
+    );
   });
-}
-
-/* =========================================================
-   RECENT QUOTES PANEL
-========================================================= */
-
-function renderRecentQuotes(quotes) {
-
-  const container = document.getElementById("recentQuotesContainer");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  if (!quotes || !quotes.length) {
-    container.innerHTML = "<div>No recent quotes</div>";
-    return;
-  }
-
-  quotes.forEach(q => {
-
-    const div = document.createElement("div");
-    div.className = "recent-quote-item";
-
-    div.innerHTML = `
-      <strong>RFQ #${q.rfq_id}</strong>
-      <p>${escapeHTML(q.supplier_email)} quoted ₹${q.price}</p>
-    `;
-
-    container.appendChild(div);
-  });
-}
-
-/* =========================================================
-   CHARTS
-========================================================= */
-
-function renderCharts(rfqs) {
-
-  renderPie(rfqs);
-  renderBar(rfqs);
-}
-
-function renderPie(rfqs) {
-
-  const counts = {};
-
-  rfqs.forEach(r => {
-    counts[r.status] = (counts[r.status] || 0) + 1;
-  });
-
-  if (pieChart) pieChart.destroy();
-
-  pieChart = new Chart(
-    document.getElementById("rfqPieChart"),
-    {
-      type: "doughnut",
-      data: {
-        labels: Object.keys(counts),
-        datasets: [{
-          data: Object.values(counts),
-          backgroundColor: [
-            "#2563eb",
-            "#10b981",
-            "#f59e0b",
-            "#ef4444"
-          ]
-        }]
-      }
-    }
-  );
-}
-
-function renderBar(rfqs) {
-
-  const monthly = {};
-
-  rfqs.forEach(r => {
-
-    const key = new Date(r.created_at)
-      .toLocaleString("default", { month: "short" });
-
-    monthly[key] = (monthly[key] || 0) + 1;
-  });
-
-  if (barChart) barChart.destroy();
-
-  barChart = new Chart(
-    document.getElementById("rfqBarChart"),
-    {
-      type: "bar",
-      data: {
-        labels: Object.keys(monthly),
-        datasets: [{
-          data: Object.values(monthly),
-          backgroundColor: "#2563eb"
-        }]
-      }
-    }
-  );
-}
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function escapeHTML(str) {
-  return String(str).replace(/[<>&"']/g, "");
-}
-
-function showSkeletons() {
-  document.querySelectorAll(".skeleton")
-    .forEach(el => el.classList.remove("hidden"));
-}
-
-function hideSkeletons() {
-  document.querySelectorAll(".skeleton")
-    .forEach(el => el.classList.add("hidden"));
-}
-
-function showError(msg) {
-  console.error(msg);
 }
 
 /* =========================================================
    NAVIGATION
 ========================================================= */
-
 function viewRFQ(id) {
   window.location.href = `/rfq-detail?id=${id}`;
 }
@@ -287,11 +199,3 @@ function goToCreateRFQ() {
   window.location.href = `/rfq-create`;
 }
 
-function goToPO() {
-  window.location.href = `/buyer-po`;
-}
-
-function logout() {
-  localStorage.clear();
-  window.location.href = "/login";
-}

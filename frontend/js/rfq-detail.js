@@ -1,274 +1,274 @@
-/* =========================================================
-   AXO RFQ DETAIL – FULL LIFECYCLE + QUOTE ENGINE
-========================================================= */
+// =====================================================
+// RFQ DETAIL JS - COMPLETE
+// =====================================================
 
-function getUser() {
-  try { return JSON.parse(localStorage.getItem("user")); }
-  catch { return null; }
-}
+let currentRfqId = null;
 
-function getToken() {
-  return localStorage.getItem("token");
-}
-
-(function authGuard() {
-  const user = getUser();
-  const token = getToken();
-  if (!user || !token) {
-    window.location.href = "/frontend/login.html";
-  }
-})();
-
-let rfqId = null;
-let currentUser = getUser();
-let currentRFQ = null;
-let existingSupplierQuote = null;
-
-document.addEventListener("DOMContentLoaded", async () => {
-
-  document.getElementById("userEmail").textContent = currentUser.email;
-
-  rfqId = getRFQIdFromURL();
-  if (!rfqId) return;
-
-  await loadRFQDetails();
-  await loadFiles();
-  await loadQuotes();
-  await loadMessages();
-
-  setupLifecycleButtons();
-  setupQuoteButton();
-
-  document
-    .getElementById("sendMessageBtn")
-    ?.addEventListener("click", sendMessage);
+document.addEventListener('DOMContentLoaded', () => {
+    // Get RFQ ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    currentRfqId = urlParams.get('id');
+    
+    if (currentRfqId) {
+        loadRfqDetail(currentRfqId);
+    }
+    
+    // Setup message input
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
 });
 
-/* =========================================================
-   LOAD RFQ DETAILS
-========================================================= */
-
-async function loadRFQDetails() {
-
-  const rfq = await fetchAPI(`/api/rfqs/${rfqId}`);
-  currentRFQ = rfq;
-
-  setText("rfqPartName", rfq.part_name);
-  setText("rfqId", rfq.id);
-  setText("rfqCreated", formatDate(rfq.created_at));
-
-  setText("detailPartId", rfq.part_id);
-  setText("detailTotalQty", rfq.total_quantity);
-  setText("detailBatchQty", rfq.batch_quantity);
-  setText("detailTargetPrice", rfq.target_price || "-");
-  setText("detailDelivery", rfq.delivery_timeline);
-  setText("detailPpap", rfq.ppap_level);
-  setText("detailMaterial", rfq.material_specification);
-
-  setStatusBadge(rfq.status);
-
-  controlLifecycleUI(rfq.status);
-  controlSupplierQuoteUI(rfq.status);
-}
-
-/* =========================================================
-   SUPPLIER QUOTE UI CONTROL
-========================================================= */
-
-async function controlSupplierQuoteUI(status) {
-
-  const section = document.getElementById("supplierQuoteSection");
-
-  if (!section) return;
-
-  if (
-    (currentUser.role === "supplier" || currentUser.role === "both") &&
-    status === "active"
-  ) {
-
-    // Check assignment
+// Load RFQ details
+async function loadRfqDetail(rfqId) {
+    if (!rfqId) return;
+    
     try {
-      await fetchAPI(`/api/rfqs/${rfqId}`); // access already validated
-      section.classList.remove("hidden");
+        showSkeletons();
 
-      await loadExistingSupplierQuote();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/buyer/rfq/${rfqId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-    } catch {
-      section.classList.add("hidden");
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/portal-login';
+                return;
+            }
+            throw new Error('Failed to load RFQ details');
+        }
+
+        const rfq = await response.json();
+
+        // Update detail view
+        document.getElementById('detailRfqIdDisplay').textContent = `RFQ ID: ${rfq.rfqId}`;
+        document.getElementById('detailPartName').textContent = rfq.partName || 'N/A';
+        document.getElementById('detailTotalQty').textContent = rfq.totalQuantity ? rfq.totalQuantity.toLocaleString() : '0';
+
+        const statusEl = document.getElementById('detailRfqStatus');
+        if (statusEl) {
+            statusEl.textContent = rfq.status || 'Draft';
+            statusEl.className = `status-badge ${(rfq.status || 'draft').toLowerCase()}`;
+        }
+
+        document.getElementById('detailCreatedDate').textContent = rfq.createdAt ? new Date(rfq.createdAt).toLocaleDateString() : 'N/A';
+        document.getElementById('detailDeliveryTimeline').textContent = rfq.deliveryTimeline || 'Not specified';
+        document.getElementById('detailPpapLevel').textContent = rfq.ppapLevel || 'Not specified';
+        document.getElementById('detailMaterialSpec').textContent = rfq.materialSpec || 'No specification';
+
+        updateDetailFiles(rfq.files);
+        updateDetailQuotes(rfq.quotes);
+        updateDetailMessages(rfq.messages);
+
+        if (rfq.purchaseOrder) {
+            showDetailPurchaseOrder(rfq.purchaseOrder);
+        }
+
+        hideSkeletons();
+
+    } catch (error) {
+        console.error('Error loading RFQ details:', error);
+        showStatusMessage('Failed to load RFQ details', 'error');
+        hideSkeletons();
+    }
+}
+
+function updateDetailFiles(files) {
+    const fileList = document.getElementById('detailFileList');
+    if (!fileList) return;
+
+    if (!files || files.length === 0) {
+        fileList.innerHTML = '<li class="file-item">No files uploaded</li>';
+        return;
     }
 
-  } else {
-    section.classList.add("hidden");
-  }
+    fileList.innerHTML = files.map(file => `
+        <li class="file-item">
+            <a href="${file.url}" target="_blank">${file.name}</a>
+        </li>
+    `).join('');
 }
 
-async function loadExistingSupplierQuote() {
+function updateDetailQuotes(quotes) {
+    const quotesContainer = document.getElementById('quotesContainer');
+    if (!quotesContainer) return;
 
-  const quotes = await fetchAPI(`/api/quotes/rfq/${rfqId}`);
-
-  existingSupplierQuote = quotes.find(
-    q => q.supplier_id === currentUser.id
-  );
-
-  if (existingSupplierQuote) {
-
-    document.getElementById("quotePrice").value = existingSupplierQuote.price;
-    document.getElementById("quoteBatchQty").value = existingSupplierQuote.batch_quantity;
-    document.getElementById("quoteDelivery").value = existingSupplierQuote.delivery_timeline;
-    document.getElementById("quoteMaterial").value = existingSupplierQuote.material_specification;
-    document.getElementById("quoteCertifications").value = existingSupplierQuote.certifications;
-
-    if (existingSupplierQuote.status === "accepted") {
-      document.getElementById("submitQuoteBtn").disabled = true;
+    if (!quotes || quotes.length === 0) {
+        quotesContainer.innerHTML = '<p>No quotes received yet</p>';
+        return;
     }
-  }
-}
 
-function setupQuoteButton() {
-  document.getElementById("submitQuoteBtn")
-    ?.addEventListener("click", submitQuote);
-}
-
-async function submitQuote() {
-
-  const payload = {
-    rfq_id: rfqId,
-    price: Number(document.getElementById("quotePrice").value),
-    batch_quantity: Number(document.getElementById("quoteBatchQty").value),
-    delivery_timeline: document.getElementById("quoteDelivery").value,
-    material_specification: document.getElementById("quoteMaterial").value,
-    certifications: document.getElementById("quoteCertifications").value
-  };
-
-  if (!payload.price || !payload.batch_quantity) {
-    alert("Price and Batch Quantity required");
-    return;
-  }
-
-  await fetchAPI("/api/quotes", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-
-  alert("Quote submitted successfully");
-  await loadQuotes();
-}
-
-/* =========================================================
-   REST OF ORIGINAL LOGIC (FILES, QUOTES, MESSAGES)
-========================================================= */
-
-async function loadFiles() {
-  const files = await fetchAPI(`/api/rfq-files/${rfqId}`);
-  const list = document.getElementById("rfqFilesList");
-  list.innerHTML = files.length
-    ? files.map(f =>
-        `<li><a href="${escapeHTML(f.file_url)}" target="_blank">
-          ${escapeHTML(f.file_name)}
-        </a></li>`
-      ).join("")
-    : "<li>No documents uploaded</li>";
-}
-
-async function loadQuotes() {
-  const quotes = await fetchAPI(`/api/quotes/rfq/${rfqId}`);
-  const tbody = document.getElementById("quotesTableBody");
-  const countLabel = document.getElementById("quoteCount");
-
-  countLabel.textContent = `${quotes.length} Quotes`;
-
-  tbody.innerHTML = quotes.length
-    ? quotes.map(q => `
-        <tr>
-          <td>${escapeHTML(q.supplier_email || q.supplier_id)}</td>
-          <td>${escapeHTML(q.price)}</td>
-          <td>${escapeHTML(q.batch_quantity)}</td>
-          <td>${escapeHTML(q.delivery_timeline)}</td>
-          <td>${escapeHTML(q.status)}</td>
-          <td>${renderQuoteAction(q)}</td>
-        </tr>
-      `).join("")
-    : `<tr><td colspan="6">No quotes submitted yet</td></tr>`;
-}
-
-function renderQuoteAction(q) {
-  if (currentUser.role !== "buyer") return "-";
-  if (q.status === "accepted") return "Accepted";
-
-  return `<button class="primary-btn"
-    onclick="acceptQuote(${q.id}, ${q.supplier_id}, ${q.price})">
-    Accept
-  </button>`;
-}
-
-async function loadMessages() {
-  const messages = await fetchAPI(`/api/rfq-messages/${rfqId}`);
-  const container = document.getElementById("messagesContainer");
-  container.innerHTML = messages.length
-    ? messages.map(m => `
-        <div class="message-row">
-          <strong>User ${escapeHTML(m.sender_id)}</strong>
-          <p>${escapeHTML(m.message)}</p>
+    quotesContainer.innerHTML = quotes.map(quote => `
+        <div class="quote-card">
+            <div class="quote-header">${quote.supplierName || 'Supplier'}</div>
+            <div class="quote-details">
+                <div><span>Quote:</span> <strong>$${quote.pricePerUnit || '0'}/unit</strong></div>
+                <div><span>Delivery:</span> <strong>${quote.deliveryTimeline || 'N/A'}</strong></div>
+                <div><span>MOQ:</span> <strong>${quote.moq || '0'}</strong></div>
+            </div>
+            <div class="quote-actions">
+                <button class="btn-success" onclick="acceptQuote('${quote.quoteId}')">Accept</button>
+                <button class="btn-outline" onclick="viewQuoteDetails('${quote.quoteId}')">Details</button>
+            </div>
         </div>
-      `).join("")
-    : "<div>No messages yet</div>";
+    `).join('');
 }
 
-/* =========================================================
-   UTIL
-========================================================= */
+function updateDetailMessages(messages) {
+    const messageList = document.getElementById('messageList');
+    if (!messageList) return;
 
-async function fetchAPI(url, options = {}) {
-  const response = await fetch(url, {
-    method: options.method || "GET",
-    headers: {
-      "Authorization": `Bearer ${getToken()}`,
-      "Content-Type": "application/json"
-    },
-    body: options.body
-  });
+    if (!messages || messages.length === 0) {
+        messageList.innerHTML = '<p class="text-center">No messages yet</p>';
+        return;
+    }
 
-  if (response.status === 401 || response.status === 403) {
-    window.location.href = "/frontend/login.html";
-    return;
-  }
-
-  if (!response.ok) throw new Error("Network error");
-
-  const data = await response.json();
-  if (!data.success) throw new Error(data.message);
-
-  return data.data;
+    messageList.innerHTML = messages.map(msg => `
+        <div class="chat-message ${msg.sender === 'buyer' ? 'sent' : 'received'}">
+            <div class="message-bubble">${msg.content}</div>
+            <span class="message-time">${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''}</span>
+        </div>
+    `).join('');
+    
+    // Scroll to bottom
+    messageList.scrollTop = messageList.scrollHeight;
 }
 
-function getRFQIdFromURL() {
-  return new URLSearchParams(window.location.search).get("id");
+function showDetailPurchaseOrder(po) {
+    const poSection = document.getElementById('poSection');
+    if (!poSection) return;
+
+    poSection.style.display = 'block';
+    document.getElementById('poId').textContent = po.poId || '—';
+    document.getElementById('poQty').textContent = po.quantity ? po.quantity.toLocaleString() : '—';
+    document.getElementById('poPrice').textContent = po.totalPrice ? `$${po.totalPrice.toLocaleString()}` : '—';
+    
+    const statusEl = document.getElementById('poStatus');
+    if (statusEl) {
+        statusEl.textContent = po.status || 'ISSUED';
+        statusEl.className = `status-badge ${(po.status || 'issued').toLowerCase()}`;
+    }
 }
 
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
+// Send message
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const content = input.value.trim();
+    
+    if (!content || !currentRfqId) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/buyer/rfq/${currentRfqId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content })
+        });
+
+        if (!response.ok) throw new Error('Failed to send message');
+        
+        // Clear input
+        input.value = '';
+        
+        // Reload messages
+        const result = await response.json();
+        updateDetailMessages(result.messages);
+        
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showStatusMessage('Failed to send message', 'error');
+    }
 }
 
-function setStatusBadge(status) {
-  const badge = document.getElementById("rfqStatus");
-  badge.textContent = status.toUpperCase();
-  badge.className = `status-badge ${status}`;
+// Accept quote
+async function acceptQuote(quoteId) {
+    if (!confirm('Are you sure you want to accept this quote? This will create a purchase order.')) {
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/buyer/quotes/${quoteId}/accept`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Failed to accept quote');
+        
+        const po = await response.json();
+        
+        showStatusMessage('Quote accepted! Purchase order created.', 'success');
+        
+        // Show PO section
+        showDetailPurchaseOrder(po);
+        
+        // Reload quotes
+        if (currentRfqId) {
+            loadRfqDetail(currentRfqId);
+        }
+        
+    } catch (error) {
+        console.error('Error accepting quote:', error);
+        showStatusMessage('Failed to accept quote', 'error');
+    }
 }
 
-function formatDate(date) {
-  return new Date(date).toLocaleDateString();
+// View quote details
+function viewQuoteDetails(quoteId) {
+    console.log('View quote details:', quoteId);
+    // Implement as needed
 }
 
-function escapeHTML(str) {
-  return String(str).replace(/[<>&"']/g, "");
+// Show skeletons
+function showSkeletons() {
+    document.querySelectorAll('.skeleton').forEach(el => {
+        el.classList.remove('fade-out');
+    });
 }
 
-function goBack() {
-  window.location.href = "/frontend/buyer-dashboard.html";
+// Hide skeletons
+function hideSkeletons() {
+    document.querySelectorAll('.skeleton').forEach(el => {
+        el.classList.add('fade-out');
+    });
 }
 
-function logout() {
-  localStorage.clear();
-  window.location.href = "/frontend/login.html";
+// Show status message
+function showStatusMessage(message, type = 'success') {
+    const statusEl = document.getElementById('statusMessage');
+    if (!statusEl) return;
+
+    statusEl.textContent = message;
+    statusEl.className = `status-message ${type}`;
+    statusEl.style.display = 'block';
+
+    setTimeout(() => {
+        statusEl.style.display = 'none';
+    }, 3000);
 }
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Expose functions globally
+window.loadRfqDetail = loadRfqDetail;
+window.sendMessage = sendMessage;
+window.acceptQuote = acceptQuote;
+window.viewQuoteDetails = viewQuoteDetails;

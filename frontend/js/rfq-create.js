@@ -1,218 +1,212 @@
-/* =========================================================
-   AXO RFQ CREATE – ENTERPRISE VERSION
-========================================================= */
+// =====================================================
+// RFQ CREATE JS - COMPLETE
+// =====================================================
 
-/* ================= AUTH HELPERS ================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('rfqForm');
+    if (form) {
+        form.addEventListener('submit', handleSubmit);
+    }
 
-function getUser() {
-  try { return JSON.parse(localStorage.getItem("user")); }
-  catch { return null; }
-}
+    // Add save draft handler
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    if (saveDraftBtn) {
+        saveDraftBtn.addEventListener('click', saveDraft);
+    }
 
-function getToken() {
-  return localStorage.getItem("token");
-}
-
-/* ================= AUTH GUARD ================= */
-
-(function authGuard() {
-  const user = getUser();
-  const token = getToken();
-
-  if (!user || !token || user.role?.toLowerCase() !== "buyer") {
-    window.location.href = "/frontend/login.html";
-  }
-})();
-
-/* ================= INIT ================= */
-
-let isSubmitting = false;
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  const user = getUser();
-  document.getElementById("userEmail").textContent = user.email;
-
-  const form = document.getElementById("rfqForm");
-  form.addEventListener("submit", handleSubmit);
+    // Load user data
+    loadUserData();
 });
 
-/* =========================================================
-   MAIN SUBMIT (CREATE DRAFT ONLY)
-========================================================= */
-
+// Handle form submission
 async function handleSubmit(event) {
+    event.preventDefault();
 
-  event.preventDefault();
+    try {
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
 
-  if (isSubmitting) return;
+        // Show loading state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<span class="spinner"></span> Submitting...';
+        submitBtn.disabled = true;
 
-  clearErrors();
+        // Collect form data
+        const formData = new FormData();
+        formData.append('partName', document.getElementById('part_name').value);
+        formData.append('partId', document.getElementById('part_id').value);
+        formData.append('totalQuantity', document.getElementById('total_quantity').value);
+        formData.append('batchQuantity', document.getElementById('batch_quantity').value || '');
+        formData.append('targetPrice', document.getElementById('target_price').value || '');
+        formData.append('deliveryTimeline', document.getElementById('delivery_timeline').value);
+        formData.append('ppapLevel', document.getElementById('ppap_level').value);
+        formData.append('materialSpec', document.getElementById('material_specification').value);
 
-  const formData = collectFormData();
+        // Add files
+        const files = document.getElementById('rfq_files').files;
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
 
-  if (!validateForm(formData)) return;
+        // Send to API
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/buyer/rfq', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
 
-  try {
-    isSubmitting = true;
-    setLoadingState(true);
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to create RFQ');
+        }
 
-    const response = await fetch("/api/rfqs", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${getToken()}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(formData)
-    });
+        const result = await response.json();
 
-    if (response.status === 401 || response.status === 403) {
-      window.location.href = "/frontend/login.html";
-      return;
+        // Show success message
+        showStatusMessage('RFQ created successfully!', 'success');
+
+        // Reset form
+        event.target.reset();
+
+    } catch (error) {
+        console.error('Error creating RFQ:', error);
+        showStatusMessage(error.message || 'Failed to create RFQ', 'error');
+
+        // Reset button
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = 'Submit RFQ';
+        submitBtn.disabled = false;
+    }
+}
+
+// Validate form
+function validateForm() {
+    const requiredFields = [
+        { id: 'part_name', name: 'Part Name' },
+        { id: 'part_id', name: 'Part ID' },
+        { id: 'total_quantity', name: 'Total Quantity' },
+        { id: 'delivery_timeline', name: 'Delivery Timeline' },
+        { id: 'material_specification', name: 'Material Specification' },
+        { id: 'ppap_level', name: 'PPAP Level' }
+    ];
+
+    for (const field of requiredFields) {
+        const element = document.getElementById(field.id);
+        if (!element || !element.value.trim()) {
+            if (element) {
+                element.style.borderColor = '#dc2626';
+                element.focus();
+            }
+            showStatusMessage(`${field.name} is required`, 'error');
+            return false;
+        }
+        if (element) {
+            element.style.borderColor = '#e5e7eb';
+        }
     }
 
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || "Creation failed");
+    // Validate quantity
+    const quantity = document.getElementById('total_quantity').value;
+    if (quantity <= 0) {
+        showStatusMessage('Quantity must be greater than 0', 'error');
+        return false;
     }
 
-    // 🚀 Redirect to RFQ detail page for supplier assignment
-    window.location.href = `/frontend/rfq-detail.html?id=${result.data.id}`;
+    // Validate batch quantity if provided
+    const batchQuantity = document.getElementById('batch_quantity').value;
+    if (batchQuantity && batchQuantity <= 0) {
+        showStatusMessage('Batch quantity must be greater than 0', 'error');
+        return false;
+    }
 
-  } catch (error) {
-    showFormError("Unable to create RFQ draft. Please try again.");
-  } finally {
-    isSubmitting = false;
-    setLoadingState(false);
-  }
+    return true;
 }
 
-/* =========================================================
-   DATA COLLECTION
-========================================================= */
+// Save as draft
+async function saveDraft() {
+    try {
+        const draftData = {
+            partName: document.getElementById('part_name').value,
+            partId: document.getElementById('part_id').value,
+            totalQuantity: document.getElementById('total_quantity').value,
+            batchQuantity: document.getElementById('batch_quantity').value,
+            targetPrice: document.getElementById('target_price').value,
+            deliveryTimeline: document.getElementById('delivery_timeline').value,
+            ppapLevel: document.getElementById('ppap_level').value,
+            materialSpec: document.getElementById('material_specification').value,
+            status: 'draft',
+            draftId: 'DRAFT-' + Date.now(),
+            createdAt: new Date().toISOString()
+        };
 
-function collectFormData() {
+        // Save to local storage
+        const drafts = JSON.parse(localStorage.getItem('rfqDrafts') || '[]');
+        drafts.push(draftData);
+        localStorage.setItem('rfqDrafts', JSON.stringify(drafts));
 
-  return {
-    part_name: sanitize(document.getElementById("part_name").value),
-    part_id: sanitize(document.getElementById("part_id").value),
-    total_quantity: Number(document.getElementById("total_quantity").value),
-    batch_quantity: Number(document.getElementById("batch_quantity").value),
-    target_price: document.getElementById("target_price").value || null,
-    delivery_timeline: sanitize(document.getElementById("delivery_timeline").value),
-    material_specification: sanitize(document.getElementById("material_specification").value),
-    ppap_level: document.getElementById("ppap_level").value
-  };
+        showStatusMessage('Draft saved successfully!', 'success');
+
+    } catch (error) {
+        console.error('Error saving draft:', error);
+        showStatusMessage('Failed to save draft', 'error');
+    }
 }
 
-/* =========================================================
-   VALIDATION
-========================================================= */
+// Load user data
+async function loadUserData() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
-function validateForm(data) {
+        const response = await fetch('/api/buyer/profile', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-  let valid = true;
-
-  if (!data.part_name) {
-    setFieldError("part_name", "Part name is required");
-    valid = false;
-  }
-
-  if (!data.part_id) {
-    setFieldError("part_id", "Part ID is required");
-    valid = false;
-  }
-
-  if (!data.total_quantity || data.total_quantity <= 0) {
-    setFieldError("total_quantity", "Enter valid total quantity");
-    valid = false;
-  }
-
-  if (!data.batch_quantity || data.batch_quantity <= 0) {
-    setFieldError("batch_quantity", "Enter valid batch quantity");
-    valid = false;
-  }
-
-  if (!data.delivery_timeline) {
-    setFieldError("delivery_timeline", "Delivery timeline required");
-    valid = false;
-  }
-
-  if (!data.material_specification) {
-    setFieldError("material_specification", "Material specification required");
-    valid = false;
-  }
-
-  if (!data.ppap_level) {
-    setFieldError("ppap_level", "Select PPAP level");
-    valid = false;
-  }
-
-  return valid;
+        if (response.ok) {
+            const user = await response.json();
+            const userEmailSpan = document.getElementById('userEmail');
+            if (userEmailSpan) {
+                userEmailSpan.textContent = user.email || 'buyer@axonetworks.com';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+    }
 }
 
-/* =========================================================
-   UI HELPERS
-========================================================= */
+// Show status message
+function showStatusMessage(message, type = 'success') {
+    let statusEl = document.getElementById('statusMessage');
+    
+    // Create status message element if it doesn't exist
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'statusMessage';
+        statusEl.className = 'status-message';
+        const form = document.getElementById('rfqForm');
+        if (form) {
+            form.parentNode.insertBefore(statusEl, form);
+        }
+    }
+    
+    statusEl.textContent = message;
+    statusEl.className = `status-message ${type}`;
+    statusEl.style.display = 'block';
 
-function setFieldError(fieldId, message) {
-  const field = document.getElementById(fieldId);
-  const errorSpan = field.parentElement.querySelector(".error-text");
-
-  if (errorSpan) {
-    errorSpan.textContent = message;
-  }
-
-  field.style.borderColor = "#dc2626";
+    setTimeout(() => {
+        statusEl.style.display = 'none';
+    }, 3000);
 }
 
-function clearErrors() {
-  document.querySelectorAll(".error-text").forEach(el => el.textContent = "");
-  document.querySelectorAll("input, textarea, select")
-    .forEach(el => el.style.borderColor = "");
-}
-
-function showFormError(message) {
-  const banner = document.createElement("div");
-  banner.className = "form-global-error";
-  banner.textContent = message;
-
-  const form = document.getElementById("rfqForm");
-  form.prepend(banner);
-
-  setTimeout(() => banner.remove(), 4000);
-}
-
-function setLoadingState(loading) {
-  const submitBtn = document.querySelector(".primary-btn");
-
-  if (loading) {
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Creating Draft...";
-  } else {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Create RFQ Draft";
-  }
-}
-
-/* =========================================================
-   SANITIZATION
-========================================================= */
-
-function sanitize(value) {
-  return String(value).replace(/[<>&"']/g, "").trim();
-}
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function goBack() {
-  window.location.href = "/frontend/buyer-dashboard.html";
-}
-
-function logout() {
-  localStorage.clear();
-  window.location.href = "/frontend/login.html";
-}
+// Expose functions globally
+window.initializeRfqForm = function() {
+    // Any initialization code
+    console.log('RFQ Form initialized');
+};

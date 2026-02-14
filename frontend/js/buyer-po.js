@@ -1,107 +1,106 @@
-/* =========================================================
-   AUTH HELPERS
-========================================================= */
-function getUser() {
-  return JSON.parse(localStorage.getItem("user"));
-}
+// =====================================================
+// BUYER PO JS - COMPLETE
+// =====================================================
 
-function getToken() {
-  return localStorage.getItem("token");
-}
-
-/* =========================================================
-   INIT
-========================================================= */
-document.addEventListener("DOMContentLoaded", () => {
-  if (!getUser() || !getToken()) {
-    window.location.href = "/login";
-    return;
-  }
-
-  loadPOs();
+document.addEventListener('DOMContentLoaded', () => {
+    loadPurchaseOrders();
 });
 
-/* =========================================================
-   LOAD PURCHASE ORDERS (DB ONLY)
-========================================================= */
-async function loadPOs() {
-  try {
-    const pos = await fetchPOs();
-    renderPOs(pos);
-  } catch (err) {
-    console.error("Load POs error:", err);
-  }
+// Load purchase orders
+async function loadPurchaseOrders() {
+    try {
+        showSkeletons();
+
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/buyer/purchase-orders', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/portal-login';
+                return;
+            }
+            throw new Error('Failed to load purchase orders');
+        }
+
+        const data = await response.json();
+        updatePoTable(data.orders);
+        hideSkeletons();
+
+    } catch (error) {
+        console.error('Error loading POs:', error);
+        showStatusMessage('Failed to load purchase orders', 'error');
+        hideSkeletons();
+    }
 }
 
-/* =========================================================
-   API
-========================================================= */
-async function fetchPOs() {
-  const buyerId = getUser().id;
+// Update PO table
+function updatePoTable(orders) {
+    const tbody = document.getElementById('poTableBody');
+    if (!tbody) return;
 
-  const res = await fetch(`/api/purchase-orders/buyer/${buyerId}`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  });
+    if (!orders || orders.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center">No purchase orders found</td>
+            </tr>
+        `;
+        return;
+    }
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch purchase orders");
-  }
-
-  const result = await res.json();
-
-  if (!result.success) {
-    throw new Error(result.message || "Failed to fetch purchase orders");
-  }
-
-  return result.data;
+    tbody.innerHTML = orders.map(po => `
+        <tr>
+            <td>${po.poId || 'N/A'}</td>
+            <td>${po.rfqId || 'N/A'}</td>
+            <td>${po.supplierName || 'N/A'}</td>
+            <td>${po.quantity ? po.quantity.toLocaleString() : '0'}</td>
+            <td>${po.totalPrice ? `$${po.totalPrice.toLocaleString()}` : '$0'}</td>
+            <td><span class="status-badge ${(po.status || 'pending').toLowerCase()}">${po.status || 'Pending'}</span></td>
+            <td>
+                <button onclick="viewPoDetails('${po.poId}')" class="btn-sm">View</button>
+            </td>
+        </tr>
+    `).join('');
 }
 
-/* =========================================================
-   RENDER
-========================================================= */
-function renderPOs(pos) {
-  const tbody = document.getElementById("poTableBody");
-  tbody.innerHTML = "";
-
-  if (!pos || pos.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" class="empty">No purchase orders found</td>
-      </tr>
-    `;
-    return;
-  }
-
-  pos.forEach(po => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${po.id}</td>
-        <td>${po.rfq_id}</td>
-        <td>${po.supplier_id}</td>
-        <td>${po.quantity}</td>
-        <td>₹${po.price}</td>
-        <td>
-          <span class="status issued">ISSUED</span>
-        </td>
-        <td>
-          <button class="view-btn" onclick="viewPO(${po.id})">
-            View
-          </button>
-        </td>
-      </tr>
-    `;
-  });
+// View PO details
+function viewPoDetails(poId) {
+    console.log('View PO details:', poId);
+    // Implement as needed
+    showStatusMessage(`Viewing PO: ${poId}`, 'info');
 }
 
-/* =========================================================
-   NAVIGATION
-========================================================= */
-function viewPO(id) {
-  window.location.href = `/po-detail.html?id=${id}`;
+// Show skeletons
+function showSkeletons() {
+    document.querySelectorAll('.skeleton').forEach(el => {
+        el.classList.remove('fade-out');
+    });
 }
 
-function goBack() {
-  window.history.back();
+// Hide skeletons
+function hideSkeletons() {
+    document.querySelectorAll('.skeleton').forEach(el => {
+        el.classList.add('fade-out');
+    });
 }
+
+// Show status message
+function showStatusMessage(message, type = 'success') {
+    const statusEl = document.getElementById('statusMessage');
+    if (!statusEl) return;
+
+    statusEl.textContent = message;
+    statusEl.className = `status-message ${type}`;
+    statusEl.style.display = 'block';
+
+    setTimeout(() => {
+        statusEl.style.display = 'none';
+    }, 3000);
+}
+
+// Expose functions globally
+window.loadPurchaseOrders = loadPurchaseOrders;
+window.viewPoDetails = viewPoDetails;

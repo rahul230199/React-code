@@ -2,11 +2,8 @@
    AUTH HELPERS
 ========================================================= */
 function getUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem("user")); }
+  catch { return null; }
 }
 
 function getToken() {
@@ -15,27 +12,24 @@ function getToken() {
 
 function logout() {
   localStorage.clear();
-  window.location.href = "/frontend/login.html";
+  window.location.href = "/portal-login";
 }
 
 /* =========================================================
-   AUTH GUARD (FIXED – NO REDIRECT LOOP)
+   AUTH GUARD
 ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
+
   const user = getUser();
   const token = getToken();
 
-  // 🔥 CRITICAL: do NOT run auth guard before DOMContentLoaded
-  if (!user || !token || user.role !== "SUPPLIER") {
-    console.warn("Auth failed, redirecting to login");
+  if (!user || !token || user.role !== "supplier") {
     logout();
     return;
   }
 
   const emailEl = document.getElementById("userEmail");
-  if (emailEl) {
-    emailEl.textContent = user.email;
-  }
+  if (emailEl) emailEl.textContent = user.email;
 
   loadDashboard();
 });
@@ -46,29 +40,17 @@ document.addEventListener("DOMContentLoaded", () => {
 async function api(url) {
   const token = getToken();
 
-  if (!token) {
-    logout();
-    return;
-  }
-
   const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+    headers: { Authorization: `Bearer ${token}` }
   });
 
-  if (res.status === 401 || res.status === 403) {
+  if (!res.ok) {
     logout();
-    return;
+    return [];
   }
 
   const result = await res.json();
-
-  if (!result.success) {
-    throw new Error(result.message || "API error");
-  }
-
-  return result.data;
+  return result.data || [];
 }
 
 /* =========================================================
@@ -83,73 +65,45 @@ async function loadDashboard() {
       api(`/api/purchase-orders/supplier/${user.id}`)
     ]);
 
-    renderActionStrip(rfqs);
     renderSummary(rfqs, pos);
     renderRFQTable(rfqs);
     renderPOTable(pos);
     renderCharts(rfqs, pos);
 
   } catch (err) {
-    console.error("Dashboard load failed:", err.message);
-    alert("Failed to load supplier dashboard");
+    console.error("Dashboard error:", err);
   }
-}
-
-/* =========================================================
-   STATUS DERIVATION (REAL DATA)
-========================================================= */
-function deriveSupplierStatus(r) {
-  if (r.has_po) return "po_received";
-  if (r.quote_id) return "quoted";
-  return "active";
 }
 
 /* =========================================================
    SUMMARY
 ========================================================= */
 function renderSummary(rfqs, pos) {
-  const rfqAction = rfqs.filter(r => !r.quote_id).length;
-  const quotesSubmitted = rfqs.filter(r => r.quote_id && !r.has_po).length;
 
-  document.getElementById("summarySection").innerHTML = `
+  const section = document.getElementById("summarySection");
+  if (!section) return;
+
+  const active = rfqs.filter(r => !r.quote_id).length;
+  const quoted = rfqs.filter(r => r.quote_id).length;
+
+  section.innerHTML = `
     <div class="card">
-      <h3>RFQs Requiring Action</h3>
-      <p>${rfqAction}</p>
+      <h3>Active RFQs</h3>
+      <p>${active}</p>
     </div>
-
     <div class="card">
       <h3>Quotes Submitted</h3>
-      <p>${quotesSubmitted}</p>
+      <p>${quoted}</p>
     </div>
-
     <div class="card">
       <h3>Purchase Orders</h3>
       <p>${pos.length}</p>
     </div>
-
     <div class="card">
       <h3>Total RFQs</h3>
       <p>${rfqs.length}</p>
     </div>
   `;
-}
-
-/* =========================================================
-   ACTION STRIP
-========================================================= */
-function renderActionStrip(rfqs) {
-  const urgent = rfqs.filter(r => !r.quote_id).length;
-  const strip = document.getElementById("actionStrip");
-
-  if (!strip) return;
-
-  if (!urgent) {
-    strip.classList.add("hidden");
-    return;
-  }
-
-  strip.textContent = `${urgent} RFQ(s) awaiting your quote`;
-  strip.classList.remove("hidden");
 }
 
 /* =========================================================
@@ -165,18 +119,12 @@ function renderRFQTable(rfqs) {
   }
 
   rfqs.forEach(r => {
-    const status = deriveSupplierStatus(r);
-
     tbody.innerHTML += `
       <tr>
         <td>${r.id}</td>
         <td>${r.part_name}</td>
         <td>${r.total_quantity}</td>
-        <td>
-          <span class="status ${status}">
-            ${formatStatus(status)}
-          </span>
-        </td>
+        <td>${r.quote_id ? "QUOTED" : "ACTIVE"}</td>
         <td>${new Date(r.created_at).toLocaleDateString()}</td>
         <td>
           <button onclick="openRFQ(${r.id})">
@@ -222,65 +170,46 @@ function renderPOTable(pos) {
 let rfqChart, flowChart;
 
 function renderCharts(rfqs, pos) {
+
   rfqChart?.destroy();
   flowChart?.destroy();
 
   const active = rfqs.filter(r => !r.quote_id).length;
-  const quoted = rfqs.filter(r => r.quote_id && !r.has_po).length;
-  const closed = rfqs.filter(r => r.has_po).length;
+  const quoted = rfqs.filter(r => r.quote_id).length;
 
-  rfqChart = new Chart(
-    document.getElementById("rfqFunnelChart"),
-    {
-      type: "bar",
-      data: {
-        labels: ["Active", "Quoted", "PO Received"],
-        datasets: [{
-          data: [active, quoted, closed],
-          backgroundColor: ["#f59e0b", "#6366f1", "#10b981"]
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-      }
-    }
-  );
+  rfqChart = new Chart(document.getElementById("rfqFunnelChart"), {
+    type: "bar",
+    data: {
+      labels: ["Active", "Quoted"],
+      datasets: [{
+        data: [active, quoted],
+        backgroundColor: ["#f59e0b", "#10b981"]
+      }]
+    },
+    options: { plugins: { legend: { display: false } } }
+  });
 
-  flowChart = new Chart(
-    document.getElementById("winRateChart"),
-    {
-      type: "doughnut",
-      data: {
-        labels: ["RFQs", "POs"],
-        datasets: [{
-          data: [rfqs.length, pos.length],
-          backgroundColor: ["#e5e7eb", "#1e3a8a"]
-        }]
-      },
-      options: {
-        cutout: "70%",
-        plugins: { legend: { position: "bottom" } }
-      }
-    }
-  );
-}
-
-/* =========================================================
-   HELPERS
-========================================================= */
-function formatStatus(status) {
-  return status.replace("_", " ").toUpperCase();
+  flowChart = new Chart(document.getElementById("winRateChart"), {
+    type: "doughnut",
+    data: {
+      labels: ["RFQs", "POs"],
+      datasets: [{
+        data: [rfqs.length, pos.length],
+        backgroundColor: ["#e5e7eb", "#1e3a8a"]
+      }]
+    },
+    options: { cutout: "70%" }
+  });
 }
 
 /* =========================================================
    NAVIGATION
 ========================================================= */
 function openRFQ(id) {
-  window.location.href = `/supplier-rfq-detail.html?id=${id}`;
+  window.location.href = `/supplier-rfq-detail?id=${id}`;
 }
 
 function openPO(id) {
-  window.location.href = `/po-detail.html?id=${id}`;
+  window.location.href = `/po-detail?id=${id}`;
 }
 

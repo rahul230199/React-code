@@ -1,6 +1,5 @@
 /* =========================================================
-   AXO NETWORKS — ENTERPRISE LOGIN MODULE
-   Clean • Secure • Predictable • Role Safe
+   AXO NETWORKS — ENTERPRISE LOGIN MODULE (FIXED)
 ========================================================= */
 
 const API_BASE_URL = "/api";
@@ -16,7 +15,7 @@ function initLogin() {
   const existingUser = getStoredUser();
   const token = getToken();
 
-  // If session already exists → redirect
+  // If session already exists → redirect safely
   if (existingUser && token) {
     redirectByRole(existingUser.role);
     return;
@@ -36,7 +35,7 @@ function bindLoginForm() {
 }
 
 /* =========================================================
-   LOGIN HANDLER
+   LOGIN HANDLER (FIXED RESPONSE HANDLING)
 ========================================================= */
 async function handleLoginSubmit(event) {
   event.preventDefault();
@@ -62,24 +61,28 @@ async function handleLoginSubmit(event) {
       body: JSON.stringify({ email, password })
     });
 
-    if (!response.ok) {
-      const errorData = await safeParseJSON(response);
-      throw new Error(errorData?.message || "Invalid credentials");
+    const result = await safeParseJSON(response);
+
+    if (!response.ok || !result?.success) {
+      throw new Error(result?.message || "Invalid credentials");
     }
 
-    const result = await response.json();
+    // 🔥 Support both backend formats
+    const token = result.token || result.data?.token;
+    const userData = result.user || result.data?.user;
 
-    if (!result.success || !result.token || !result.user) {
-      throw new Error(result.message || "Authentication failed");
+    if (!token || !userData) {
+      throw new Error("Invalid login response from server");
     }
 
-    const user = storeSession(result.token, result.user);
+    const user = storeSession(token, userData);
 
     showMessage("Login successful. Redirecting...", "success");
 
+    // Small delay for stability
     setTimeout(() => {
       redirectByRole(user.role);
-    }, 400);
+    }, 300);
 
   } catch (error) {
     console.error("Login failed:", error.message);
@@ -90,7 +93,7 @@ async function handleLoginSubmit(event) {
 }
 
 /* =========================================================
-   ROLE REDIRECT (STANDARDIZED)
+   ROLE REDIRECT (NGINX SAFE)
 ========================================================= */
 function redirectByRole(role) {
   if (!role) return;
@@ -104,7 +107,7 @@ function redirectByRole(role) {
     both: "/buyer-dashboard"
   };
 
-  window.location.href = routes[normalized] || "/login";
+  window.location.href = routes[normalized] || "/portal-login";
 }
 
 /* =========================================================
@@ -190,3 +193,4 @@ async function safeParseJSON(response) {
     return null;
   }
 }
+
