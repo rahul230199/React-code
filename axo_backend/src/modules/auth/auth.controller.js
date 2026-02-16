@@ -79,3 +79,43 @@ exports.login = async (req, res) => {
     return sendResponse(res, 500, false, "Server error");
   }
 };
+
+/* =========================================================
+   FORCE CHANGE PASSWORD
+========================================================= */
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user?.id; // from auth middleware
+    const { newPassword } = req.body;
+
+    if (!userId) {
+      return sendResponse(res, 401, false, "Unauthorized");
+    }
+
+    if (!newPassword || newPassword.length < 8) {
+      return sendResponse(res, 400, false, "Password must be at least 8 characters");
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const result = await pool.query(
+      `UPDATE public.users
+       SET password_hash = $1,
+           must_change_password = false
+       WHERE id = $2
+       RETURNING id`,
+      [hashedPassword, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return sendResponse(res, 404, false, "User not found");
+    }
+
+    return sendResponse(res, 200, true, "Password changed successfully");
+
+  } catch (error) {
+    console.error("❌ Change Password Error:", error);
+    return sendResponse(res, 500, false, "Server error");
+  }
+};

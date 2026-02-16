@@ -82,40 +82,24 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
 /* =========================================================
-   CHANGE PASSWORD
+   FORCE CHANGE PASSWORD (NO OLD PASSWORD REQUIRED)
 ========================================================= */
 router.post("/change-password", authenticate, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { old_password, new_password } = req.body;
+    const { newPassword } = req.body;
 
-    if (!old_password || !new_password) {
-      return sendResponse(res, 400, false, "Old and new password required");
+    if (!newPassword) {
+      return sendResponse(res, 400, false, "New password required");
     }
 
-    if (new_password.length < 8) {
+    if (newPassword.length < 8) {
       return sendResponse(res, 400, false, "Password must be at least 8 characters");
     }
 
-    const result = await pool.query(
-      `SELECT password_hash FROM public.users WHERE id = $1`,
-      [userId]
-    );
-
-    if (result.rowCount === 0) {
-      return sendResponse(res, 404, false, "User not found");
-    }
-
-    const user = result.rows[0];
-
-    const match = await bcrypt.compare(old_password, user.password_hash);
-
-    if (!match) {
-      return sendResponse(res, 401, false, "Old password is incorrect");
-    }
-
-    const newHash = await bcrypt.hash(new_password, 10);
+    const newHash = await bcrypt.hash(newPassword, 10);
 
     await pool.query(
       `UPDATE public.users

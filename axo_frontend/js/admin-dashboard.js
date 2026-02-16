@@ -242,41 +242,66 @@ function viewDetails(id) {
   }
 }
 
+
 /* =========================================================
-   HANDLE STATUS CHANGE
+   HANDLE STATUS CHANGE (IMPROVED + SAFE)
 ========================================================= */
 function handleStatusChange(newStatus) {
-  // Close view modal
+
+  if (!currentViewingItem) return;
+
+  // Close main modal
   document.getElementById("viewModal").style.display = "none";
-  
-  // Open status confirmation modal
+
   const statusModal = document.getElementById("statusModal");
   const statusTitle = document.getElementById("statusTitle");
   const statusComment = document.getElementById("statusComment");
-  
-  statusTitle.textContent = newStatus === "APPROVED" 
-    ? "Approve Request" 
-    : "Reject Request";
-  
-  statusComment.value = "";
-  statusModal.style.display = "flex";
-  
-  // Bind confirmation button
   const confirmBtn = document.getElementById("confirmStatusBtn");
   const cancelBtn = document.getElementById("cancelStatusBtn");
-  
-  confirmBtn.onclick = async () => {
+
+  statusTitle.textContent =
+    newStatus === "APPROVED"
+      ? "Approve Request"
+      : "Reject Request";
+
+  statusComment.value = "";
+  statusModal.style.display = "flex";
+
+  // Remove old listeners (VERY IMPORTANT)
+  confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+  cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+
+  const newConfirmBtn = document.getElementById("confirmStatusBtn");
+  const newCancelBtn = document.getElementById("cancelStatusBtn");
+
+  newConfirmBtn.onclick = async () => {
+
     const comment = statusComment.value.trim();
     if (!comment) {
-      alert("Please enter a verification comment");
+     showMessage("Please enter a verification comment", "error");
       return;
     }
-    
-    await updateRequestStatus(currentViewingItem.id, newStatus, comment);
-    statusModal.style.display = "none";
+
+    // Disable button to prevent double click
+    newConfirmBtn.disabled = true;
+    newConfirmBtn.innerText = "Processing...";
+
+    try {
+      await updateRequestStatus(
+        currentViewingItem.id,
+        newStatus,
+        comment
+      );
+    } finally {
+      newConfirmBtn.disabled = false;
+      newConfirmBtn.innerText =
+        newStatus === "APPROVED"
+          ? "Confirm Approval"
+          : "Confirm Rejection";
+    }
   };
-  
-  cancelBtn.onclick = () => {
+
+  newCancelBtn.onclick = () => {
     statusModal.style.display = "none";
   };
 }
@@ -285,22 +310,57 @@ function handleStatusChange(newStatus) {
    UPDATE REQUEST STATUS VIA API
 ========================================================= */
 async function updateRequestStatus(id, status, comment) {
-  const result = await apiFetch(
-    `${API_BASE_URL}/admin/network-access-requests/${id}/status`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({ status, comment })
-    }
-  );
 
-  if (result?.success) {
-    alert(`Request ${status.toLowerCase()} successfully!`);
-    loadDashboard(); // Reload data
+  if (!id || !status) return;
+
+  let url = "";
+  let method = "POST";
+
+  if (status === "APPROVED") {
+    url = `${API_BASE_URL}/admin/network-access-requests/${id}/approve`;
+  } else if (status === "REJECTED") {
+    url = `${API_BASE_URL}/admin/network-access-requests/${id}/reject`;
   } else {
-    alert("Failed to update request status");
+   showMessage("Invalid status action", "error");
+    return;
+  }
+
+  const result = await apiFetch(url, {
+    method,
+    body: JSON.stringify({ comment })
+  });
+
+  if (!result) {
+   showMessage("Server not responding", "error");
+    return;
+  }
+
+  if (result.success) {
+
+    document.getElementById("statusModal").style.display = "none";
+
+    if (status === "APPROVED") {
+
+      const tempPassword = result.data?.temporary_password;
+
+     showMessage(
+  tempPassword
+    ? `User created successfully. Temporary Password: ${tempPassword}`
+    : "Request approved successfully!",
+  "success"
+);
+
+    } else {
+      showMessage("Request rejected successfully!", "success");
+    }
+
+    currentViewingItem = null;
+    await loadDashboard();
+
+  } else {
+   showMessage(result.message || "Failed to update request status", "error");
   }
 }
-
 /* =========================================================
    CLOSE MODALS
 ========================================================= */
@@ -413,4 +473,17 @@ function renderWhatYouDo(data) {
       <p><strong>What You Do:</strong> ${activeItems || "-"}</p>
     </div>
   `;
+}
+
+function showMessage(message, type = "success") {
+  const box = document.getElementById("topMessage");
+  if (!box) return;
+
+  box.textContent = message;
+  box.className = `top-message ${type}`;
+  box.style.display = "block";
+
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 4000);
 }

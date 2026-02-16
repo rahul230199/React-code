@@ -1,5 +1,5 @@
 /* =========================================================
-   AXO NETWORKS — LOGIN MODULE (ENTERPRISE STABLE)
+   AXO NETWORKS — LOGIN MODULE (ENTERPRISE STABLE — FIXED)
 ========================================================= */
 
 const API_BASE_URL = "/api";
@@ -34,13 +34,19 @@ async function initLogin() {
 
     const result = await safeJson(response);
 
-    if (!response.ok || !result.success || !result.user) {
+    if (!response.ok || !result.success || !result.data?.user) {
       clearSession();
       bindLoginForm();
       return;
     }
 
-    handlePostLoginRedirect(result.user);
+    const user = {
+      ...result.data.user,
+      must_change_password: result.data.must_change_password
+    };
+
+    storeSession(token, user);
+    handlePostLoginRedirect(user);
 
   } catch (err) {
     clearSession();
@@ -55,7 +61,6 @@ function bindLoginForm() {
   const form = document.getElementById("loginForm");
   if (!form) return;
 
-  // Prevent multiple bindings
   form.removeEventListener("submit", handleLoginSubmit);
   form.addEventListener("submit", handleLoginSubmit);
 }
@@ -89,28 +94,28 @@ async function handleLoginSubmit(event) {
 
     const result = await safeJson(response);
 
-    if (response.status === 401) {
-      throw new Error("Invalid email or password");
+    if (!response.ok || !result.success || !result.data) {
+      throw new Error(result.message || "Invalid email or password");
     }
 
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || "Login failed");
-    }
-
-    const token = result.token || result.data?.token;
-    const user = result.user || result.data?.user;
+    const { token, user, must_change_password } = result.data;
 
     if (!token || !user) {
       throw new Error("Invalid login response from server");
     }
 
-    storeSession(token, user);
+    const fullUser = {
+      ...user,
+      must_change_password
+    };
+
+    storeSession(token, fullUser);
 
     showMessage("Login successful. Redirecting...", "success");
 
     setTimeout(() => {
-      handlePostLoginRedirect(user);
-    }, 400);
+      handlePostLoginRedirect(fullUser);
+    }, 500);
 
   } catch (error) {
     showMessage(error.message || "Server error");
@@ -127,7 +132,7 @@ function handlePostLoginRedirect(user) {
 
   // 🔐 Force password change first
   if (user.must_change_password === true) {
-    window.location.href = "/change-password";
+    window.location.href = "/change-password.html";
     return;
   }
 
@@ -144,6 +149,7 @@ function redirectByRole(role) {
     admin: "/admin-dashboard",
     supplier: "/supplier/dashboard",
     buyer: "/buyer/dashboard",
+    oem: "/oem/dashboard",
     both: "/buyer/dashboard"
   };
 

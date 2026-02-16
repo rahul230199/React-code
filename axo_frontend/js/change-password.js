@@ -14,20 +14,41 @@ document.addEventListener("DOMContentLoaded", () => {
 ========================================================= */
 function protectPage() {
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userRaw = localStorage.getItem("user");
 
-  if (!token || !user) {
+  if (!token || !userRaw) {
     return redirectToLogin();
   }
 
-  // Only allow if forced password change is required
+  let user;
+  try {
+    user = JSON.parse(userRaw);
+  } catch {
+    return redirectToLogin();
+  }
+
+  // If password change is NOT required → redirect properly
   if (user.must_change_password !== true) {
-    // If not required, redirect to dashboard
-    if (user.role?.toLowerCase() === "admin") {
-      window.location.href = "/admin-dashboard";
-    } else {
-      redirectToLogin();
-    }
+    redirectToDashboard(user.role);
+  }
+}
+
+/* =========================================================
+   REDIRECT TO DASHBOARD BASED ON ROLE
+========================================================= */
+function redirectToDashboard(role) {
+  const roleLower = role?.toLowerCase();
+
+  if (roleLower === "admin") {
+    window.location.href = "/admin-dashboard";
+  } else if (roleLower === "supplier") {
+    window.location.href = "/supplier/dashboard";
+  } else if (roleLower === "buyer") {
+    window.location.href = "/buyer/dashboard";
+  } else if (roleLower === "oem") {
+    window.location.href = "/oem/dashboard";
+  } else {
+    redirectToLogin();
   }
 }
 
@@ -54,7 +75,7 @@ async function handleSubmit(e) {
 
   if (!token) return redirectToLogin();
 
-  if (newPassword.length < 8) {
+  if (!newPassword || newPassword.length < 8) {
     return showMessage("Password must be at least 8 characters");
   }
 
@@ -89,7 +110,7 @@ async function handleSubmit(e) {
       "success"
     );
 
-    // Clear session
+    // Clear session after success
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 

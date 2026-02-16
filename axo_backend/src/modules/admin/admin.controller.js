@@ -119,10 +119,14 @@ exports.approveNetworkRequest = async (req, res) => {
 
   try {
     const { id } = req.params;
+    const { comment } = req.body;
+
+    if (!comment) {
+      return sendResponse(res, 400, false, "Verification comment required");
+    }
 
     await client.query("BEGIN");
 
-    // 🔒 Lock request row
     const requestResult = await client.query(
       `SELECT * FROM public.network_access_requests
        WHERE id = $1
@@ -142,9 +146,9 @@ exports.approveNetworkRequest = async (req, res) => {
       return sendResponse(res, 400, false, "Request already processed");
     }
 
-    /* =====================================================
-       DUPLICATE CHECK (EMAIL + PHONE)
-    ===================================================== */
+    /* ================================
+       DUPLICATE CHECK
+    ================================= */
 
     const duplicateUser = await client.query(
       `SELECT id FROM public.users
@@ -162,9 +166,9 @@ exports.approveNetworkRequest = async (req, res) => {
       );
     }
 
-    /* =====================================================
+    /* ================================
        CREATE ORGANIZATION
-    ===================================================== */
+    ================================= */
 
     const orgResult = await client.query(
       `INSERT INTO public.organizations (
@@ -192,11 +196,13 @@ exports.approveNetworkRequest = async (req, res) => {
 
     const organizationId = orgResult.rows[0].id;
 
-    /* =====================================================
-       CREATE USER (INCLUDING PHONE)
-    ===================================================== */
+    /* ================================
+       CREATE USER
+    ================================= */
 
-    const tempPassword = "ChangeMe@123";
+    const tempPassword =
+      "AXO@" + Math.random().toString(36).slice(-6);
+
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     const userResult = await client.query(
@@ -225,15 +231,17 @@ exports.approveNetworkRequest = async (req, res) => {
       ]
     );
 
-    /* =====================================================
+    /* ================================
        UPDATE REQUEST STATUS
-    ===================================================== */
+    ================================= */
 
     await client.query(
       `UPDATE public.network_access_requests
-       SET status = 'approved'
-       WHERE id = $1`,
-      [id]
+       SET status = 'approved',
+           verification_notes = $1,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [comment, id]
     );
 
     await client.query("COMMIT");
@@ -259,13 +267,21 @@ exports.approveNetworkRequest = async (req, res) => {
 exports.rejectNetworkRequest = async (req, res) => {
   try {
     const { id } = req.params;
+    const { comment } = req.body;
+
+    if (!comment) {
+      return sendResponse(res, 400, false, "Rejection comment required");
+    }
 
     const result = await pool.query(
       `UPDATE public.network_access_requests
-       SET status = 'rejected'
-       WHERE id = $1 AND status = 'pending'
+       SET status = 'rejected',
+           verification_notes = $1,
+           updated_at = NOW()
+       WHERE id = $2
+         AND status = 'pending'
        RETURNING id`,
-      [id]
+      [comment, id]
     );
 
     if (result.rowCount === 0) {
@@ -273,6 +289,7 @@ exports.rejectNetworkRequest = async (req, res) => {
     }
 
     return sendResponse(res, 200, true, "Request rejected successfully");
+
   } catch (error) {
     return sendResponse(res, 500, false, error.message);
   }
