@@ -3,6 +3,7 @@ const pool = require("../../config/db");
 exports.submitRequest = async (req, res) => {
   try {
     console.log("📩 Network submit triggered");
+    console.log("Incoming Body:", req.body);
 
     let {
       company_name,
@@ -10,7 +11,7 @@ exports.submitRequest = async (req, res) => {
       registered_address,
       city_state,
       contact_name,
-      role_requested,
+      role_requested, // THIS IS CONTACT ROLE (Manager, CEO etc.)
       email,
       phone,
       what_you_do,
@@ -24,14 +25,14 @@ exports.submitRequest = async (req, res) => {
     } = req.body;
 
     /* =====================================================
-       1️⃣ BASIC VALIDATION
+       1️⃣ BASIC REQUIRED FIELD VALIDATION
+       (Matches your DB structure exactly)
     ===================================================== */
 
     if (
       !company_name ||
       !city_state ||
       !contact_name ||
-      !role_requested ||
       !email ||
       !phone ||
       !primary_product ||
@@ -43,27 +44,14 @@ exports.submitRequest = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields",
+        message: "Please fill all required fields",
       });
     }
 
     /* =====================================================
-       2️⃣ ENUM NORMALIZATION & VALIDATION
+       2️⃣ VALIDATE role_in_ev (DB HAS CHECK CONSTRAINT)
     ===================================================== */
 
-    // Normalize role_requested (system role)
-    role_requested = role_requested.toLowerCase();
-
-    const allowedRoleRequested = ["buyer", "supplier", "oem"];
-
-    if (!allowedRoleRequested.includes(role_requested)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid role_requested. Allowed: buyer, supplier, oem",
-      });
-    }
-
-    // Normalize role_in_ev (business descriptor)
     const roleInEvMap = {
       oem: "OEMs",
       oems: "OEMs",
@@ -72,7 +60,7 @@ exports.submitRequest = async (req, res) => {
     };
 
     role_in_ev =
-      roleInEvMap[role_in_ev.toLowerCase()] || role_in_ev;
+      roleInEvMap[String(role_in_ev).toLowerCase()] || role_in_ev;
 
     const allowedRoleInEv = ["OEMs", "Supplier", "Both"];
 
@@ -93,7 +81,7 @@ exports.submitRequest = async (req, res) => {
     const user_agent = req.headers["user-agent"];
 
     /* =====================================================
-       4️⃣ INSERT INTO DB
+       4️⃣ INSERT INTO DATABASE
     ===================================================== */
 
     const result = await pool.query(
@@ -134,10 +122,10 @@ exports.submitRequest = async (req, res) => {
         registered_address || null,
         city_state.trim(),
         contact_name.trim(),
-        role_requested,
+        role_requested || null, // FREE TEXT NOW
         email.toLowerCase().trim(),
         phone.trim(),
-        JSON.stringify(what_you_do || {}),
+        JSON.stringify(what_you_do || []),
         primary_product.trim(),
         key_components.trim(),
         manufacturing_locations.trim(),
@@ -165,3 +153,4 @@ exports.submitRequest = async (req, res) => {
     });
   }
 };
+

@@ -78,10 +78,10 @@ exports.updateUserStatus = async (req, res) => {
 exports.getPlatformStats = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT 
+      SELECT
         COUNT(*) FILTER (WHERE role = 'buyer') AS total_buyers,
         COUNT(*) FILTER (WHERE role = 'supplier') AS total_suppliers,
-        COUNT(*) FILTER (WHERE role = 'oem') AS total_oems,
+        COUNT(*) FILTER (WHERE role = 'both') AS total_both,
         COUNT(*) FILTER (WHERE role = 'admin') AS total_admins
       FROM public.users
     `);
@@ -103,16 +103,21 @@ exports.getAllNetworkAccessRequests = async (req, res) => {
       ORDER BY created_at DESC
     `);
 
-    return sendResponse(res, 200, true, "Network access requests fetched successfully", result.rows);
+    return sendResponse(
+      res,
+      200,
+      true,
+      "Network access requests fetched successfully",
+      result.rows
+    );
   } catch (error) {
     return sendResponse(res, 500, false, error.message);
   }
 };
 
-
 /* =========================================================
-   APPROVE NETWORK ACCESS REQUEST (WITH ORGANIZATION)
-   Production Safe Version
+   APPROVE NETWORK ACCESS REQUEST
+   FULLY FIXED ROLE SAFE VERSION
 ========================================================= */
 exports.approveNetworkRequest = async (req, res) => {
   const client = await pool.connect();
@@ -147,9 +152,8 @@ exports.approveNetworkRequest = async (req, res) => {
     }
 
     /* ================================
-       DUPLICATE CHECK
+       DUPLICATE USER CHECK
     ================================= */
-
     const duplicateUser = await client.query(
       `SELECT id FROM public.users
        WHERE email = $1 OR phone = $2`,
@@ -169,7 +173,6 @@ exports.approveNetworkRequest = async (req, res) => {
     /* ================================
        CREATE ORGANIZATION
     ================================= */
-
     const orgResult = await client.query(
       `INSERT INTO public.organizations (
         company_name,
@@ -190,16 +193,32 @@ exports.approveNetworkRequest = async (req, res) => {
         request.city_state,
         request.primary_product,
         request.monthly_capacity,
-        req.user.id
+        req.user.id,
       ]
     );
 
     const organizationId = orgResult.rows[0].id;
 
     /* ================================
+       ROLE SAFE MAPPING
+    ================================= */
+    const allowedRoles = ["buyer", "supplier", "both", "admin"];
+
+    let systemRole = request.role_requested?.toLowerCase();
+
+    // Map OEM → buyer
+    if (systemRole === "oem") {
+      systemRole = "buyer";
+    }
+
+    // Final safety fallback
+    if (!allowedRoles.includes(systemRole)) {
+      systemRole = "supplier";
+    }
+
+    /* ================================
        CREATE USER
     ================================= */
-
     const tempPassword =
       "AXO@" + Math.random().toString(36).slice(-6);
 
@@ -224,22 +243,20 @@ exports.approveNetworkRequest = async (req, res) => {
         request.email.toLowerCase(),
         request.email.split("@")[0],
         passwordHash,
-        request.role_requested,
+        systemRole,
         request.phone,
         request.id,
-        organizationId
+        organizationId,
       ]
     );
 
     /* ================================
        UPDATE REQUEST STATUS
     ================================= */
-
     await client.query(
       `UPDATE public.network_access_requests
        SET status = 'approved',
-           verification_notes = $1,
-           updated_at = NOW()
+           verification_notes = $1
        WHERE id = $2`,
       [comment, id]
     );
@@ -249,7 +266,7 @@ exports.approveNetworkRequest = async (req, res) => {
     return sendResponse(res, 200, true, "Request approved successfully", {
       organization_id: organizationId,
       user: userResult.rows[0],
-      temporary_password: tempPassword
+      temporary_password: tempPassword,
     });
 
   } catch (error) {
@@ -276,8 +293,7 @@ exports.rejectNetworkRequest = async (req, res) => {
     const result = await pool.query(
       `UPDATE public.network_access_requests
        SET status = 'rejected',
-           verification_notes = $1,
-           updated_at = NOW()
+           verification_notes = $1
        WHERE id = $2
          AND status = 'pending'
        RETURNING id`,
@@ -294,3 +310,4 @@ exports.rejectNetworkRequest = async (req, res) => {
     return sendResponse(res, 500, false, error.message);
   }
 };
+
