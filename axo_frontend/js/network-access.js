@@ -1,6 +1,6 @@
 /****************************************************
  * AXO NETWORKS – NETWORK ACCESS FORM JS
- * FULLY FIXED • PRODUCTION SAFE • DB READY
+ * SAFE VERSION (HTML/JSON PROOF)
  ****************************************************/
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -66,31 +66,26 @@ document.addEventListener("DOMContentLoaded", () => {
         disableSubmit();
 
         /* ===============================
-           COLLECT CHECKBOX VALUES
-        =============================== */
-
+           VALIDATION
+        ================================ */
         const whatYouDo = Array.from(
             form.querySelectorAll('input[name="whatYouDo"]:checked')
         ).map(el => el.value);
 
         if (whatYouDo.length === 0) {
-            enableSubmit();
-            return showError("Please select at least one option for 'What Do You Do'");
+            showError("Please select at least one option for 'What do you do'");
+            return;
         }
 
-        const roleInEVRadio = form.querySelector(
-            'input[name="roleInEV"]:checked'
-        );
-
-        if (!roleInEVRadio) {
-            enableSubmit();
-            return showError("Please select your role in EV manufacturing");
+        const roleInEV = form.querySelector('input[name="roleInEV"]:checked');
+        if (!roleInEV) {
+            showError("Please select your role in EV manufacturing");
+            return;
         }
 
         /* ===============================
-           BUILD PAYLOAD (MATCHES DB)
-        =============================== */
-
+           BUILD PAYLOAD
+        ================================ */
         const payload = {
             companyName: form.companyName.value.trim(),
             website: form.website.value.trim(),
@@ -100,49 +95,42 @@ document.addEventListener("DOMContentLoaded", () => {
             role: form.role.value.trim(),
             email: form.email.value.trim(),
             phone: form.phone.value.trim(),
-            whatYouDo: whatYouDo, // ARRAY (backend will store JSON)
+            whatYouDo,
             primaryProduct: form.primaryProduct.value.trim(),
             keyComponents: form.keyComponents.value.trim(),
             manufacturingLocations: form.manufacturingLocations.value.trim(),
             monthlyCapacity: form.monthlyCapacity.value.trim(),
             certifications: form.certifications.value.trim(),
-            roleInEV: roleInEVRadio.value,
+            roleInEV: roleInEV.value,
             whyJoinAXO: form.whyJoinAXO.value.trim()
         };
 
         /* ===============================
            REQUIRED FIELD CHECK
-        =============================== */
-
-        const requiredFields = [
-            "companyName",
-            "cityState",
-            "contactName",
-            "role",
-            "email",
-            "phone",
-            "primaryProduct",
-            "keyComponents",
-            "manufacturingLocations",
-            "monthlyCapacity",
-            "roleInEV",
-            "whyJoinAXO"
-        ];
-
-        for (let field of requiredFields) {
-            if (!payload[field]) {
-                enableSubmit();
-                return showError("Please fill all required fields.");
+        ================================ */
+        for (const key of [
+            "companyName","cityState","contactName","role",
+            "email","phone","primaryProduct",
+            "keyComponents","manufacturingLocations",
+            "monthlyCapacity","roleInEV","whyJoinAXO"
+        ]) {
+            if (!payload[key]) {
+                showError("Please fill all required fields");
+                return;
             }
         }
 
-        /* ===============================
-           SEND TO BACKEND
-        =============================== */
+        if (whatYouDo.length === 0) {
+            showError("Please select at least one option for 'What do you do'");
+            return;
+        }
 
+        /* ===============================
+           SUBMIT TO BACKEND (SAFE)
+        ================================ */
         try {
 
-            const response = await fetch("/api/network-request", {
+            const res = await fetch("/api/network-request", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -150,17 +138,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify(payload)
             });
 
-            const text = await response.text();
+            const text = await res.text(); // IMPORTANT
 
-            let data;
+            let json;
             try {
                 data = JSON.parse(text);
             } catch {
                 throw new Error("Server returned invalid response.");
             }
 
-            if (!response.ok || !data.success) {
-                throw new Error(data.error || "Submission failed.");
+            if (!res.ok || !json.success) {
+                throw new Error(json.error || "Submission failed");
             }
 
             showSuccess();
