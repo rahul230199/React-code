@@ -152,3 +152,226 @@ exports.getBuyerRFQs = async (req, res) => {
     return sendResponse(res, 500, false, "Server error");
   }
 };
+
+/* =========================================================
+   ACCEPT QUOTE → CREATE PURCHASE ORDER
+   Phase 2
+========================================================= */
+exports.acceptQuote = async (req, res) => {
+  const { id } = req.params; // quote id
+  const organizationId = req.user.organization_id;
+
+  if (!organizationId) {
+    return sendResponse(res, 400, false, "Organization not found");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    /* -----------------------------------------------------
+       1️⃣ Get Quote (LOCK ROW)
+    ----------------------------------------------------- */
+    const quoteResult = await client.query(
+      `SELECT * FROM quotes WHERE id = $1 FOR UPDATE`,
+      [id]
+    );
+
+    if (quoteResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return sendResponse(res, 404, false, "Quote not found");
+    }
+
+    const quote = quoteResult.rows[0];
+
+    /* -----------------------------------------------------
+       2️⃣ Get RFQ (Verify Ownership)
+    ----------------------------------------------------- */
+    const rfqResult = await client.query(
+      `SELECT * FROM rfqs WHERE id = $1`,
+      [quote.rfq_id]
+    );
+
+    if (rfqResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return sendResponse(res, 404, false, "RFQ not found");
+    }
+
+    const rfq = rfqResult.rows[0];
+
+    if (rfq.buyer_org_id !== organizationId) {
+      await client.query("ROLLBACK");
+      return sendResponse(res, 403, false, "Unauthorized");
+    }
+
+    if (quote.status === "accepted") {
+      await client.query("ROLLBACK");
+      return sendResponse(res, 400, false, "Quote already accepted");
+    }
+
+    /* -----------------------------------------------------
+       3️⃣ Accept Selected Quote
+    ----------------------------------------------------- */
+    await client.query(
+      `UPDATE quotes SET status = 'accepted' WHERE id = $1`,
+      [id]
+    );
+
+    /* -----------------------------------------------------
+       4️⃣ Reject Other Quotes
+    ----------------------------------------------------- */
+    await client.query(
+      `UPDATE quotes
+       SET status = 'rejected'
+       WHERE rfq_id = $1 AND id != $2`,
+      [quote.rfq_id, id]
+    );
+
+    /* -----------------------------------------------------
+       5️⃣ Generate PO Number
+    ----------------------------------------------------- */
+    const poNumber = `PO-${Date.now()}`;
+
+    /* -----------------------------------------------------
+       6️⃣ Create Purchase Order
+    ----------------------------------------------------- */
+    const poResult = await client.query(
+      `
+      INSERT INTO purchase_orders
+      (
+        po_number,
+        rfq_id,
+        quote_id,
+        buyer_org_id,
+        supplier_org_id,
+        part_name,
+        quantity,
+        value,
+        status,
+        accepted_at
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'issued',NOW())
+      RETURNING *
+      `,
+      [
+        poNumber,
+        rfq.id,
+        quote.id,
+        rfq.buyer_org_id,
+        quote.supplier_org_id,
+        rfq.part_name,
+        rfq.quantity,
+        quote.price
+      ]
+    );
+
+    /* -----------------------------------------------------
+       7️⃣ Insert PO Event (Audit)
+    ----------------------------------------------------- */
+    await client.query(
+      `
+      INSERT INTO po_events (po_id, event_type, description)
+      VALUES ($1, 'PO_CREATED', 'Purchase Order created after quote acceptance')
+      `,
+      [poResult.rows[0].id]
+    );
+
+    await client.query("COMMIT");
+
+    return sendResponse(res, 200, true, "Quote accepted & PO created", poResult.rows[0]);
+
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Accept Quote Error:", error);
+    return sendResponse(res, 500, false, "Server error");
+  } finally {
+    client.release();
+  }
+};
+
+/* =========================================================
+   GET ALL QUOTES FOR SPECIFIC RFQ
+========================================================= */
+exports.getQuotesForRFQ = async (req, res) => {
+  try {
+    const organizationId = req.user.organization_id;
+    const { rfqId } = req.params;
+
+    const rfqCheck = await pool.query(
+      `SELECT * FROM rfqs WHERE id = $1 AND buyer_org_id = $2`,
+      [rfqId, organizationId]
+    );
+
+    if (rfqCheck.rows.length === 0) {
+      return sendResponse(res, 404, false, "RFQ not found or unauthorized");
+    }
+
+    const result = await pool.query(
+      `
+      SELECT 
+        id,
+        supplier_org_id,
+        price,
+        timeline_days,
+        certifications,
+        reliability_snapshot,
+        status,
+        created_at
+      FROM quotes
+      WHERE rfq_id = $1
+      ORDER BY created_at ASC
+      `,
+      [rfqId]
+    );
+
+    return sendResponse(res, 200, true, "Quotes fetched successfully", result.rows);
+
+  } catch (error) {
+    console.error("Get Quotes Error:", error);
+    return sendResponse(res, 500, false, "Server error");
+  }
+};
+
+/* =========================================================
+   REJECT QUOTE
+========================================================= */
+exports.rejectQuote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const organizationId = req.user.organization_id;
+
+    const quoteCheck = await pool.query(
+      `
+      SELECT q.*, r.buyer_org_id
+      FROM quotes q
+      JOIN rfqs r ON q.rfq_id = r.id
+      WHERE q.id = $1
+      `,
+      [id]
+    );
+
+    if (quoteCheck.rows.length === 0) {
+      return sendResponse(res, 404, false, "Quote not found");
+    }
+
+    if (quoteCheck.rows[0].buyer_org_id !== organizationId) {
+      return sendResponse(res, 403, false, "Unauthorized");
+    }
+
+    if (quoteCheck.rows[0].status === "accepted") {
+      return sendResponse(res, 400, false, "Cannot reject accepted quote");
+    }
+
+    await pool.query(
+      `UPDATE quotes SET status = 'rejected' WHERE id = $1`,
+      [id]
+    );
+
+    return sendResponse(res, 200, true, "Quote rejected successfully");
+
+  } catch (error) {
+    console.error("Reject Quote Error:", error);
+    return sendResponse(res, 500, false, "Server error");
+  }
+};

@@ -73,6 +73,40 @@ exports.updateUserStatus = async (req, res) => {
 };
 
 /* =========================================================
+   RESET USER PASSWORD
+========================================================= */
+exports.resetUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Generate temporary password
+    const tempPassword = "AXO@" + Math.random().toString(36).slice(-6);
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    const result = await pool.query(
+      `UPDATE public.users
+       SET password_hash = $1,
+           must_change_password = true
+       WHERE id = $2
+       RETURNING id, email, role`,
+      [passwordHash, id]
+    );
+
+    if (result.rowCount === 0) {
+      return sendResponse(res, 404, false, "User not found");
+    }
+
+    return sendResponse(res, 200, true, "Password reset successful", {
+      user: result.rows[0],
+      temporary_password: tempPassword,
+    });
+
+  } catch (error) {
+    return sendResponse(res, 500, false, error.message);
+  }
+};
+
+/* =========================================================
    PLATFORM STATS (NETWORK REQUEST BASED)
 ========================================================= */
 exports.getPlatformStats = async (req, res) => {

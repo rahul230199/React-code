@@ -30,4 +30,13 @@ router.post("/rfqs", authenticate, authorizeRoles("buyer"), buyerController.crea
 
 router.get("/rfqs", authenticate, authorizeRoles("buyer"), buyerController.getBuyerRFQs);
 
+/* NEW: Get Quotes for RFQ */
+router.get("/rfqs/:rfqId/quotes", buyerController.getQuotesForRFQ);
+
+/* Accept Quote */
+router.post("/quotes/:id/accept", buyerController.acceptQuote);
+
+/* Reject Quote (optional) */
+router.post("/quotes/:id/reject", buyerController.rejectQuote);
+
 module.exports = router;
