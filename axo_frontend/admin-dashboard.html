@@ -10,8 +10,6 @@
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- In your <head> -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Styles -->
   <link rel="stylesheet" href="./styles/admin-dashboard.css">
@@ -22,7 +20,7 @@
 <div class="app">
 
   <!-- =====================================================
-       TOPBAR (Sticky, Clean, Modern)
+       TOPBAR
   ====================================================== -->
   <header class="topbar">
 
@@ -35,6 +33,12 @@
     </div>
 
     <div class="topbar-right">
+
+      <!-- USERS BUTTON -->
+     <button class="btn btn-secondary" id="usersViewBtn">
+  <i class="fas fa-users" id="toggleIcon"></i>
+  <span id="toggleText">Users</span>
+</button>
 
       <button class="icon-btn" id="refreshBtn" title="Refresh">
         <i class="fas fa-rotate"></i>
@@ -49,7 +53,7 @@
         <div class="avatar">A</div>
         <div class="user-info">
           <span class="user-name" id="adminName">Admin</span>
-              <small id="adminRole">Administrator</small>
+          <small id="adminRole">Administrator</small>
         </div>
         <button class="icon-btn" id="logoutBtn">
           <i class="fas fa-sign-out-alt"></i>
@@ -69,11 +73,13 @@
       <h1>Dashboard Overview</h1>
       <p>Manage EV network access and supplier onboarding requests</p>
     </section>
-<div id="topMessage" class="top-message"></div>
+
+    <div id="topMessage" class="top-message"></div>
+
     <!-- =====================================================
          STATS GRID
     ====================================================== -->
-    <section class="stats-grid">
+    <section class="stats-grid" id="statsSection">
 
       <div class="stat-card total">
         <div class="stat-icon">
@@ -118,13 +124,12 @@
     </section>
 
     <!-- =====================================================
-         REQUEST TABLE SECTION
+         REQUESTS SECTION
     ====================================================== -->
-    <section class="table-section">
+    <section class="table-section" id="requestsSection">
 
       <div class="card">
 
-        <!-- Card Header -->
         <div class="card-header">
           <div>
             <h2>Network Access Requests</h2>
@@ -132,7 +137,6 @@
           </div>
         </div>
 
-        <!-- FILTER BAR -->
         <div class="filter-bar">
 
           <div class="search-box">
@@ -160,17 +164,14 @@
 
         </div>
 
-        <!-- TABLE WRAPPER -->
         <div class="table-wrapper">
 
-          <!-- Empty State -->
           <div id="emptyState" class="empty-state" style="display:none;">
             <i class="fas fa-folder-open"></i>
             <h3>No Requests Found</h3>
             <p>Submitted EV network forms will appear here.</p>
           </div>
 
-          <!-- Data Table -->
           <table id="dataTable">
             <thead>
               <tr>
@@ -194,15 +195,74 @@
 
     </section>
 
+    <!-- =====================================================
+         USERS SECTION (Hidden Initially)
+    ====================================================== -->
+    <section class="table-section" id="usersSection" style="display:none;">
+
+      <div class="card">
+
+        <div class="card-header">
+          <div>
+            <h2>Platform Users</h2>
+            <p>Manage buyers, suppliers, OEMs and admins</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="userSearchInput"
+              placeholder="Search by name or email..." />
+          </div>
+
+          <select id="userRoleFilter" class="filter-controls">
+            <option value="ALL">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="buyer">Buyer</option>
+            <option value="supplier">Supplier</option>
+            <option value="oem">OEM</option>
+          </select>
+
+        </div>
+
+        <div class="table-wrapper">
+
+          <div id="usersEmptyState" class="empty-state" style="display:none;">
+            <i class="fas fa-users-slash"></i>
+            <h3>No Users Found</h3>
+          </div>
+
+          <table id="usersTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+
+        </div>
+
+      </div>
+
+    </section>
+
   </main>
 
 </div>
 
 <!-- =====================================================
-     MODALS (Dynamic)
+     MODALS
 ====================================================== -->
 
-<!-- View Modal -->
 <div id="viewModal" class="modal" style="display:none;">
   <div class="modal-content">
     <button class="modal-close" id="modalCloseBtn">
@@ -212,7 +272,6 @@
   </div>
 </div>
 
-<!-- Status Modal -->
 <div id="statusModal" class="modal" style="display:none;">
   <div class="modal-content">
     <h3 id="statusTitle">Confirm Action</h3>
@@ -222,8 +281,8 @@
 
     <div class="modal-actions">
       <button class="btn btn-secondary" id="cancelStatusBtn">
-  Cancel
-</button>
+        Cancel
+      </button>
 
       <button class="btn btn-primary"
         id="confirmStatusBtn">Confirm</button>
@@ -231,8 +290,8 @@
   </div>
 </div>
 
-<!-- JS -->
 <script src="./js/admin-dashboard.js"></script>
 
 </body>
 </html>
+
