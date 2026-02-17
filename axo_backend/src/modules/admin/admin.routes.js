@@ -29,6 +29,9 @@ router.get("/users", adminController.getAllUsers);
 // PATCH /admin/users/:id/status
 router.patch("/users/:id/status", adminController.updateUserStatus);
 
+// POST /admin/users/:id/reset-password
+router.post("/users/:id/reset-password", adminController.resetUserPassword);
+
 /* =========================================================
    PLATFORM STATS
 ========================================================= */

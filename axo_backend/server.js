@@ -35,6 +35,8 @@ const pool = require("./src/config/db");
 const authRoutes = require("./src/modules/auth/auth.routes");
 const networkRoutes = require("./src/modules/network/network.routes");
 const adminRoutes = require("./src/modules/admin/admin.routes");
+const buyerRoutes = require("./src/modules/buyer/buyer.routes");
+const sellerRoutes =require("./src/modules/supplier/supplier.routes");
 
 /* =========================================================
    APP INITIALIZATION
@@ -84,6 +86,8 @@ app.get("/admin-dashboard", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/network", networkRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/buyer", buyerRoutes);
+app.use("/api/supplier", sellerRoutes);
 
 /* =========================================================
    HEALTH CHECK

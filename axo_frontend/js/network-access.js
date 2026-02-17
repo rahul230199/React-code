@@ -1,9 +1,10 @@
 /****************************************************
  * AXO NETWORKS – NETWORK ACCESS FORM JS
- * SAFE VERSION (HTML/JSON PROOF)
+ * FULLY FIXED • PRODUCTION SAFE • DB READY
  ****************************************************/
 
 document.addEventListener("DOMContentLoaded", () => {
+
     const form = document.getElementById("accessForm");
     if (!form) return;
 
@@ -11,10 +12,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorBox = document.getElementById("errorMessage");
     const errorText = document.getElementById("errorText");
 
+    const submitButton = form.querySelector("button[type='submit']");
+
+    /* ===============================================
+       UI HELPERS
+    =============================================== */
+
     function showError(message) {
         if (!errorBox || !errorText) return;
         errorText.textContent = message;
         errorBox.style.display = "block";
+        successBox.style.display = "none";
+
         setTimeout(() => {
             errorBox.style.display = "none";
         }, 4000);
@@ -22,38 +31,66 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showSuccess() {
         if (!successBox) return;
+
         successBox.style.display = "block";
+        errorBox.style.display = "none";
+        form.reset();
+
         setTimeout(() => {
             successBox.style.display = "none";
-            form.style.display = "block";
-            form.reset();
         }, 5000);
     }
+
+    function disableSubmit() {
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = "<span>Submitting...</span>";
+        }
+    }
+
+    function enableSubmit() {
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML =
+                "<span>Submit Request <i class='fas fa-arrow-right'></i></span>";
+        }
+    }
+
+    /* ===============================================
+       FORM SUBMIT
+    =============================================== */
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
+        disableSubmit();
+
         /* ===============================
-           VALIDATION
-        ================================ */
+           COLLECT CHECKBOX VALUES
+        =============================== */
+
         const whatYouDo = Array.from(
             form.querySelectorAll('input[name="whatYouDo"]:checked')
-        ).map(c => c.value);
+        ).map(el => el.value);
 
         if (whatYouDo.length === 0) {
-            showError("Please select at least one option for 'What do you do'");
-            return;
+            enableSubmit();
+            return showError("Please select at least one option for 'What Do You Do'");
         }
 
-        const roleInEV = form.querySelector('input[name="roleInEV"]:checked');
-        if (!roleInEV) {
-            showError("Please select your role in EV manufacturing");
-            return;
+        const roleInEVRadio = form.querySelector(
+            'input[name="roleInEV"]:checked'
+        );
+
+        if (!roleInEVRadio) {
+            enableSubmit();
+            return showError("Please select your role in EV manufacturing");
         }
 
         /* ===============================
-           BUILD PAYLOAD
-        ================================ */
+           BUILD PAYLOAD (MATCHES DB)
+        =============================== */
+
         const payload = {
             companyName: form.companyName.value.trim(),
             website: form.website.value.trim(),
@@ -63,63 +100,78 @@ document.addEventListener("DOMContentLoaded", () => {
             role: form.role.value.trim(),
             email: form.email.value.trim(),
             phone: form.phone.value.trim(),
-            whatYouDo,
+            whatYouDo: whatYouDo, // ARRAY (backend will store JSON)
             primaryProduct: form.primaryProduct.value.trim(),
             keyComponents: form.keyComponents.value.trim(),
             manufacturingLocations: form.manufacturingLocations.value.trim(),
             monthlyCapacity: form.monthlyCapacity.value.trim(),
             certifications: form.certifications.value.trim(),
-            roleInEV: roleInEV.value,
+            roleInEV: roleInEVRadio.value,
             whyJoinAXO: form.whyJoinAXO.value.trim()
         };
 
         /* ===============================
            REQUIRED FIELD CHECK
-        ================================ */
-        for (const key of [
-            "companyName","cityState","contactName","role",
-            "email","phone","primaryProduct",
-            "keyComponents","manufacturingLocations",
-            "monthlyCapacity","roleInEV","whyJoinAXO"
-        ]) {
-            if (!payload[key]) {
-                showError("Please fill all required fields");
-                return;
+        =============================== */
+
+        const requiredFields = [
+            "companyName",
+            "cityState",
+            "contactName",
+            "role",
+            "email",
+            "phone",
+            "primaryProduct",
+            "keyComponents",
+            "manufacturingLocations",
+            "monthlyCapacity",
+            "roleInEV",
+            "whyJoinAXO"
+        ];
+
+        for (let field of requiredFields) {
+            if (!payload[field]) {
+                enableSubmit();
+                return showError("Please fill all required fields.");
             }
         }
 
         /* ===============================
-           SUBMIT TO BACKEND (SAFE)
-        ================================ */
-        try {
-            form.style.display = "none";
+           SEND TO BACKEND
+        =============================== */
 
-            const res = await fetch("/api/network-request", {
+        try {
+
+            const response = await fetch("/api/network-request", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
-            const text = await res.text(); // IMPORTANT
+            const text = await response.text();
 
-            let json;
+            let data;
             try {
-                json = JSON.parse(text);
+                data = JSON.parse(text);
             } catch {
-                throw new Error("Server returned invalid response");
+                throw new Error("Server returned invalid response.");
             }
 
-            if (!res.ok || !json.success) {
-                throw new Error(json.error || "Submission failed");
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || "Submission failed.");
             }
 
             showSuccess();
 
-        } catch (err) {
-            console.error("Submission error:", err);
-            form.style.display = "block";
-            showError(err.message || "Submission failed. Please try again.");
+        } catch (error) {
+            console.error("Network Request Error:", error);
+            showError(error.message || "Submission failed. Please try again.");
+        } finally {
+            enableSubmit();
         }
-    });
-});
 
+    });
+
+});

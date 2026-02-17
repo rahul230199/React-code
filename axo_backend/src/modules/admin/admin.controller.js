@@ -73,25 +73,26 @@ exports.updateUserStatus = async (req, res) => {
 };
 
 /* =========================================================
-   PLATFORM STATS
+   PLATFORM STATS (NETWORK REQUEST BASED)
 ========================================================= */
 exports.getPlatformStats = async (req, res) => {
   try {
+
     const result = await pool.query(`
-      SELECT 
-        COUNT(*) FILTER (WHERE role = 'buyer') AS total_buyers,
-        COUNT(*) FILTER (WHERE role = 'supplier') AS total_suppliers,
-        COUNT(*) FILTER (WHERE role = 'oem') AS total_oems,
-        COUNT(*) FILTER (WHERE role = 'admin') AS total_admins
-      FROM public.users
+      SELECT
+        COUNT(*) AS total_requests,
+        COUNT(*) FILTER (WHERE status = 'pending') AS total_pending,
+        COUNT(*) FILTER (WHERE status = 'approved') AS total_approved,
+        COUNT(*) FILTER (WHERE status = 'rejected') AS total_rejected
+      FROM public.network_access_requests
     `);
 
     return sendResponse(res, 200, true, "Stats fetched", result.rows[0]);
+
   } catch (error) {
     return sendResponse(res, 500, false, error.message);
   }
 };
-
 /* =========================================================
    GET ALL NETWORK ACCESS REQUESTS
 ========================================================= */
@@ -292,5 +293,45 @@ exports.rejectNetworkRequest = async (req, res) => {
 
   } catch (error) {
     return sendResponse(res, 500, false, error.message);
+  }
+};
+
+/* =========================================================
+   RESET USER PASSWORD (ADMIN)
+========================================================= */
+exports.resetUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return sendResponse(res, 400, false, "User ID required");
+    }
+
+    // Generate temporary password
+    const tempPassword = "AXO@" + Math.random().toString(36).slice(-6);
+
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    const result = await pool.query(
+      `UPDATE public.users
+       SET password_hash = $1,
+           must_change_password = true
+       WHERE id = $2
+       RETURNING id, email, role`,
+      [hashedPassword, id]
+    );
+
+    if (result.rowCount === 0) {
+      return sendResponse(res, 404, false, "User not found");
+    }
+
+    return sendResponse(res, 200, true, "Password reset successfully", {
+      user: result.rows[0],
+      temporary_password: tempPassword,
+    });
+
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    return sendResponse(res, 500, false, "Server error");
   }
 };

@@ -261,13 +261,21 @@ function renderUsers(data) {
       </td>
       <td data-label="Created">${formatDate(user.created_at)}</td>
       <td data-label="Actions">
-        <button class="btn btn-sm ${isActive ? "btn-warning" : "btn-success"} toggle-btn"
-          data-id="${user.id}"
-          data-status="${user.status}">
-          <i class="fas ${isActive ? "fa-ban" : "fa-check-circle"}"></i>
-          ${isActive ? "Deactivate" : "Activate"}
-        </button>
-      </td>
+
+  <button class="btn btn-secondary btn-sm reset-btn"
+    data-id="${user.id}"
+    data-email="${user.email}">
+    <i class="fas fa-key"></i> Reset
+  </button>
+
+  <button class="btn btn-sm ${isActive ? "btn-warning" : "btn-success"} toggle-btn"
+    data-id="${user.id}"
+    data-status="${user.status}">
+    <i class="fas ${isActive ? "fa-ban" : "fa-check-circle"}"></i>
+    ${isActive ? "Deactivate" : "Activate"}
+  </button>
+
+</td>
     `;
 
     tbody.appendChild(row);
@@ -596,6 +604,8 @@ function showCommentModal(status) {
    USER ACTIONS
 ========================================================= */
 function bindUserActions() {
+
+  /* ---------------- TOGGLE STATUS ---------------- */
   document.querySelectorAll(".toggle-btn").forEach(btn => {
     btn.onclick = async () => {
 
@@ -622,7 +632,38 @@ function bindUserActions() {
       }
     };
   });
+
+  /* ---------------- RESET PASSWORD ---------------- */
+  document.querySelectorAll(".reset-btn").forEach(btn => {
+    btn.onclick = async () => {
+
+      const userId = btn.dataset.id;
+      const userEmail = btn.dataset.email;
+
+      const confirmed = await showResetConfirmModal();
+      if (!confirmed) return;
+
+      const result = await apiFetch(
+        `${API_BASE_URL}/admin/users/${userId}/reset-password`,
+        { method: "POST" }
+      );
+
+      if (!result?.success) {
+        showMessage(result?.message || "Reset failed", "error");
+        return;
+      }
+
+      document.getElementById("resetUserEmail").textContent = userEmail;
+      document.getElementById("resetTempPassword").value =
+        result.data.temporary_password;
+
+      document.getElementById("resetPasswordModal").style.display = "flex";
+    };
+  });
 }
+/* =========================================================
+   CONFIRM MODALS
+========================================================= */
 
 function showUserStatusConfirmModal(status) {
   return new Promise((resolve) => {
@@ -659,6 +700,40 @@ function showUserStatusConfirmModal(status) {
   });
 }
 
+function showResetConfirmModal() {
+  return new Promise((resolve) => {
+
+    const message = `
+      <div style="padding:20px;">
+        <h3 style="margin-bottom:15px;">
+          Reset User Password
+        </h3>
+        <p>This will generate a new temporary password for this user.</p>
+        <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
+          <button id="cancelResetAction" class="btn btn-secondary">Cancel</button>
+          <button id="confirmResetAction" class="btn btn-primary">Confirm</button>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement("div");
+    container.className = "modal";
+    container.style.display = "flex";
+    container.innerHTML = `<div class="modal-content">${message}</div>`;
+
+    document.body.appendChild(container);
+
+    document.getElementById("confirmResetAction").onclick = () => {
+      document.body.removeChild(container);
+      resolve(true);
+    };
+
+    document.getElementById("cancelResetAction").onclick = () => {
+      document.body.removeChild(container);
+      resolve(false);
+    };
+  });
+}
 /* =========================================================
    EXPORT
 ========================================================= */
@@ -883,3 +958,20 @@ function renderWhatYouDo(data) {
 window.addEventListener("beforeunload", () => {
   if (autoRefreshTimer) clearInterval(autoRefreshTimer);
 });
+
+/* =========================================================
+   RESET PASSWORD MODAL FUNCTIONS
+========================================================= */
+
+function closeResetModal() {
+  const modal = document.getElementById("resetPasswordModal");
+  if (modal) modal.style.display = "none";
+}
+
+function copyResetPassword() {
+  const input = document.getElementById("resetTempPassword");
+  input.select();
+  input.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+  showMessage("Password copied to clipboard", "success");
+}
