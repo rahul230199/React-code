@@ -1,10 +1,12 @@
 /* =========================================================
-   AXO NETWORKS — BACKEND SERVER (PRODUCTION STRUCTURE)
+   AXO NETWORKS — BACKEND SERVER (ENTERPRISE HARDENED)
 ========================================================= */
 
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const setupSwagger = require("./src/config/swagger");
 
 /* =========================================================
    LOAD ENV BASED ON NODE_ENV
@@ -36,7 +38,20 @@ const authRoutes = require("./src/modules/auth/auth.routes");
 const networkRoutes = require("./src/modules/network/network.routes");
 const adminRoutes = require("./src/modules/admin/admin.routes");
 const buyerRoutes = require("./src/modules/buyer/buyer.routes");
-const sellerRoutes =require("./src/modules/supplier/supplier.routes");
+const supplierRoutes = require("./src/modules/supplier/supplier.routes");
+const {
+  globalLimiter,
+  authLimiter,
+  networkLimiter,
+} = require("./src/middlewares/rateLimit.middleware");
+
+
+
+/* =========================================================
+   IMPORT GLOBAL ERROR MIDDLEWARE
+========================================================= */
+
+const errorMiddleware = require("./src/middlewares/error.middleware");
 
 /* =========================================================
    APP INITIALIZATION
@@ -46,21 +61,41 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 /* =========================================================
-   GLOBAL MIDDLEWARE
+   TRUST PROXY (FOR NGINX / LOAD BALANCER)
 ========================================================= */
-
-app.use(cors());
-app.use(express.json({ limit: "5mb" }));
+app.set("trust proxy", 1);
 
 /* =========================================================
-   STATIC FRONTEND (IMPORTANT)
+   GLOBAL SECURITY MIDDLEWARE
+========================================================= */
+
+// Security headers
+app.use(helmet());
+
+// CORS configuration (production safe)
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.ALLOWED_ORIGIN
+        : "*",
+    credentials: true,
+  })
+);
+
+// Body parsing
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+/* =========================================================
+   STATIC FRONTEND
 ========================================================= */
 
 const frontendPath = path.join(__dirname, "../axo_frontend");
 app.use(express.static(frontendPath));
 
 /* =========================================================
-   CLEAN FRONTEND ROUTES (NO .HTML)
+   FRONTEND ROUTES (CLEAN URL SUPPORT)
 ========================================================= */
 
 app.get("/", (req, res) => {
@@ -83,11 +118,20 @@ app.get("/admin-dashboard", (req, res) => {
    API ROUTES
 ========================================================= */
 
+app.use(globalLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/network", networkRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/buyer", buyerRoutes);
-app.use("/api/supplier", sellerRoutes);
+app.use("/api/supplier", supplierRoutes);
+
+/* =========================================================
+   SWAGGER DOCUMENTATION
+========================================================= */
+if (process.env.NODE_ENV !== "production") {
+  setupSwagger(app);
+}
+
 
 /* =========================================================
    HEALTH CHECK
@@ -123,7 +167,7 @@ app.use("/api", (req, res) => {
 });
 
 /* =========================================================
-   FRONTEND FALLBACK (OPTIONAL SPA SUPPORT)
+   FRONTEND FALLBACK (SPA SAFE)
 ========================================================= */
 
 app.use((req, res, next) => {
@@ -134,21 +178,47 @@ app.use((req, res, next) => {
 });
 
 /* =========================================================
-   GLOBAL ERROR HANDLER
+   GLOBAL ERROR HANDLER (MUST BE LAST)
 ========================================================= */
 
-app.use((err, req, res, next) => {
-  console.error("Unhandled Error:", err.message);
-  res.status(500).json({
-    success: false,
-    message: "Internal server error",
-  });
-});
+app.use(errorMiddleware);
 
 /* =========================================================
    START SERVER
 ========================================================= */
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
+
+/* =========================================================
+   GRACEFUL SHUTDOWN HANDLING
+========================================================= */
+
+process.on("SIGTERM", () => {
+  console.log("🛑 SIGTERM received. Shutting down gracefully...");
+  server.close(() => {
+    console.log("💤 Process terminated safely.");
+    process.exit(0);
+  });
+});
+
+/* =========================================================
+   HANDLE UNCAUGHT EXCEPTIONS
+========================================================= */
+
+process.on("uncaughtException", (err) => {
+  console.error("❌ UNCAUGHT EXCEPTION:", err);
+  process.exit(1);
+});
+
+/* =========================================================
+   HANDLE UNHANDLED PROMISE REJECTIONS
+========================================================= */
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ UNHANDLED REJECTION:", err);
+  server.close(() => {
+    process.exit(1);
+  });
 });

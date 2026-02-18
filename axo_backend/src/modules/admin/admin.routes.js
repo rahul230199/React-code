@@ -1,63 +1,176 @@
 /* =========================================================
-   AXO NETWORKS — ADMIN ROUTES
-   Protected • Structured • Production Ready
+   AXO NETWORKS — ADMIN ROUTES (ENTERPRISE STRUCTURED)
 ========================================================= */
 
 const express = require("express");
 const router = express.Router();
 
-const adminController = require("./admin.controller");
 const { authenticate } = require("../../middlewares/auth.middleware");
-const { authorizeRoles } = require("../../middlewares/role.middleware");
+const authorize = require("../../middlewares/authorize.middleware");
+const {
+  validateRequiredFields,
+} = require("../../middlewares/validation.middleware");
+
+const adminController = require("./admin.controller");
+const poController = require("./admin.po.controller");
+const dashboardController = require("./admin.dashboard.controller");
+const analyticsController = require("./admin.analytics.controller");
+/**
+ * @swagger
+ * /api/admin/dashboard:
+ *   get:
+ *     summary: Get admin dashboard
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard data
+ */
 
 /* =========================================================
-   ALL ROUTES BELOW REQUIRE:
-   1️⃣ Valid JWT
-   2️⃣ Admin Role
+   GLOBAL ADMIN AUTHENTICATION
 ========================================================= */
-
 router.use(authenticate);
-router.use(authorizeRoles("admin"));
 
 /* =========================================================
-   USERS MANAGEMENT
+   USER MANAGEMENT
 ========================================================= */
 
-// GET /admin/users?role=supplier
-router.get("/users", adminController.getAllUsers);
+router.get(
+  "/users",
+  authorize("VIEW_USERS"),
+  adminController.getAllUsers
+);
 
-// PATCH /admin/users/:id/status
-router.patch("/users/:id/status", adminController.updateUserStatus);
+router.patch(
+  "/users/:id/status",
+  authorize("MANAGE_USERS"),
+  validateRequiredFields(["status"]),
+  adminController.updateUserStatus
+);
 
-// POST /admin/users/:id/reset-password
-router.post("/users/:id/reset-password", adminController.resetUserPassword);
+router.post(
+  "/users/:id/reset-password",
+  authorize("MANAGE_USERS"),
+  adminController.resetUserPassword
+);
 
 /* =========================================================
    PLATFORM STATS
 ========================================================= */
 
-// GET /admin/stats
-router.get("/stats", adminController.getPlatformStats);
+router.get(
+  "/stats",
+  authorize("VIEW_STATS"),
+  adminController.getPlatformStats
+);
 
 /* =========================================================
    NETWORK ACCESS REQUESTS
 ========================================================= */
 
-// GET /admin/network-access-requests
 router.get(
   "/network-access-requests",
+  authorize("VIEW_NETWORK_REQUESTS"),
   adminController.getAllNetworkAccessRequests
 );
-// Approve request
+
 router.post(
   "/network-access-requests/:id/approve",
+  authorize("APPROVE_NETWORK_REQUEST"),
+  validateRequiredFields(["comment"]),
   adminController.approveNetworkRequest
 );
 
-// Reject request
 router.post(
   "/network-access-requests/:id/reject",
+  authorize("REJECT_NETWORK_REQUEST"),
+  validateRequiredFields(["comment"]),
   adminController.rejectNetworkRequest
+);
+
+/* =========================================================
+   DISPUTES
+========================================================= */
+
+router.get(
+  "/disputes",
+  authorize("VIEW_DISPUTES"),
+  adminController.getAllDisputes
+);
+
+router.post(
+  "/purchase-orders/:poId/disputes/:disputeId/resolve",
+  authorize("RESOLVE_DISPUTE"),
+  validateRequiredFields(["action"]),
+  adminController.resolveDispute
+);
+
+/* =========================================================
+   PURCHASE ORDERS
+========================================================= */
+
+router.get(
+  "/purchase-orders",
+  authorize("VIEW_PO"),
+  poController.getAllPurchaseOrders
+);
+
+router.get(
+  "/purchase-orders/:poId",
+  authorize("VIEW_PO"),
+  poController.getPurchaseOrderDetails
+);
+
+router.post(
+  "/purchase-orders/:poId/force-cancel",
+  authorize("FORCE_PO_ACTION"),
+  poController.forceCancelPurchaseOrder
+);
+
+router.post(
+  "/purchase-orders/:poId/force-close",
+  authorize("FORCE_PO_ACTION"),
+  poController.forceClosePurchaseOrder
+);
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+router.get(
+  "/dashboard",
+  authorize("VIEW_DASHBOARD"),
+  dashboardController.getAdminDashboard
+);
+
+/* =========================================================
+   ANALYTICS
+========================================================= */
+
+router.get(
+  "/analytics/monthly-revenue",
+  authorize("VIEW_ANALYTICS"),
+  analyticsController.getMonthlyRevenue
+);
+
+router.get(
+  "/analytics/top-suppliers",
+  authorize("VIEW_ANALYTICS"),
+  analyticsController.getTopSuppliers
+);
+
+router.get(
+  "/analytics/conversion-rate",
+  authorize("VIEW_ANALYTICS"),
+  analyticsController.getConversionRate
+);
+
+router.get(
+  "/analytics/dispute-ratio",
+  authorize("VIEW_ANALYTICS"),
+  analyticsController.getDisputeRatio
 );
 
 module.exports = router;

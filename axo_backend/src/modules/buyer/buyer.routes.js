@@ -1,42 +1,84 @@
 /* =========================================================
-   AXO NETWORKS — BUYER ROUTES
-   Protected • Organization Scoped • Production Ready
+   AXO NETWORKS — BUYER ROUTES (ENTERPRISE STRUCTURED)
 ========================================================= */
 
 const express = require("express");
 const router = express.Router();
 
 const { authenticate } = require("../../middlewares/auth.middleware");
-const { authorizeRoles } = require("../../middlewares/role.middleware");
+const authorize = require("../../middlewares/authorize.middleware");
+const {
+  validateRequiredFields,
+} = require("../../middlewares/validation.middleware");
+
 const buyerController = require("./buyer.controller");
 
 /* =========================================================
-   ALL BUYER ROUTES REQUIRE:
-   1️⃣ Valid JWT
-   2️⃣ Buyer Role
+   GLOBAL BUYER AUTH
 ========================================================= */
-
 router.use(authenticate);
-router.use(authorizeRoles("buyer"));
 
 /* =========================================================
    DASHBOARD
 ========================================================= */
+router.get(
+  "/dashboard-stats",
+  authorize("VIEW_BUYER_DASHBOARD"),
+  buyerController.getDashboardStats
+);
 
-// GET /api/buyer/dashboard-stats
-router.get("/dashboard-stats", buyerController.getDashboardStats);
+/* =========================================================
+   RFQ MANAGEMENT
+========================================================= */
+router.post(
+  "/rfqs",
+  authorize("CREATE_RFQ"),
+  validateRequiredFields(["part_name", "quantity"]),
+  buyerController.createRFQ
+);
 
-router.post("/rfqs", authenticate, authorizeRoles("buyer"), buyerController.createRFQ);
+router.get(
+  "/rfqs",
+  authorize("VIEW_RFQ"),
+  buyerController.getBuyerRFQs
+);
 
-router.get("/rfqs", authenticate, authorizeRoles("buyer"), buyerController.getBuyerRFQs);
+router.get(
+  "/rfqs/:rfqId/quotes",
+  authorize("VIEW_RFQ"),
+  buyerController.getQuotesForRFQ
+);
 
-/* NEW: Get Quotes for RFQ */
-router.get("/rfqs/:rfqId/quotes", buyerController.getQuotesForRFQ);
+/* =========================================================
+   QUOTE ACTIONS
+========================================================= */
+router.post(
+  "/quotes/:id/accept",
+  authorize("ACCEPT_QUOTE"),
+  buyerController.acceptQuote
+);
 
-/* Accept Quote */
-router.post("/quotes/:id/accept", buyerController.acceptQuote);
+router.post(
+  "/quotes/:id/reject",
+  authorize("REJECT_QUOTE"),
+  buyerController.rejectQuote
+);
 
-/* Reject Quote (optional) */
-router.post("/quotes/:id/reject", buyerController.rejectQuote);
+/* =========================================================
+   PO ACTIONS
+========================================================= */
+router.post(
+  "/purchase-orders/:poId/milestones/:milestoneId/pay",
+  authorize("PAY_MILESTONE"),
+  validateRequiredFields(["amount"]),
+  buyerController.payMilestone
+);
+
+router.post(
+  "/purchase-orders/:poId/dispute",
+  authorize("RAISE_DISPUTE"),
+  validateRequiredFields(["reason"]),
+  buyerController.raiseDispute
+);
 
 module.exports = router;

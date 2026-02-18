@@ -1,41 +1,58 @@
+/* =========================================================
+   AXO NETWORKS — SUPPLIER ROUTES (ENTERPRISE STRUCTURED)
+========================================================= */
+
 const express = require("express");
 const router = express.Router();
 
 const supplierController = require("./supplier.controller");
 const { authenticate } = require("../../middlewares/auth.middleware");
-const { authorizeRoles } = require("../../middlewares/role.middleware");
+const authorize = require("../../middlewares/authorize.middleware");
+const {
+  validateRequiredFields,
+} = require("../../middlewares/validation.middleware");
 
 /* =========================================================
-   ALL SUPPLIER ROUTES REQUIRE:
-   1️⃣ Valid JWT
-   2️⃣ Supplier Role
+   GLOBAL AUTH
 ========================================================= */
-
 router.use(authenticate);
-router.use(authorizeRoles("supplier"));
 
 /* =========================================================
    RFQ MARKETPLACE
 ========================================================= */
 
-// GET /api/supplier/rfqs
-router.get("/rfqs", supplierController.getOpenRFQs);
+router.get(
+  "/rfqs",
+  authorize("VIEW_OPEN_RFQS"),
+  supplierController.getOpenRFQs
+);
 
-// POST /api/supplier/rfqs/:rfqId/quote
-router.post("/rfqs/:rfqId/quote", supplierController.submitQuote);
+router.post(
+  "/rfqs/:rfqId/quote",
+  authorize("SUBMIT_QUOTE"),
+  validateRequiredFields(["price"]),
+  supplierController.submitQuote
+);
+
 /* =========================================================
    SUPPLIER PURCHASE ORDERS
 ========================================================= */
 
-// GET /api/supplier/purchase-orders
-router.get("/purchase-orders", supplierController.getSupplierPurchaseOrders);
+router.get(
+  "/purchase-orders",
+  authorize("VIEW_SUPPLIER_POS"),
+  supplierController.getSupplierPurchaseOrders
+);
 
-// POST /api/supplier/purchase-orders/:id/accept
-router.post("/purchase-orders/:id/accept", supplierController.acceptPurchaseOrder);
+router.post(
+  "/purchase-orders/:id/accept",
+  authorize("ACCEPT_PO"),
+  supplierController.acceptPurchaseOrder
+);
 
-// POST /api/supplier/purchase-orders/:poId/milestones/:milestoneId/update
 router.post(
   "/purchase-orders/:poId/milestones/:milestoneId/update",
+  authorize("UPDATE_MILESTONE"),
   supplierController.updateMilestone
 );
 
