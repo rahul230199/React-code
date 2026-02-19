@@ -1,18 +1,12 @@
-/* =========================================================
-   AXO NETWORKS — AUTHORIZATION MIDDLEWARE (ENTERPRISE)
-   Permission-Based RBAC Enforcement
-========================================================= */
+/**
+ * AXO NETWORKS — AUTHORIZATION MIDDLEWARE
+ * Enterprise RBAC (Permission Based)
+ */
 
 const { ROLE_PERMISSIONS } = require("../config/roles.config");
 const AppError = require("../utils/AppError");
 
-/* =========================================================
-   AUTHORIZE PERMISSION
-   Supports single or multiple permissions
-========================================================= */
-
 const authorize = (requiredPermissions = []) => {
-  // Normalize to array
   const permissions = Array.isArray(requiredPermissions)
     ? requiredPermissions
     : [requiredPermissions];
@@ -28,7 +22,9 @@ const authorize = (requiredPermissions = []) => {
       );
     }
 
-    const rolePermissions = ROLE_PERMISSIONS[user.role];
+    // Case-insensitive role handling
+    const roleKey = user.role.toLowerCase();
+    const rolePermissions = ROLE_PERMISSIONS[roleKey];
 
     if (!rolePermissions) {
       return next(
@@ -38,12 +34,11 @@ const authorize = (requiredPermissions = []) => {
       );
     }
 
-    // SUPER ADMIN wildcard
+    // SUPER ADMIN wildcard access
     if (rolePermissions.includes("*")) {
       return next();
     }
 
-    // Check if at least one required permission is allowed
     const hasPermission = permissions.some((permission) =>
       rolePermissions.includes(permission)
     );
@@ -54,7 +49,7 @@ const authorize = (requiredPermissions = []) => {
           errorCode: "AUTH_PERMISSION_DENIED",
           meta: {
             requiredPermissions: permissions,
-            userRole: user.role,
+            userRole: roleKey,
           },
         })
       );
@@ -65,3 +60,4 @@ const authorize = (requiredPermissions = []) => {
 };
 
 module.exports = authorize;
+

@@ -1,5 +1,5 @@
 /* =========================================================
-   AXO NETWORKS — SUPPLIER CONTROLLER (ENTERPRISE)
+   AXO NETWORKS — SUPPLIER CONTROLLER (ENTERPRISE FINAL)
 ========================================================= */
 
 const pool = require("../../config/db");
@@ -47,7 +47,6 @@ exports.getOpenRFQs = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: "Open RFQs fetched successfully",
     data: result.rows
   });
 });
@@ -58,7 +57,7 @@ exports.getOpenRFQs = asyncHandler(async (req, res) => {
 exports.submitQuote = asyncHandler(async (req, res) => {
   const supplierOrgId = req.user.organization_id;
   const { rfqId } = req.params;
-  const { price, timeline_days, certifications, reliability_snapshot } = req.body;
+  const { price, timeline_days, certifications } = req.body;
 
   if (!supplierOrgId)
     throw new AppError("Supplier organization not found", 400);
@@ -77,17 +76,13 @@ exports.submitQuote = asyncHandler(async (req, res) => {
   );
 
   if (existingQuote.rowCount > 0)
-    throw new AppError(
-      "You have already submitted a quote for this RFQ",
-      400
-    );
+    throw new AppError("Quote already submitted", 400);
 
   const result = await pool.query(
     `
     INSERT INTO quotes
-    (rfq_id, supplier_org_id, price,
-     timeline_days, certifications, reliability_snapshot)
-    VALUES ($1,$2,$3,$4,$5,$6)
+    (rfq_id, supplier_org_id, price, timeline_days, certifications)
+    VALUES ($1,$2,$3,$4,$5)
     RETURNING *
     `,
     [
@@ -95,18 +90,15 @@ exports.submitQuote = asyncHandler(async (req, res) => {
       supplierOrgId,
       price,
       timeline_days || null,
-      certifications || null,
-      reliability_snapshot || null
+      certifications || null
     ]
   );
 
   res.status(201).json({
     success: true,
-    message: "Quote submitted successfully",
     data: result.rows[0]
   });
 });
-
 
 /* =========================================================
    GET SUPPLIER PURCHASE ORDERS
@@ -127,8 +119,9 @@ exports.getSupplierPurchaseOrders = asyncHandler(async (req, res) => {
       po.value,
       po.status,
       po.accepted_at,
-      po.created_at,
+      po.actual_delivery_date,
       po.agreed_delivery_date,
+      po.created_at,
       o.company_name AS buyer_company
     FROM purchase_orders po
     JOIN organizations o
@@ -141,11 +134,41 @@ exports.getSupplierPurchaseOrders = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: "Supplier purchase orders fetched successfully",
     data: result.rows
   });
 });
 
+/* =========================================================
+   GET SINGLE PO WITH MILESTONES
+========================================================= */
+exports.getSinglePO = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const supplierOrgId = req.user.organization_id;
+
+  const poResult = await pool.query(
+    `SELECT * FROM purchase_orders
+     WHERE id = $1 AND supplier_org_id = $2`,
+    [id, supplierOrgId]
+  );
+
+  if (poResult.rowCount === 0)
+    throw new AppError("PO not found", 404);
+
+  const milestones = await pool.query(
+    `SELECT * FROM po_milestones
+     WHERE po_id = $1
+     ORDER BY sequence_order ASC`,
+    [id]
+  );
+
+  res.status(200).json({
+    success: true,
+    data: {
+      po: poResult.rows[0],
+      milestones: milestones.rows
+    }
+  });
+});
 
 /* =========================================================
    ACCEPT PURCHASE ORDER
@@ -171,28 +194,15 @@ exports.acceptPurchaseOrder = asyncHandler(async (req, res) => {
     if (po.supplier_org_id !== supplierOrgId)
       throw new AppError("Unauthorized", 403);
 
-    if (po.status === PO_STATUS.DISPUTED)
-      throw new AppError("Cannot accept disputed PO", 400);
-
     if (po.status !== PO_STATUS.ISSUED)
       throw new AppError("Only issued POs can be accepted", 400);
 
-    const existingMilestones = await client.query(
-      `SELECT id FROM po_milestones WHERE po_id = $1 LIMIT 1`,
-      [id]
-    );
-
-    if (existingMilestones.rowCount > 0)
-      throw new AppError("Milestones already initialized", 400);
-
     await client.query(
-      `UPDATE purchase_orders SET status = $1 WHERE id = $2`,
+      `UPDATE purchase_orders
+       SET status = $1,
+           accepted_at = NOW()
+       WHERE id = $2`,
       [PO_STATUS.ACCEPTED, id]
-    );
-
-    await client.query(
-      `UPDATE rfqs SET status = 'closed' WHERE id = $1`,
-      [po.rfq_id]
     );
 
     const milestones = [
@@ -210,8 +220,7 @@ exports.acceptPurchaseOrder = asyncHandler(async (req, res) => {
       await client.query(
         `
         INSERT INTO po_milestones
-        (po_id, milestone_name, status,
-         sequence_order, created_at, updated_at)
+        (po_id, milestone_name, status, sequence_order, created_at, updated_at)
         VALUES ($1,$2,$3,$4,NOW(),NOW())
         `,
         [
@@ -226,21 +235,17 @@ exports.acceptPurchaseOrder = asyncHandler(async (req, res) => {
     await logPoEvent(client, {
       poId: id,
       eventType: EVENT_TYPES.PO_ACCEPTED,
-      description: "Supplier accepted the purchase order",
+      description: "Supplier accepted the PO",
       actorUserId: req.user.id,
       organizationId: supplierOrgId,
-      actorRole: req.user.role,
-      metadata: {
-        po_number: po.po_number,
-        rfq_id: po.rfq_id
-      }
+      actorRole: req.user.role
     });
 
     await client.query("COMMIT");
 
     res.status(200).json({
       success: true,
-      message: "Purchase order accepted & milestones initialized"
+      message: "PO accepted successfully"
     });
 
   } catch (err) {
@@ -251,14 +256,12 @@ exports.acceptPurchaseOrder = asyncHandler(async (req, res) => {
   }
 });
 
-
 /* =========================================================
-   UPDATE MILESTONE
+   UPDATE MILESTONE (FINAL ENTERPRISE VERSION)
 ========================================================= */
 exports.updateMilestone = asyncHandler(async (req, res) => {
   const { poId, milestoneId } = req.params;
   const { evidence_url, remarks } = req.body;
-
   const supplierOrgId = req.user.organization_id;
   const client = await pool.connect();
 
@@ -271,15 +274,12 @@ exports.updateMilestone = asyncHandler(async (req, res) => {
     );
 
     if (poResult.rowCount === 0)
-      throw new AppError("Purchase order not found", 404);
+      throw new AppError("PO not found", 404);
 
     const po = poResult.rows[0];
 
     if (po.supplier_org_id !== supplierOrgId)
       throw new AppError("Unauthorized", 403);
-
-    if (po.status === PO_STATUS.DISPUTED)
-      throw new AppError("PO is under dispute", 400);
 
     const milestoneResult = await client.query(
       `SELECT * FROM po_milestones
@@ -292,27 +292,8 @@ exports.updateMilestone = asyncHandler(async (req, res) => {
 
     const milestone = milestoneResult.rows[0];
 
-    if (milestone.milestone_name === "PAID")
-      throw new AppError("PAID milestone is system-controlled", 400);
-
     if (milestone.status === "completed")
-      throw new AppError("Milestone already completed", 400);
-
-    const previousMilestones = await client.query(
-      `
-      SELECT id FROM po_milestones
-      WHERE po_id = $1
-        AND sequence_order < $2
-        AND status != 'completed'
-      `,
-      [poId, milestone.sequence_order]
-    );
-
-    if (previousMilestones.rowCount > 0)
-      throw new AppError(
-        "Previous milestone must be completed first",
-        400
-      );
+      throw new AppError("Already completed", 400);
 
     await client.query(
       `
@@ -327,51 +308,37 @@ exports.updateMilestone = asyncHandler(async (req, res) => {
       [evidence_url || null, remarks || null, milestoneId]
     );
 
-    if (po.status === PO_STATUS.ACCEPTED) {
+    if (milestone.milestone_name === "DELIVERED") {
       await client.query(
-        `UPDATE purchase_orders SET status = $1 WHERE id = $2`,
-        [PO_STATUS.IN_PROGRESS, poId]
+        `UPDATE purchase_orders
+         SET actual_delivery_date = NOW()
+         WHERE id = $1`,
+        [poId]
       );
     }
 
-    const pendingCheck = await client.query(
+    const remaining = await client.query(
       `SELECT id FROM po_milestones
        WHERE po_id = $1 AND status != 'completed'`,
       [poId]
     );
 
-    if (pendingCheck.rowCount === 0) {
+    if (remaining.rowCount === 0) {
       await client.query(
-        `UPDATE purchase_orders SET status = $1 WHERE id = $2`,
+        `UPDATE purchase_orders
+         SET status = $1
+         WHERE id = $2`,
         [PO_STATUS.COMPLETED, poId]
       );
-
-      await logPoEvent(client, {
-        poId,
-        eventType: EVENT_TYPES.PO_COMPLETED,
-        description: "Purchase order automatically marked as completed",
-        actorUserId: req.user.id,
-        organizationId: supplierOrgId,
-        actorRole: req.user.role,
-        metadata: {
-          completion_triggered_by_milestone:
-            milestone.milestone_name
-        }
-      });
     }
 
     await logPoEvent(client, {
       poId,
       eventType: EVENT_TYPES.MILESTONE_UPDATED,
-      description: `Milestone ${milestone.milestone_name} completed by supplier`,
+      description: `Milestone ${milestone.milestone_name} completed`,
       actorUserId: req.user.id,
       organizationId: supplierOrgId,
-      actorRole: req.user.role,
-      metadata: {
-        milestone_id: milestoneId,
-        milestone_name: milestone.milestone_name,
-        evidence_url: evidence_url || null
-      }
+      actorRole: req.user.role
     });
 
     await client.query("COMMIT");
@@ -388,3 +355,38 @@ exports.updateMilestone = asyncHandler(async (req, res) => {
     client.release();
   }
 });
+
+/* =========================================================
+   GET RELIABILITY SCORE (BASIC VERSION)
+========================================================= */
+exports.getReliabilityScore = asyncHandler(async (req, res) => {
+  const supplierOrgId = req.user.organization_id;
+
+  const result = await pool.query(
+    `
+    SELECT
+      COUNT(*) FILTER (WHERE status = 'completed') AS completed,
+      COUNT(*) FILTER (
+        WHERE status = 'completed'
+        AND actual_delivery_date <= agreed_delivery_date
+      ) AS on_time
+    FROM purchase_orders
+    WHERE supplier_org_id = $1
+    `,
+    [supplierOrgId]
+  );
+
+  const completed = Number(result.rows[0].completed);
+  const onTime = Number(result.rows[0].on_time);
+
+  const score =
+    completed === 0
+      ? 0
+      : Math.round((onTime / completed) * 100);
+
+  res.status(200).json({
+    success: true,
+    data: { score }
+  });
+});
+

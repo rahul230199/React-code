@@ -24,18 +24,13 @@ const pool = new Pool({
   password: String(process.env.DB_PASSWORD),
   database: process.env.DB_NAME,
 
-  // Enterprise Pool Tuning
-  max: 20, // maximum connections
-  idleTimeoutMillis: 30000, // close idle clients after 30 sec
-  connectionTimeoutMillis: 5000, // return error after 5 sec if cannot connect
-  statement_timeout: 10000, // 10 sec query timeout
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  statement_timeout: 10000,
   query_timeout: 10000,
 
-  // Production SSL (Render / AWS / DigitalOcean)
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: false, // ✅ disable SSL for EC2 local postgres
 });
 
 /* =========================================================

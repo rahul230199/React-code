@@ -21,7 +21,7 @@ require("dotenv").config({
   path: path.resolve(__dirname, envFile),
 });
 
-console.log("🌍 Environment:", process.env.NODE_ENV || "local");
+console.log("🌍 Environment:", process.env.NODE_ENV || "production");
 console.log("📄 Using ENV file:", envFile);
 
 /* =========================================================
@@ -112,6 +112,10 @@ app.get("/change-password", (req, res) => {
 
 app.get("/admin-dashboard", (req, res) => {
   res.sendFile(path.join(frontendPath, "admin-dashboard.html"));
+});
+
+app.get("/supplier/", (req, res) => {
+  res.sendFile(path.join(frontendPath, "supplier-dashboard.html"));
 });
 
 /* =========================================================

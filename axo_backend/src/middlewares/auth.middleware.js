@@ -38,7 +38,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
 
   const result = await pool.query(
     `
-    SELECT id, role, organization_id, must_change_password, is_active
+    SELECT id, role, organization_id, must_change_password, status
     FROM public.users
     WHERE id = $1
     `,
@@ -55,7 +55,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
      ACCOUNT STATUS CHECK
   ========================================================= */
 
-  if (!user.is_active) {
+  if (user.status !== "active") {
     throw new AppError("Account is deactivated. Contact admin.", 403);
   }
 

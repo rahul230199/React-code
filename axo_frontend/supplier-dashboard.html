@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AXO Supplier Control Center</title>
+  <link rel="stylesheet" href="/styles/supplier.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">AXO</h2>
+
+    <nav>
+      <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+      <a href="#" onclick="showSection('rfqs')">Sell (RFQs)</a>
+      <a href="#" onclick="showSection('orders')">Orders</a>
+      <a href="#" onclick="showSection('profile')">Profile</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </nav>
+  </aside>
+
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- ================= DASHBOARD ================= -->
+    <section id="dashboardSection" class="section active">
+
+      <h1>Supplier Control Center</h1>
+
+      <div class="kpi-grid">
+        <div class="card">
+          <h3>Active RFQs</h3>
+          <p id="kpiRFQs">0</p>
+        </div>
+
+        <div class="card">
+          <h3>Active Orders</h3>
+          <p id="kpiOrders">0</p>
+        </div>
+
+        <div class="card">
+          <h3>Completed Orders</h3>
+          <p id="kpiCompleted">0</p>
+        </div>
+
+        <div class="card">
+          <h3>Reliability Score</h3>
+          <p id="kpiReliability">--</p>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Order Status Distribution</h3>
+        <canvas id="statusChart"></canvas>
+      </div>
+
+    </section>
+
+
+    <!-- ================= RFQ SELL SECTION ================= -->
+    <section id="rfqSection" class="section">
+
+      <h2>Open RFQs</h2>
+
+      <div id="rfqList" class="rfq-grid">
+        <!-- RFQs load here -->
+      </div>
+
+    </section>
+
+
+    <!-- ================= ORDERS SECTION ================= -->
+    <section id="ordersSection" class="section">
+
+      <h2>Purchase Orders</h2>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>PO Number</th>
+            <th>Part</th>
+            <th>Qty</th>
+            <th>Status</th>
+            <th>Delivery</th>
+          </tr>
+        </thead>
+
+        <tbody id="ordersTableBody">
+          <tr>
+            <td colspan="5">No orders yet</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </section>
+
+
+    <!-- ================= PROFILE SECTION ================= -->
+    <section id="profileSection" class="section">
+      <h2>Company Profile</h2>
+      <p>Profile management coming soon...</p>
+    </section>
+
+  </main>
+</div>
+
+<script src="/js/supplier.js"></script>
+</body>
+</html>
+
