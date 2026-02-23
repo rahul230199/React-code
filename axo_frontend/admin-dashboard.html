@@ -19,9 +19,7 @@
 
 <div class="app">
 
-  <!-- =====================================================
-       TOPBAR
-  ====================================================== -->
+  <!-- ================= TOPBAR ================= -->
   <header class="topbar">
 
     <div class="topbar-left">
@@ -34,11 +32,10 @@
 
     <div class="topbar-right">
 
-      <!-- USERS BUTTON -->
-     <button class="btn btn-secondary" id="usersViewBtn">
-  <i class="fas fa-users" id="toggleIcon"></i>
-  <span id="toggleText">Users</span>
-</button>
+      <button class="btn btn-secondary" id="usersViewBtn">
+        <i class="fas fa-users" id="toggleIcon"></i>
+        <span id="toggleText">Users</span>
+      </button>
 
       <button class="icon-btn" id="refreshBtn" title="Refresh">
         <i class="fas fa-rotate"></i>
@@ -63,28 +60,20 @@
     </div>
   </header>
 
-  <!-- =====================================================
-       MAIN CONTENT
-  ====================================================== -->
+  <!-- ================= MAIN ================= -->
   <main class="container">
 
-    <!-- PAGE HEADER -->
+    <!-- HEADER -->
     <section class="page-header">
       <h1>Dashboard Overview</h1>
       <p>Manage EV network access and supplier onboarding requests</p>
     </section>
 
-    <div id="topMessage" class="top-message"></div>
-
-    <!-- =====================================================
-         STATS GRID
-    ====================================================== -->
+    <!-- ================= STATS ================= -->
     <section class="stats-grid" id="statsSection">
 
       <div class="stat-card total">
-        <div class="stat-icon">
-          <i class="fas fa-layer-group"></i>
-        </div>
+        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
         <div class="stat-content">
           <span class="stat-label">Total Requests</span>
           <span class="stat-value" id="totalSubmissions">0</span>
@@ -92,9 +81,7 @@
       </div>
 
       <div class="stat-card pending">
-        <div class="stat-icon">
-          <i class="fas fa-clock"></i>
-        </div>
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
         <div class="stat-content">
           <span class="stat-label">Pending</span>
           <span class="stat-value" id="pendingCount">0</span>
@@ -102,9 +89,7 @@
       </div>
 
       <div class="stat-card approved">
-        <div class="stat-icon">
-          <i class="fas fa-check-circle"></i>
-        </div>
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
         <div class="stat-content">
           <span class="stat-label">Approved</span>
           <span class="stat-value" id="approvedCount">0</span>
@@ -112,9 +97,7 @@
       </div>
 
       <div class="stat-card rejected">
-        <div class="stat-icon">
-          <i class="fas fa-times-circle"></i>
-        </div>
+        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
         <div class="stat-content">
           <span class="stat-label">Rejected</span>
           <span class="stat-value" id="rejectedCount">0</span>
@@ -123,9 +106,7 @@
 
     </section>
 
-    <!-- =====================================================
-         REQUESTS SECTION
-    ====================================================== -->
+    <!-- ================= NETWORK REQUESTS ================= -->
     <section class="table-section" id="requestsSection">
 
       <div class="card">
@@ -142,7 +123,7 @@
           <div class="search-box">
             <i class="fas fa-search"></i>
             <input type="text" id="searchInput"
-              placeholder="Search by company or email..." />
+                   placeholder="Search by company or email..." />
           </div>
 
           <div class="filter-controls">
@@ -161,7 +142,6 @@
             </div>
 
           </div>
-
         </div>
 
         <div class="table-wrapper">
@@ -190,14 +170,10 @@
           </table>
 
         </div>
-
       </div>
-
     </section>
 
-    <!-- =====================================================
-         USERS SECTION (Hidden Initially)
-    ====================================================== -->
+    <!-- ================= USERS ================= -->
     <section class="table-section" id="usersSection" style="display:none;">
 
       <div class="card">
@@ -214,10 +190,10 @@
           <div class="search-box">
             <i class="fas fa-search"></i>
             <input type="text" id="userSearchInput"
-              placeholder="Search by name or email..." />
+                   placeholder="Search by name or email..." />
           </div>
 
-          <select id="userRoleFilter" class="filter-controls">
+          <select id="userRoleFilter">
             <option value="ALL">All Roles</option>
             <option value="admin">Admin</option>
             <option value="buyer">Buyer</option>
@@ -250,19 +226,13 @@
           </table>
 
         </div>
-
       </div>
-
     </section>
 
   </main>
-
 </div>
 
-<!-- =====================================================
-     MODALS
-====================================================== -->
-
+<!-- ================= VIEW MODAL ================= -->
 <div id="viewModal" class="modal" style="display:none;">
   <div class="modal-content">
     <button class="modal-close" id="modalCloseBtn">
@@ -272,59 +242,44 @@
   </div>
 </div>
 
-<div id="statusModal" class="modal" style="display:none;">
+<!-- ================= COMMENT MODAL ================= -->
+<div id="commentModal" class="modal" style="display:none;">
   <div class="modal-content">
-    <h3 id="statusTitle">Confirm Action</h3>
-    <textarea id="statusComment" rows="4"
-      placeholder="Enter verification comment (required)">
-    </textarea>
+    <h3 id="commentModalTitle">Action</h3>
+    <textarea id="commentInput" rows="4"
+              placeholder="Enter verification comment..."></textarea>
 
     <div class="modal-actions">
-      <button class="btn btn-secondary" id="cancelStatusBtn">
-        Cancel
-      </button>
-
-      <button class="btn btn-primary"
-        id="confirmStatusBtn">Confirm</button>
+      <button id="cancelCommentBtn" class="btn btn-secondary">Cancel</button>
+      <button id="confirmCommentBtn" class="btn btn-primary">Confirm</button>
     </div>
   </div>
 </div>
-<!-- =====================================================
-     RESET PASSWORD MODAL
-====================================================== -->
-<div id="resetPasswordModal" class="modal" style="display:none;">
-  <div class="modal-content">
 
-    <button class="modal-close" onclick="closeResetModal()">
-      <i class="fas fa-times"></i>
-    </button>
-
+<!-- ================= RESET PASSWORD MODAL ================= -->
+<div id="resetPasswordModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
     <h3>Password Reset Successful</h3>
 
-    <p><strong>Email:</strong> <span id="resetUserEmail"></span></p>
+    <p>User: <strong id="resetUserEmail"></strong></p>
 
-    <div style="margin-top:15px; display:flex; gap:10px;">
-      <input type="text"
-             id="resetTempPassword"
-             readonly
-             style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
-      <button class="btn btn-primary"
-              onclick="copyResetPassword()">
-        Copy
-      </button>
+    <div class="password-copy-wrapper">
+      <input type="text" id="resetTempPassword" readonly />
+      <button class="copy-reset-btn">Copy</button>
     </div>
 
-    <div style="margin-top:20px;">
-      <button class="btn btn-secondary"
-              onclick="closeResetModal()">
-        Close
-      </button>
+    <div class="modal-actions">
+      <button class="close-reset-btn">Close</button>
     </div>
-
   </div>
 </div>
-<script src="./js/admin-dashboard.js"></script>
+
+<!-- ================= GLOBAL LOADER ================= -->
+<div id="globalLoader" style="display:none;">
+  <div class="loader-spinner"></div>
+</div>
+
+<script type="module" src="/js/modules/admin/admin-dashboard.page.js"></script>
 
 </body>
 </html>
-

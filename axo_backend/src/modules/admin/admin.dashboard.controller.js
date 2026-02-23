@@ -1,5 +1,5 @@
 /* =========================================================
-   AXO NETWORKS — ADMIN DASHBOARD CONTROLLER (ENTERPRISE)
+   AXO NETWORKS — ADMIN DASHBOARD CONTROLLER (ENTERPRISE FIXED)
 ========================================================= */
 
 const pool = require("../../config/db");
@@ -9,9 +9,7 @@ const asyncHandler = require("../../utils/asyncHandler");
    GET ADMIN KPI DASHBOARD
 ========================================================= */
 exports.getAdminDashboard = asyncHandler(async (req, res) => {
-  /* =====================================================
-     RUN ALL QUERIES IN PARALLEL (PERFORMANCE OPTIMIZED)
-  ===================================================== */
+
   const [
     usersResult,
     orgResult,
@@ -19,7 +17,9 @@ exports.getAdminDashboard = asyncHandler(async (req, res) => {
     poResult,
     disputeResult,
     paymentResult,
+    networkRequestResult
   ] = await Promise.all([
+
     pool.query(`SELECT COUNT(*)::INT AS total FROM users`),
 
     pool.query(`SELECT COUNT(*)::INT AS total FROM organizations`),
@@ -57,11 +57,18 @@ exports.getAdminDashboard = asyncHandler(async (req, res) => {
       FROM payments
       WHERE status = 'paid'
     `),
+
+    /* 🔥 NETWORK ACCESS KPI (THIS WAS MISSING) */
+    pool.query(`
+      SELECT
+        COUNT(*)::INT AS total_requests,
+        COUNT(*) FILTER (WHERE status = 'pending')::INT AS pending,
+        COUNT(*) FILTER (WHERE status = 'approved')::INT AS approved,
+        COUNT(*) FILTER (WHERE status = 'rejected')::INT AS rejected
+      FROM network_access_requests
+    `)
   ]);
 
-  /* =====================================================
-     STRUCTURED RESPONSE
-  ===================================================== */
   res.status(200).json({
     success: true,
     message: "Admin dashboard fetched successfully",
@@ -70,13 +77,12 @@ exports.getAdminDashboard = asyncHandler(async (req, res) => {
       total_organizations: orgResult.rows[0].total,
 
       rfqs: rfqResult.rows[0],
-
       purchase_orders: poResult.rows[0],
-
       disputes: disputeResult.rows[0],
+      total_payment_value: paymentResult.rows[0].total_payment_value,
 
-      total_payment_value:
-        paymentResult.rows[0].total_payment_value,
+      /* 🔥 THIS FIXES YOUR CARDS */
+      network_requests: networkRequestResult.rows[0]
     },
   });
 });

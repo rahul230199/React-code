@@ -3,15 +3,11 @@
    Enterprise Audit Utility Layer
 ========================================================= */
 
-const EVENT_TYPES = require("../constants/eventTypes.constants");
+const pool = require("../config/db");
 
-/**
- * Logs PO Event
- * Must be called inside an existing DB transaction
- * 
- * @param {Object} client - PG client (transaction active)
- * @param {Object} options
- */
+/* =========================================================
+   LOG PO EVENT (MUST BE CALLED INSIDE TRANSACTION)
+========================================================= */
 async function logPoEvent(client, options) {
   const {
     poId,
@@ -24,7 +20,7 @@ async function logPoEvent(client, options) {
   } = options;
 
   if (!poId || !eventType || !actorUserId) {
-    throw new Error("Invalid audit log parameters");
+    throw new Error("Invalid PO audit log parameters");
   }
 
   await client.query(
@@ -53,6 +49,43 @@ async function logPoEvent(client, options) {
   );
 }
 
+/* =========================================================
+   LOG ADMIN ACTION (OUTSIDE OR INSIDE TRANSACTION SAFE)
+========================================================= */
+async function logAdminAction({
+  adminUserId,
+  actionType,
+  targetTable,
+  targetId,
+  metadata = {}
+}) {
+  if (!adminUserId || !actionType) {
+    throw new Error("Invalid admin audit log parameters");
+  }
+
+  await pool.query(
+    `
+    INSERT INTO admin_audit_logs
+    (
+      admin_user_id,
+      action_type,
+      target_table,
+      target_id,
+      metadata
+    )
+    VALUES ($1,$2,$3,$4,$5)
+    `,
+    [
+      adminUserId,
+      actionType,
+      targetTable || null,
+      targetId || null,
+      metadata
+    ]
+  );
+}
+
 module.exports = {
-  logPoEvent
+  logPoEvent,
+  logAdminAction
 };

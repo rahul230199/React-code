@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AXO Networks | Buyer Dashboard</title>
+
+   <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="styles/buyer-dashboard.css" />
+ 
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+    <div class="logo-content">
+      <h2>AXO</h2>
+      <span>BUYER PANEL</span>
+    </div>
+    <button class="menu-toggle">←</button>
+  </div>
+
+      <nav class="nav-menu">
+        <ul>
+          <li data-page="dashboard" class="active">Dashboard</li>
+          <li data-page="buy">Buy</li>
+          <li data-page="orders">Orders</li>
+          <li data-page="profile">Profile</li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-area">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+          <div style="display: flex; align-items: center; gap: var(--space-4);">
+    <button class="mobile-menu-btn">☰</button>
+    <div class="company-info">
+      <h3 id="companyName">Organization ID: 4</h3>
+      <span id="companyScore">Reliability Score: --</span>
+    </div>
+  </div>
+
+       <div class="user-section">
+
+  <!-- Notification Bell -->
+  <div class="notification-wrapper">
+    <button id="notificationBell" class="notification-btn">
+      <i class="fa-solid fa-bell"></i>
+      <span id="notificationBadge" class="notification-badge hidden">0</span>
+    </button>
+
+    <div id="notificationDropdown" class="notification-dropdown hidden">
+      <div class="notification-header">
+        <h4>Notifications</h4>
+      </div>
+      <div id="notificationList" class="notification-list">
+        <div class="notification-empty">No notifications</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User -->
+  <div class="user-info">
+    <span id="loggedUser">User</span>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+</div>
+      </header>
+
+      <!-- PAGE CONTENT -->
+      <main class="content" id="pageContainer">
+        <!-- Dynamic content will render here -->
+      </main>
+
+    </div>
+  </div>
+
+ <script src="/js/vendor/chart.js"></script>
+
+  <script type="module" src="js/modules/buyer/buyer-dashboard.page.js"></script>
+
+</body>
+</html>

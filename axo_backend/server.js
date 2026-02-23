@@ -21,7 +21,7 @@ require("dotenv").config({
   path: path.resolve(__dirname, envFile),
 });
 
-console.log("🌍 Environment:", process.env.NODE_ENV || "production");
+console.log("🌍 Environment:", process.env.NODE_ENV || "local");
 console.log("📄 Using ENV file:", envFile);
 
 /* =========================================================
@@ -39,13 +39,10 @@ const networkRoutes = require("./src/modules/network/network.routes");
 const adminRoutes = require("./src/modules/admin/admin.routes");
 const buyerRoutes = require("./src/modules/buyer/buyer.routes");
 const supplierRoutes = require("./src/modules/supplier/supplier.routes");
+
 const {
   globalLimiter,
-  authLimiter,
-  networkLimiter,
 } = require("./src/middlewares/rateLimit.middleware");
-
-
 
 /* =========================================================
    IMPORT GLOBAL ERROR MIDDLEWARE
@@ -63,6 +60,7 @@ const PORT = process.env.PORT || 5000;
 /* =========================================================
    TRUST PROXY (FOR NGINX / LOAD BALANCER)
 ========================================================= */
+
 app.set("trust proxy", 1);
 
 /* =========================================================
@@ -70,9 +68,13 @@ app.set("trust proxy", 1);
 ========================================================= */
 
 // Security headers
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // allow frontend modules
+  })
+);
 
-// CORS configuration (production safe)
+// CORS configuration
 app.use(
   cors({
     origin:
@@ -88,14 +90,19 @@ app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 /* =========================================================
-   STATIC FRONTEND
+   STATIC FRONTEND (MUST COME BEFORE API & FALLBACK)
 ========================================================= */
 
 const frontendPath = path.join(__dirname, "../axo_frontend");
-app.use(express.static(frontendPath));
+
+app.use(
+  express.static(frontendPath, {
+    extensions: ["html"],
+  })
+);
 
 /* =========================================================
-   FRONTEND ROUTES (CLEAN URL SUPPORT)
+   FRONTEND CLEAN ROUTES
 ========================================================= */
 
 app.get("/", (req, res) => {
@@ -114,7 +121,11 @@ app.get("/admin-dashboard", (req, res) => {
   res.sendFile(path.join(frontendPath, "admin-dashboard.html"));
 });
 
-app.get("/supplier/", (req, res) => {
+app.get("/buyer-dashboard", (req, res) => {
+  res.sendFile(path.join(frontendPath, "buyer-dashboard.html"));
+});
+
+app.get("/supplier-dashboard", (req, res) => {
   res.sendFile(path.join(frontendPath, "supplier-dashboard.html"));
 });
 
@@ -123,6 +134,7 @@ app.get("/supplier/", (req, res) => {
 ========================================================= */
 
 app.use(globalLimiter);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/network", networkRoutes);
 app.use("/api/admin", adminRoutes);
@@ -130,12 +142,12 @@ app.use("/api/buyer", buyerRoutes);
 app.use("/api/supplier", supplierRoutes);
 
 /* =========================================================
-   SWAGGER DOCUMENTATION
+   SWAGGER DOCUMENTATION (DEV ONLY)
 ========================================================= */
+
 if (process.env.NODE_ENV !== "production") {
   setupSwagger(app);
 }
-
 
 /* =========================================================
    HEALTH CHECK
@@ -171,14 +183,26 @@ app.use("/api", (req, res) => {
 });
 
 /* =========================================================
-   FRONTEND FALLBACK (SPA SAFE)
+   SAFE FRONTEND FALLBACK
+   - Allows static assets
+   - Allows API
+   - Only fallback for real page routes
 ========================================================= */
 
 app.use((req, res, next) => {
-  if (!req.path.startsWith("/api")) {
-    return res.sendFile(path.join(frontendPath, "login.html"));
+
+  // Allow API
+  if (req.path.startsWith("/api")) {
+    return next();
   }
-  next();
+
+  // Allow static files (js, css, images)
+  if (req.path.includes(".")) {
+    return next();
+  }
+
+  // Fallback to login page
+  return res.sendFile(path.join(frontendPath, "login.html"));
 });
 
 /* =========================================================
@@ -196,7 +220,7 @@ const server = app.listen(PORT, () => {
 });
 
 /* =========================================================
-   GRACEFUL SHUTDOWN HANDLING
+   GRACEFUL SHUTDOWN
 ========================================================= */
 
 process.on("SIGTERM", () => {
@@ -207,18 +231,10 @@ process.on("SIGTERM", () => {
   });
 });
 
-/* =========================================================
-   HANDLE UNCAUGHT EXCEPTIONS
-========================================================= */
-
 process.on("uncaughtException", (err) => {
   console.error("❌ UNCAUGHT EXCEPTION:", err);
   process.exit(1);
 });
-
-/* =========================================================
-   HANDLE UNHANDLED PROMISE REJECTIONS
-========================================================= */
 
 process.on("unhandledRejection", (err) => {
   console.error("❌ UNHANDLED REJECTION:", err);

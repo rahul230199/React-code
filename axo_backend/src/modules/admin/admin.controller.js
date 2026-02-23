@@ -6,6 +6,7 @@ const pool = require("../../config/db");
 const bcrypt = require("bcrypt");
 const AppError = require("../../utils/AppError");
 const asyncHandler = require("../../utils/asyncHandler");
+const { logAdminAction } = require("../../utils/auditLogger");
 
 /* =========================================================
    GET ALL USERS
@@ -66,6 +67,14 @@ exports.updateUserStatus = asyncHandler(async (req, res) => {
     });
   }
 
+  await logAdminAction({
+  adminUserId: req.user.id,
+  actionType: "USER_STATUS_UPDATED",
+  targetTable: "users",
+  targetId: id,
+  metadata: { new_status: status }
+});
+
   res.status(200).json({
     success: true,
     message: "User updated successfully",
@@ -98,6 +107,13 @@ exports.resetUserPassword = asyncHandler(async (req, res) => {
       errorCode: "ADMIN_USER_NOT_FOUND",
     });
   }
+
+  await logAdminAction({
+  adminUserId: req.user.id,
+  actionType: "USER_PASSWORD_RESET",
+  targetTable: "users",
+  targetId: id
+});
 
   res.status(200).json({
     success: true,
@@ -133,16 +149,88 @@ exports.getPlatformStats = asyncHandler(async (req, res) => {
    GET ALL NETWORK ACCESS REQUESTS
 ========================================================= */
 exports.getAllNetworkAccessRequests = asyncHandler(async (req, res) => {
-  const result = await pool.query(`
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    search,
+    start_date,
+    end_date,
+  } = req.query;
+
+  const numericPage = Number(page);
+  const numericLimit = Number(limit);
+  const offset = (numericPage - 1) * numericLimit;
+
+  let whereClause = [];
+  let values = [];
+  let index = 1;
+
+  if (status && status !== "ALL") {
+    whereClause.push(`status = $${index}`);
+    values.push(status.toLowerCase());
+    index++;
+  }
+
+  if (search) {
+    whereClause.push(`
+      (
+        company_name ILIKE $${index}
+        OR email ILIKE $${index}
+        OR contact_name ILIKE $${index}
+      )
+    `);
+    values.push(`%${search}%`);
+    index++;
+  }
+
+  if (start_date) {
+    whereClause.push(`created_at >= $${index}`);
+    values.push(start_date);
+    index++;
+  }
+
+  if (end_date) {
+    whereClause.push(`created_at <= $${index}`);
+    values.push(end_date);
+    index++;
+  }
+
+  const whereSQL =
+    whereClause.length > 0
+      ? `WHERE ${whereClause.join(" AND ")}`
+      : "";
+
+  // Total Count
+  const countResult = await pool.query(
+    `SELECT COUNT(*) FROM public.network_access_requests ${whereSQL}`,
+    values
+  );
+
+  const totalRecords = Number(countResult.rows[0].count);
+
+  // Data Query
+  const result = await pool.query(
+    `
     SELECT *
     FROM public.network_access_requests
+    ${whereSQL}
     ORDER BY created_at DESC
-  `);
+    LIMIT $${index}
+    OFFSET $${index + 1}
+    `,
+    [...values, numericLimit, offset]
+  );
 
   res.status(200).json({
     success: true,
     message: "Network access requests fetched successfully",
-    data: result.rows,
+    data: {
+      total_records: totalRecords,
+      current_page: numericPage,
+      total_pages: Math.ceil(totalRecords / numericLimit),
+      requests: result.rows,
+    },
   });
 });
 /* =========================================================
@@ -251,6 +339,14 @@ exports.approveNetworkRequest = asyncHandler(async (req, res) => {
 
     await client.query("COMMIT");
 
+    await logAdminAction({
+  adminUserId: req.user.id,
+  actionType: "NETWORK_REQUEST_APPROVED",
+  targetTable: "network_access_requests",
+  targetId: id,
+  metadata: { email: request.email }
+});
+
     res.status(200).json({
       success: true,
       message: "Request approved successfully",
@@ -292,10 +388,19 @@ exports.rejectNetworkRequest = asyncHandler(async (req, res) => {
     );
   }
 
+    await logAdminAction({
+  adminUserId: req.user.id,
+  actionType: "NETWORK_REQUEST_REJECTED",
+  targetTable: "network_access_requests",
+  targetId: id
+});
+
   res.status(200).json({
     success: true,
     message: "Request rejected successfully",
   });
+
+
 });
 exports.getAllDisputes = asyncHandler(async (req, res) => {
   const { status, page = 1, limit = 10 } = req.query;
