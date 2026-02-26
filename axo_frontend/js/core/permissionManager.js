@@ -1,12 +1,12 @@
 /* =========================================================
    AXO NETWORKS — PERMISSION MANAGER
-   Frontend RBAC Mirror (Synced with Backend)
+   Hardened Frontend RBAC Mirror
 ========================================================= */
 
 import { StorageManager as Storage } from "./storage.js";
 
 /* =======================================================
-   ROLE PERMISSION MATRIX (Synced)
+   ROLE PERMISSION MATRIX
 ======================================================= */
 const ROLE_PERMISSIONS = {
   super_admin: ["*"],
@@ -34,14 +34,12 @@ const ROLE_PERMISSIONS = {
     "ACCEPT_QUOTE",
     "REJECT_QUOTE",
 
-    // Orders
     "VIEW_ORDERS",
     "REQUEST_PAYMENT",
     "APPROVE_PAYMENT",
     "PAY_MILESTONE",
     "RAISE_DISPUTE",
 
-    // Notifications
     "VIEW_NOTIFICATIONS",
   ],
 
@@ -55,22 +53,33 @@ const ROLE_PERMISSIONS = {
 };
 
 /* =======================================================
-   GET CURRENT ROLE
+   SAFE ROLE RESOLUTION
 ======================================================= */
 function getCurrentRole() {
   const user = Storage.getUser();
-  return user?.role || null;
+  const role = user?.role;
+
+  // Defensive: ensure role exists in matrix
+  if (!role || !ROLE_PERMISSIONS[role]) {
+    return null;
+  }
+
+  return role;
 }
 
 /* =======================================================
    CHECK PERMISSION
 ======================================================= */
 function has(permission) {
+
+  if (!permission || typeof permission !== "string") {
+    return false;
+  }
+
   const role = getCurrentRole();
   if (!role) return false;
 
   const permissions = ROLE_PERMISSIONS[role];
-  if (!permissions) return false;
 
   if (permissions.includes("*")) return true;
 
@@ -78,17 +87,22 @@ function has(permission) {
 }
 
 /* =======================================================
-   DOM AUTO-HIDE
+   DOM AUTO-HIDE (SAFE + REVERSIBLE)
 ======================================================= */
 function applyPermissionsToDOM() {
+
   const elements = document.querySelectorAll("[data-permission]");
 
   elements.forEach((el) => {
+
     const permission = el.getAttribute("data-permission");
 
     if (!has(permission)) {
-      el.style.display = "none";
+      el.classList.add("permission-hidden");
+    } else {
+      el.classList.remove("permission-hidden");
     }
+
   });
 }
 

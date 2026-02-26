@@ -1,67 +1,67 @@
 /* =========================================================
-   BUYER DASHBOARD — API LAYER
-   Enterprise Contract Aligned
+   BUYER DASHBOARD — API LAYER (ENTERPRISE INTELLIGENCE)
+   - Aggregated executive overview
+   - Risk integration
+   - Capacity integration
+   - No UI logic
+   - Clean error propagation
 ========================================================= */
 
 import { ApiClient } from "../../core/apiClient.js";
-import Toast from "../../core/toast.js";
 
 export const BuyerDashboardAPI = {
 
   /* =====================================================
-     FETCH BASIC DASHBOARD STATS
+     FETCH EXECUTIVE OVERVIEW
+     - KPIs
+     - Payments pending
+     - On-time %
+     - Reliability average
+     - Risk summary
   ====================================================== */
-  async getDashboardStats() {
-    try {
+  async getExecutiveOverview() {
 
-      const response = await ApiClient.get("/buyer/dashboard-stats");
+    const response = await ApiClient.get("/analytics/overview");
 
-      if (!response?.success) {
-        throw new Error(response?.message || "Failed to fetch stats");
-      }
-
-      return response.data;
-
-    } catch (error) {
-
-      console.error("Dashboard Stats Error:", error);
-
-      Toast.error(
-        error?.message || "Unable to load dashboard data"
+    if (!response?.success) {
+      throw new Error(
+        response?.message || "Failed to fetch executive overview"
       );
-
-      throw error;
     }
+
+    return response.data || {};
   },
 
   /* =====================================================
-     FETCH ANALYTICS OVERVIEW (KPI + Charts)
+     FETCH RISK OVERVIEW
   ====================================================== */
-  async getAnalyticsOverview() {
-    try {
+  async getRiskOverview() {
 
-      const response = await ApiClient.get(
-        "/buyer/analytics/overview"
+    const response = await ApiClient.get("/risk/overview");
+
+    if (!response?.success) {
+      throw new Error(
+        response?.message || "Failed to fetch risk overview"
       );
-
-      if (!response?.success) {
-        throw new Error(
-          response?.message || "Failed to load analytics"
-        );
-      }
-
-      return response.data;
-
-    } catch (error) {
-
-      console.error("Analytics Overview Error:", error);
-
-      Toast.error(
-        error?.message || "Unable to load analytics overview"
-      );
-
-      throw error;
     }
+
+    return response.data || {};
+  },
+
+  /* =====================================================
+     FETCH CAPACITY OVERVIEW
+  ====================================================== */
+  async getCapacityOverview() {
+
+    const response = await ApiClient.get("/capacity/overview");
+
+    if (!response?.success) {
+      throw new Error(
+        response?.message || "Failed to fetch capacity overview"
+      );
+    }
+
+    return response.data || {};
   }
 
 };

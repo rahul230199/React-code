@@ -24,13 +24,23 @@ exports.getAdminDashboard = asyncHandler(async (req, res) => {
 
     pool.query(`SELECT COUNT(*)::INT AS total FROM organizations`),
 
-    pool.query(`
-      SELECT
-        COUNT(*)::INT AS total_rfqs,
-        COUNT(*) FILTER (WHERE status = 'open')::INT AS open_rfqs,
-        COUNT(*) FILTER (WHERE status = 'closed')::INT AS closed_rfqs
-      FROM rfqs
-    `),
+ pool.query(`
+  SELECT
+    COUNT(*)::INT AS total_rfqs,
+
+    COUNT(*) FILTER (WHERE status = 'open')::INT AS open_rfqs,
+    COUNT(*) FILTER (WHERE status = 'closed')::INT AS closed_rfqs,
+
+    COUNT(*) FILTER (WHERE priority = 'high')::INT AS high_priority_rfqs,
+    COUNT(*) FILTER (WHERE priority = 'urgent')::INT AS urgent_rfqs,
+
+    COUNT(*) FILTER (WHERE visibility_type = 'private')::INT AS private_rfqs,
+    COUNT(*) FILTER (WHERE visibility_type = 'public')::INT AS public_rfqs,
+
+    COUNT(*) FILTER (WHERE assigned_supplier_org_id IS NOT NULL)::INT AS assigned_rfqs
+
+  FROM rfqs
+`),
 
     pool.query(`
       SELECT

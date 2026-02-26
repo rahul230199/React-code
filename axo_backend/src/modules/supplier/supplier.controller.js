@@ -8,11 +8,12 @@ const EVENT_TYPES = require("../../constants/eventTypes.constants");
 const { logPoEvent } = require("../../utils/auditLogger");
 const AppError = require("../../utils/AppError");
 const asyncHandler = require("../../utils/asyncHandler");
-
+const eventLogger = require("../../utils/eventLogger");
 /* =========================================================
-   GET OPEN RFQs
+   GET OPEN RFQs (ENTERPRISE VISIBILITY CONTROL)
 ========================================================= */
 exports.getOpenRFQs = asyncHandler(async (req, res) => {
+
   const supplierOrgId = req.user.organization_id;
 
   if (!supplierOrgId)
@@ -27,20 +28,45 @@ exports.getOpenRFQs = asyncHandler(async (req, res) => {
       r.quantity,
       r.ppap_level,
       r.design_file_url,
+      r.priority,
+      r.visibility_type,
+      r.assigned_supplier_org_id,
       r.created_at,
+
       EXISTS (
-        SELECT 1 FROM quotes q
+        SELECT 1
+        FROM quotes q
         WHERE q.rfq_id = r.id
         AND q.supplier_org_id = $1
       ) AS already_quoted,
+
       (
         SELECT COUNT(*)
         FROM quotes q2
         WHERE q2.rfq_id = r.id
       )::INT AS total_quotes
+
     FROM rfqs r
+
     WHERE r.status = 'open'
-    ORDER BY r.created_at DESC
+    AND (
+      r.visibility_type = 'public'
+      OR r.visibility_type = 'invited'
+      OR (
+        r.visibility_type = 'private'
+        AND r.assigned_supplier_org_id = $1
+      )
+    )
+
+    ORDER BY
+      CASE r.priority
+        WHEN 'urgent' THEN 1
+        WHEN 'high' THEN 2
+        WHEN 'normal' THEN 3
+        WHEN 'low' THEN 4
+        ELSE 5
+      END,
+      r.created_at DESC
     `,
     [supplierOrgId]
   );
@@ -49,6 +75,7 @@ exports.getOpenRFQs = asyncHandler(async (req, res) => {
     success: true,
     data: result.rows
   });
+
 });
 
 /* =========================================================
@@ -58,6 +85,11 @@ exports.submitQuote = asyncHandler(async (req, res) => {
   const supplierOrgId = req.user.organization_id;
   const { rfqId } = req.params;
   const { price, timeline_days, certifications } = req.body;
+  const { calculateSupplierScore, getReliabilityTier } =
+  require("../../utils/reliability.service");
+
+const reliability = await calculateSupplierScore(supplierOrgId);
+const tierInfo = getReliabilityTier(reliability.score);
 
   if (!supplierOrgId)
     throw new AppError("Supplier organization not found", 400);
@@ -80,8 +112,13 @@ exports.submitQuote = asyncHandler(async (req, res) => {
 
   const result = await pool.query(
     `
-    INSERT INTO quotes
-    (rfq_id, supplier_org_id, price, timeline_days, certifications)
+   INSERT INTO quotes
+(rfq_id,
+ supplier_org_id,
+ price,
+ timeline_days,
+ certifications,
+ reliability_snapshot)
     VALUES ($1,$2,$3,$4,$5)
     RETURNING *
     `,
@@ -90,7 +127,11 @@ exports.submitQuote = asyncHandler(async (req, res) => {
       supplierOrgId,
       price,
       timeline_days || null,
-      certifications || null
+      certifications || null,
+       JSON.stringify({
+    score: reliability.score,
+    tier: tierInfo.tier
+  })
     ]
   );
 
@@ -241,6 +282,12 @@ exports.acceptPurchaseOrder = asyncHandler(async (req, res) => {
       actorRole: req.user.role
     });
 
+    await eventLogger.logPOAccepted(
+  id,
+  req.user.id,
+  client
+);
+
     await client.query("COMMIT");
 
     res.status(200).json({
@@ -308,14 +355,21 @@ exports.updateMilestone = asyncHandler(async (req, res) => {
       [evidence_url || null, remarks || null, milestoneId]
     );
 
-    if (milestone.milestone_name === "DELIVERED") {
-      await client.query(
-        `UPDATE purchase_orders
-         SET actual_delivery_date = NOW()
-         WHERE id = $1`,
-        [poId]
-      );
-    }
+if (milestone.milestone_name === "DELIVERED") {
+
+  await client.query(
+    `UPDATE purchase_orders
+     SET actual_delivery_date = NOW()
+     WHERE id = $1`,
+    [poId]
+  );
+
+  await eventLogger.logDeliveryConfirmed(
+    poId,
+    req.user.id,
+    client
+  );
+}
 
     const remaining = await client.query(
       `SELECT id FROM po_milestones
@@ -341,6 +395,13 @@ exports.updateMilestone = asyncHandler(async (req, res) => {
       actorRole: req.user.role
     });
 
+    await eventLogger.logMilestoneUpdate(
+  poId,
+  req.user.id,
+  milestone.milestone_name,
+  client
+);
+
     await client.query("COMMIT");
 
     res.status(200).json({
@@ -365,28 +426,133 @@ exports.getReliabilityScore = asyncHandler(async (req, res) => {
   const result = await pool.query(
     `
     SELECT
-      COUNT(*) FILTER (WHERE status = 'completed') AS completed,
+      COUNT(*)::INT AS total_pos,
+
+      COUNT(*) FILTER (WHERE status = 'completed')::INT AS completed,
+
       COUNT(*) FILTER (
         WHERE status = 'completed'
-        AND actual_delivery_date <= agreed_delivery_date
-      ) AS on_time
+        AND actual_delivery_date IS NOT NULL
+        AND promised_delivery_date IS NOT NULL
+        AND actual_delivery_date <= promised_delivery_date
+      )::INT AS on_time,
+
+      COUNT(*) FILTER (
+        WHERE status = 'completed'
+        AND actual_delivery_date IS NOT NULL
+        AND promised_delivery_date IS NOT NULL
+        AND actual_delivery_date > promised_delivery_date
+      )::INT AS late_deliveries,
+
+      COUNT(*) FILTER (
+        WHERE status = 'DISPUTED'
+      )::INT AS disputes
+
     FROM purchase_orders
     WHERE supplier_org_id = $1
     `,
     [supplierOrgId]
   );
 
+  const total = Number(result.rows[0].total_pos);
   const completed = Number(result.rows[0].completed);
   const onTime = Number(result.rows[0].on_time);
+  const late = Number(result.rows[0].late_deliveries);
+  const disputes = Number(result.rows[0].disputes);
 
-  const score =
-    completed === 0
-      ? 0
-      : Math.round((onTime / completed) * 100);
+  if (total === 0) {
+    return res.status(200).json({
+      success: true,
+      data: { score: 0 }
+    });
+  }
+
+  let score = 100;
+
+  // 🔻 Late delivery penalty (10 points per late PO)
+  score -= late * 10;
+
+  // 🔻 Dispute penalty (15 points per dispute)
+  score -= disputes * 15;
+
+  // 🔻 Completion consistency penalty
+  const completionRate = completed / total;
+  if (completionRate < 0.8) {
+    score -= 10;
+  }
+
+  // Floor and ceiling
+  if (score < 0) score = 0;
+  if (score > 100) score = 100;
 
   res.status(200).json({
     success: true,
-    data: { score }
+    data: {
+      score,
+      breakdown: {
+        total,
+        completed,
+        on_time: onTime,
+        late_deliveries: late,
+        disputes
+      }
+    }
   });
 });
 
+exports.getSupplierReliabilityScore = asyncHandler(async (req, res) => {
+
+  const supplierOrgId = req.user.organization_id;
+
+  const result = await pool.query(`
+    SELECT
+      COUNT(*) FILTER (WHERE status = 'completed') AS completed_orders,
+      COUNT(*) FILTER (
+        WHERE status = 'completed'
+        AND actual_delivery_date <= promised_delivery_date
+      ) AS on_time_orders,
+      COUNT(*) FILTER (WHERE dispute_flag = true) AS disputed_orders,
+      COUNT(*) AS total_orders
+    FROM purchase_orders
+    WHERE supplier_org_id = $1
+  `, [supplierOrgId]);
+
+  const {
+    completed_orders,
+    on_time_orders,
+    disputed_orders,
+    total_orders
+  } = result.rows[0];
+
+  const completed = Number(completed_orders);
+  const onTime = Number(on_time_orders);
+  const disputed = Number(disputed_orders);
+  const total = Number(total_orders);
+
+  let score = 0;
+
+  if (total > 0) {
+    const completionRate = completed / total;
+    const onTimeRate = completed > 0 ? onTime / completed : 0;
+    const disputeRate = total > 0 ? disputed / total : 0;
+
+    score =
+      (completionRate * 40) +
+      (onTimeRate * 40) +
+      ((1 - disputeRate) * 20);
+  }
+
+  score = Math.round(score);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      score,
+      completed,
+      onTime,
+      disputed,
+      total
+    }
+  });
+
+});

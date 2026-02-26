@@ -39,6 +39,12 @@ const networkRoutes = require("./src/modules/network/network.routes");
 const adminRoutes = require("./src/modules/admin/admin.routes");
 const buyerRoutes = require("./src/modules/buyer/buyer.routes");
 const supplierRoutes = require("./src/modules/supplier/supplier.routes");
+const poThreadRoutes = require("./src/modules/poThread/poThread.routes");
+const riskRoutes = require("./src/modules/risk/risk.routes");
+const analyticsRoutes = require("./src/modules/analytics/analytics.routes");
+const capacityRoutes = require("./src/modules/capacity/capacity.routes");
+const exportRoutes = require("./src/modules/export/export.routes");
+
 
 const {
   globalLimiter,
@@ -140,6 +146,11 @@ app.use("/api/network", networkRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/buyer", buyerRoutes);
 app.use("/api/supplier", supplierRoutes);
+app.use("/api/po-thread", poThreadRoutes);
+app.use("/api/risk", riskRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/capacity", capacityRoutes);
+app.use("/api/export", exportRoutes);
 
 /* =========================================================
    SWAGGER DOCUMENTATION (DEV ONLY)
@@ -210,6 +221,15 @@ app.use((req, res, next) => {
 ========================================================= */
 
 app.use(errorMiddleware);
+
+
+const cron = require("node-cron");
+const { recalculateAllSupplierReliability } =
+  require("./src/modules/reliability/reliability.cron");
+
+cron.schedule("0 2 * * *", async () => {
+  await recalculateAllSupplierReliability();
+});
 
 /* =========================================================
    START SERVER

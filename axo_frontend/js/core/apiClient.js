@@ -1,9 +1,9 @@
 /* =========================================================
-   AXO NETWORKS — CENTRAL API CLIENT (PRODUCTION SAFE)
-   - No console logging
-   - Standardized error handling
-   - Safe JSON parsing
-   - Clean auth redirect
+   AXO NETWORKS — CENTRAL API CLIENT (ENTERPRISE HARDENED)
+   - AbortController timeout
+   - Proper 401 handling
+   - Flexible headers
+   - Clean error propagation
 ========================================================= */
 
 import { CONFIG } from "./config.js";
@@ -12,48 +12,31 @@ import { StorageManager as Storage } from "./storage.js";
 const { API_BASE_URL, REQUEST_TIMEOUT } = CONFIG;
 
 /* =======================================================
-   FETCH WITH TIMEOUT
-======================================================= */
-function fetchWithTimeout(url, options = {}, timeout = REQUEST_TIMEOUT) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error("Request timeout"));
-    }, timeout);
-
-    fetch(url, options)
-      .then((response) => {
-        clearTimeout(timer);
-        resolve(response);
-      })
-      .catch((error) => {
-        clearTimeout(timer);
-        reject(error);
-      });
-  });
-}
-
-/* =======================================================
-   SAFE JSON PARSER
-======================================================= */
-async function safeParseJSON(response) {
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
-
-/* =======================================================
    CORE REQUEST HANDLER
 ======================================================= */
-async function request(endpoint, method = "GET", body = null, customHeaders = {}) {
+async function request(
+  endpoint,
+  method = "GET",
+  body = null,
+  customHeaders = {}
+) {
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    REQUEST_TIMEOUT
+  );
 
   const token = Storage.getToken();
 
   const headers = {
-    "Content-Type": "application/json",
     ...customHeaders,
   };
+
+  // Only set JSON content-type if body is plain object
+  if (body && !(body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -62,35 +45,57 @@ async function request(endpoint, method = "GET", body = null, customHeaders = {}
   const options = {
     method,
     headers,
+    signal: controller.signal,
   };
 
   if (body) {
-    options.body = JSON.stringify(body);
+    options.body =
+      body instanceof FormData
+        ? body
+        : JSON.stringify(body);
   }
 
   let response;
 
   try {
 
-    response = await fetchWithTimeout(
+    response = await fetch(
       `${API_BASE_URL}${endpoint}`,
       options
     );
 
-  } catch (networkError) {
+  } catch (error) {
 
-    throw new Error("Network connection error");
+    clearTimeout(timeoutId);
+
+    if (error.name === "AbortError") {
+      throw new Error("Request timeout");
+    }
+
+    throw new Error(
+      error?.message || "Network connection error"
+    );
   }
 
-  const data = await safeParseJSON(response);
+  clearTimeout(timeoutId);
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
 
   /* ===================================================
      GLOBAL AUTH HANDLER
   =================================================== */
   if (response.status === 401) {
+
     Storage.clearSession();
     window.location.href = "/login";
-    return;
+
+    throw new Error("Session expired");
   }
 
   /* ===================================================
@@ -100,7 +105,7 @@ async function request(endpoint, method = "GET", body = null, customHeaders = {}
 
     const message =
       data?.message ||
-      "Request failed";
+      `Request failed (${response.status})`;
 
     const error = new Error(message);
     error.status = response.status;

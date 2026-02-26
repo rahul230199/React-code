@@ -43,6 +43,9 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
 ========================================================= */
 exports.updateUserStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  if (Number(id) === req.user.id) {
+  throw new AppError("You cannot change your own status.", 400);
+}
   const { status } = req.body;
 
   if (!["active", "inactive"].includes(status)) {
@@ -52,6 +55,7 @@ exports.updateUserStatus = asyncHandler(async (req, res) => {
   }
 
   const result = await pool.query(
+    
     `
     UPDATE public.users
     SET status = $1
@@ -88,7 +92,8 @@ exports.updateUserStatus = asyncHandler(async (req, res) => {
 exports.resetUserPassword = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const tempPassword = "AXO@" + Math.random().toString(36).slice(-6);
+  const crypto = require("crypto");
+const tempPassword = "AXO@" + crypto.randomBytes(6).toString("hex");
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
   const result = await pool.query(
@@ -444,6 +449,8 @@ exports.getAllDisputes = asyncHandler(async (req, res) => {
     data: disputes.rows,
   });
 });
+
+
 exports.resolveDispute = asyncHandler(async (req, res) => {
   const { disputeId } = req.params;
   const { action } = req.body;
@@ -452,22 +459,288 @@ exports.resolveDispute = asyncHandler(async (req, res) => {
     throw new AppError("Invalid action", 400);
   }
 
-  const result = await pool.query(
-    `UPDATE po_disputes
-     SET status = $1,
-         resolved_at = NOW()
-     WHERE id = $2
-     RETURNING *`,
-    [action, disputeId]
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    /* ---------------------------------------------------
+       1️⃣ Lock Dispute
+    --------------------------------------------------- */
+    const disputeResult = await client.query(
+      `
+      SELECT *
+      FROM po_disputes
+      WHERE id = $1
+      FOR UPDATE
+      `,
+      [disputeId]
+    );
+
+    if (disputeResult.rowCount === 0) {
+      throw new AppError("Dispute not found", 404);
+    }
+
+    const dispute = disputeResult.rows[0];
+
+    if (dispute.status !== "pending") {
+      throw new AppError("Dispute already processed", 400);
+    }
+
+    /* ---------------------------------------------------
+       2️⃣ Update Dispute
+    --------------------------------------------------- */
+    await client.query(
+      `
+      UPDATE po_disputes
+      SET status = $1,
+          resolved_at = NOW()
+      WHERE id = $2
+      `,
+      [action, disputeId]
+    );
+
+    /* ---------------------------------------------------
+       3️⃣ Update PO IF APPROVED
+    --------------------------------------------------- */
+    if (action === "approved") {
+      await client.query(
+        `
+        UPDATE purchase_orders
+        SET status = 'completed'
+        WHERE id = $1
+        `,
+        [dispute.po_id]
+      );
+    }
+
+    /* ---------------------------------------------------
+       4️⃣ Log PO Event
+    --------------------------------------------------- */
+    await client.query(
+      `
+      INSERT INTO po_events
+      (
+        po_id,
+        event_type,
+        description,
+        actor_user_id,
+        organization_id,
+        actor_role,
+        metadata
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7)
+      `,
+      [
+        dispute.po_id,
+        action === "approved"
+          ? "DISPUTE_RESOLVED"
+          : "DISPUTE_REJECTED",
+        `Admin ${action} dispute`,
+        req.user.id,
+        req.user.organization_id || null,
+        req.user.role,
+        JSON.stringify({ dispute_id: disputeId })
+      ]
+    );
+
+    /* ---------------------------------------------------
+       5️⃣ Log Admin Audit
+    --------------------------------------------------- */
+    await logAdminAction({
+      adminUserId: req.user.id,
+      actionType:
+        action === "approved"
+          ? "DISPUTE_APPROVED"
+          : "DISPUTE_REJECTED",
+      targetTable: "po_disputes",
+      targetId: disputeId,
+      metadata: { po_id: dispute.po_id }
+    });
+
+    await client.query("COMMIT");
+
+    res.status(200).json({
+      success: true,
+      message: "Dispute resolved successfully"
+    });
+
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+});
+
+
+/* =========================================================
+   GET ALL RFQs (ADMIN ENTERPRISE VIEW)
+========================================================= */
+exports.getAllRFQs = asyncHandler(async (req, res) => {
+
+  let {
+    page = 1,
+    limit = 10,
+    status,
+    priority,
+    visibility_type,
+    search
+  } = req.query;
+
+  page = Number(page);
+  limit = Number(limit);
+
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(limit) || limit < 1 || limit > 50) limit = 10;
+
+  const offset = (page - 1) * limit;
+
+  let whereClauses = [];
+  let values = [];
+  let index = 1;
+
+  /* -------------------------
+     Filters
+  -------------------------- */
+
+  if (status) {
+    whereClauses.push(`r.status = $${index}`);
+    values.push(status);
+    index++;
+  }
+
+  if (priority) {
+    whereClauses.push(`r.priority = $${index}`);
+    values.push(priority);
+    index++;
+  }
+
+  if (visibility_type) {
+    whereClauses.push(`r.visibility_type = $${index}`);
+    values.push(visibility_type);
+    index++;
+  }
+
+  if (search) {
+    whereClauses.push(`
+      (
+        r.part_name ILIKE $${index}
+        OR o.company_name ILIKE $${index}
+      )
+    `);
+    values.push(`%${search}%`);
+    index++;
+  }
+
+  const whereSQL =
+    whereClauses.length > 0
+      ? `WHERE ${whereClauses.join(" AND ")}`
+      : "";
+
+  /* -------------------------
+     Total Count Query
+  -------------------------- */
+
+  const countResult = await pool.query(
+    `
+    SELECT COUNT(*)
+    FROM rfqs r
+    JOIN organizations o ON r.buyer_org_id = o.id
+    ${whereSQL}
+    `,
+    values
   );
 
-  if (result.rowCount === 0) {
-    throw new AppError("Dispute not found", 404);
-  }
+  const totalRecords = Number(countResult.rows[0].count);
+
+  /* -------------------------
+     Main Data Query
+  -------------------------- */
+
+  const dataResult = await pool.query(
+    `
+    SELECT
+      r.id,
+      r.part_name,
+      r.quantity,
+      r.status,
+      r.priority,
+      r.visibility_type,
+      r.assigned_supplier_org_id,
+      r.created_at,
+      o.company_name AS buyer_company,
+
+      (
+        SELECT COUNT(*)
+        FROM quotes q
+        WHERE q.rfq_id = r.id
+      )::INT AS quote_count
+
+    FROM rfqs r
+    JOIN organizations o ON r.buyer_org_id = o.id
+
+    ${whereSQL}
+
+    ORDER BY
+      CASE r.priority
+        WHEN 'urgent' THEN 1
+        WHEN 'high' THEN 2
+        WHEN 'normal' THEN 3
+        WHEN 'low' THEN 4
+        ELSE 5
+      END,
+      r.created_at DESC
+
+    LIMIT $${index}
+    OFFSET $${index + 1}
+    `,
+    [...values, limit, offset]
+  );
 
   res.status(200).json({
     success: true,
-    message: "Dispute resolved successfully",
-    data: result.rows[0],
+    message: "RFQs fetched successfully",
+    data: {
+      total_records: totalRecords,
+      current_page: page,
+      total_pages: Math.ceil(totalRecords / limit),
+      rfqs: dataResult.rows
+    }
   });
+
+});
+
+const { calculateSupplierScore } = require("../../utils/reliability.service");
+
+/* =========================================================
+   ADMIN — SUPPLIER RANKING
+========================================================= */
+exports.getSupplierRanking = asyncHandler(async (req, res) => {
+
+  const suppliers = await pool.query(`
+    SELECT id, company_name
+    FROM organizations
+    WHERE role_type = 'supplier'
+  `);
+
+  const ranking = [];
+
+  for (const supplier of suppliers.rows) {
+    const reliability = await calculateSupplierScore(supplier.id);
+
+    ranking.push({
+      supplier_id: supplier.id,
+      company_name: supplier.company_name,
+      ...reliability
+    });
+  }
+
+  ranking.sort((a, b) => b.score - a.score);
+
+  res.status(200).json({
+    success: true,
+    data: ranking
+  });
+
 });

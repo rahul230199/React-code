@@ -1,5 +1,5 @@
 /* =========================================================
-   AXO NETWORKS — AUTHENTICATION MIDDLEWARE (PRODUCTION SAFE)
+   AXO NETWORKS — AUTHENTICATION MIDDLEWARE (HARDENED)
 ========================================================= */
 
 const jwt = require("jsonwebtoken");
@@ -12,17 +12,6 @@ const asyncHandler = require("../utils/asyncHandler");
 ========================================================= */
 
 const authenticate = asyncHandler(async (req, res, next) => {
-
-  /* =====================================================
-     ENV VALIDATION
-  ===================================================== */
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET is not configured");
-  }
-
-  /* =====================================================
-     EXTRACT TOKEN
-  ===================================================== */
 
   const authHeader = req.headers.authorization;
 
@@ -38,25 +27,27 @@ const authenticate = asyncHandler(async (req, res, next) => {
 
   const token = parts[1];
 
-  /* =====================================================
-     VERIFY TOKEN
-  ===================================================== */
-
   let decoded;
 
   try {
+
     decoded = jwt.verify(token, process.env.JWT_SECRET, {
       algorithms: ["HS256"],
       issuer: "axo-networks",
       audience: "axo-users",
     });
+
   } catch {
     throw new AppError("Session expired. Please login again.", 401);
   }
 
+  if (!decoded || !decoded.id) {
+    throw new AppError("Invalid token payload.", 401);
+  }
+
   /* =====================================================
-     FETCH LATEST USER STATE (SECURITY CRITICAL)
-  ===================================================== */
+     FETCH LATEST USER STATE
+  ====================================================== */
 
   const result = await pool.query(
     `
@@ -74,37 +65,29 @@ const authenticate = asyncHandler(async (req, res, next) => {
 
   const user = result.rows[0];
 
-  /* =====================================================
-     ACCOUNT STATUS CHECK
-  ===================================================== */
-
   if (user.status !== "active") {
     throw new AppError("Account is not active.", 403);
   }
 
   /* =====================================================
-     FORCE PASSWORD CHANGE
-  ===================================================== */
+     FORCE PASSWORD CHANGE (STRICT)
+  ====================================================== */
 
- const allowedDuringPasswordChange = [
-  "/api/auth/change-password",
-  "/api/buyer/purchase-orders", // allow viewing orders
-];
+  const passwordChangeRoute = "/api/auth/change-password";
 
-const isAllowedRoute = allowedDuringPasswordChange.some(route =>
-  req.originalUrl.startsWith(route)
-);
-
-if (user.must_change_password === true && !isAllowedRoute) {
-  throw new AppError(
-    "Password change required before accessing the system.",
-    403
-  );
-}
+  if (
+    user.must_change_password === true &&
+    !req.originalUrl.startsWith(passwordChangeRoute)
+  ) {
+    throw new AppError(
+      "Password change required before accessing the system.",
+      403
+    );
+  }
 
   /* =====================================================
      ATTACH SECURE USER OBJECT
-  ===================================================== */
+  ====================================================== */
 
   req.user = {
     id: user.id,

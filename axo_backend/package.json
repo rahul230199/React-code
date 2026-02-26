@@ -21,6 +21,7 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
     "pdfkit": "^0.17.2",
     "pg": "^8.18.0",
     "swagger-jsdoc": "^6.2.8",
@@ -29,4 +30,6 @@
   "devDependencies": {
     "nodemon": "^3.1.11"
   }
+
+  
 }

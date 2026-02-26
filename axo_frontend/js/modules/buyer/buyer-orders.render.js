@@ -21,6 +21,13 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
+function getReliabilityBadge(score = 0) {
+  if (score >= 85) return "🟢";
+  if (score >= 70) return "🟡";
+  if (score >= 55) return "🟠";
+  return "🔴";
+}
+
 /* =========================================================
    ORDERS LIST VIEW
 ========================================================= */
@@ -37,17 +44,36 @@ export function renderOrdersTable({
 
   const totalPages = Math.ceil(total / limit) || 1;
 
-  const rows = orders.length ? orders.map(order => `
+ const rows = orders.length ? orders.map(order => {
+
+  const reliabilityScore = Number(order.supplier_reliability || 0);
+  const reliabilityBadge = getReliabilityBadge(reliabilityScore);
+
+  const riskFlag = order.risk_flag
+    ? `<span class="risk-indicator">⚠️</span>`
+    : "";
+
+  return `
     <tr>
       <td>${escapeHTML(order.po_number)}</td>
       <td>${escapeHTML(order.part_name)}</td>
       <td>${order.quantity}</td>
       <td>₹ ${Number(order.value).toLocaleString()}</td>
+
       <td>
         <span class="status-badge ${escapeHTML(order.status || "").toLowerCase()}">
           ${escapeHTML(order.status)}
         </span>
+        ${riskFlag}
       </td>
+
+      <td>
+        <div class="reliability-badge">
+          ${reliabilityScore}
+          <small>${reliabilityBadge}</small>
+        </div>
+      </td>
+
       <td>
         <button class="btn-primary view-po-btn"
                 data-id="${order.id}">
@@ -55,9 +81,11 @@ export function renderOrdersTable({
         </button>
       </td>
     </tr>
-  `).join("") : `
-    <tr><td colspan="6">No orders found</td></tr>
   `;
+
+}).join("") : `
+  <tr><td colspan="7">No orders found</td></tr>
+`;
 
   container.innerHTML = `
     <div class="orders-header">
@@ -68,13 +96,14 @@ export function renderOrdersTable({
       <table class="data-table">
         <thead>
           <tr>
-            <th>PO Number</th>
-            <th>Part</th>
-            <th>Qty</th>
-            <th>Value</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
+  <th>PO Number</th>
+  <th>Part</th>
+  <th>Qty</th>
+  <th>Value</th>
+  <th>Status</th>
+  <th>Supplier Reliability</th>
+  <th></th>
+</tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
@@ -205,8 +234,8 @@ export function renderPODetailView({
     ` : ""}
 
     <button id="downloadPOBtn" class="btn-secondary">
-      Download PDF
-    </button>
+  Download Enterprise Package
+</button>
   `;
 }
 

@@ -1,155 +1,323 @@
 /* =========================================================
-   AXO NETWORKS — ADMIN DASHBOARD ENTRY (ENTERPRISE STABLE)
-   ES Module Version
-   - Safe initialization
-   - No double calls
-   - Fail-safe modules
-   - Clean startup sequence
+   AXO NETWORKS — ADMIN DASHBOARD ENTRY (ENTERPRISE FINAL)
+   Hardened • Lifecycle Safe • Mobile Safe • Clean
 ========================================================= */
 
 import { RouteGuard } from "../../guards/routeGuard.js";
-import { Toast } from "../../core/toast.js";
 import { AuthManager } from "../../core/authManager.js";
+import Toast from "../../core/toast.js";
 
-import { AdminState } from "./admin.state.js";
-import { AdminEvents } from "./admin.events.js";
-import { AdminNetworkEvents } from "./admin-network.events.js";
-import { AdminAPI } from "./admin.api.js";
+import { DashboardPage } from "./dashboard/dashboard.page.js";
+import { NetworkPage } from "./network/network.page.js";
+import { UsersPage } from "./users/users.page.js";
+import { AuditPage } from "./audit/audit.page.js";
+import { SystemPage } from "./system/system.page.js";
+import { RFQPage } from "./rfq/rfq.page.js";
 
 /* =========================================================
-   SAFE INITIALIZATION WRAPPER
+   INTERNAL STATE
 ========================================================= */
 
 let __ADMIN_INITIALIZED__ = false;
+let __ACTIVE_PAGE__ = null;
+let __IS_LOADING_VIEW__ = false;
 
-async function safeInitializeAdminDashboard() {
+/* =========================================================
+   DOM READY
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+  if (__ADMIN_INITIALIZED__) return;
+  __ADMIN_INITIALIZED__ = true;
 
   try {
 
-    // Prevent double initialization
-    if (__ADMIN_INITIALIZED__) return;
-    __ADMIN_INITIALIZED__ = true;
-
     await initializeAdminDashboard();
+    initializeSidebarSystem();
+    bindLogout();
 
   } catch (err) {
 
     console.error("Admin initialization failed:", err);
-    Toast?.error("Failed to initialize dashboard");
+    Toast.error("Failed to initialize dashboard");
 
   }
-}
+
+});
 
 /* =========================================================
    MAIN INIT
 ========================================================= */
+
 async function initializeAdminDashboard() {
 
-  /* =========================
-     ROUTE PROTECTION
-  ========================== */
   RouteGuard.protect({
     requireAuth: true,
     role: ["admin", "super_admin"],
     permission: "VIEW_DASHBOARD"
   });
 
-  /* =========================
-     USER INFO
-  ========================== */
-  injectAdminUserInfo();
+  await hydrateAuthenticatedUser();
+  bindNavigation();
 
-  /* =========================
-     DEFAULT VIEW STATE
-  ========================== */
-  AdminState?.setCurrentView?.("requests");
+  const active = document.querySelector(".nav-item.active");
+  const defaultView = active?.dataset?.view || "dashboard";
 
-  /* =========================
-     INIT EVENTS (SAFE)
-  ========================== */
-  AdminEvents?.init?.();
-  AdminNetworkEvents?.bindNetworkEvents?.();
-
-  /* =========================
-     LOAD DATA SEQUENCE
-  ========================== */
-  await loadDashboardKPIs();
-
-  if (AdminEvents?.loadRequests) {
-    await AdminEvents.loadRequests();
-  }
+  await loadView(defaultView);
 }
 
 /* =========================================================
-   LOAD DASHBOARD KPI
+   AUTH USER HYDRATION (SECURE VERSION)
 ========================================================= */
-async function loadDashboardKPIs() {
+
+async function hydrateAuthenticatedUser() {
 
   try {
 
-    showLoader();
+    // Always verify token with backend
+    const user = await AuthManager.getCurrentUser(true);
 
-    const response = await AdminAPI.getDashboard();
-    if (!response?.success) throw new Error();
+    if (!user) {
+      forceLogout();
+      return;
+    }
 
-    const network = response.data?.network_requests || {};
+    const nameEl = document.getElementById("adminName");
+    const roleEl = document.getElementById("adminRole");
+    const avatarEl = document.querySelector(".avatar");
 
-    setText("totalSubmissions", network.total_requests ?? 0);
-    setText("pendingCount", network.pending ?? 0);
-    setText("approvedCount", network.approved ?? 0);
-    setText("rejectedCount", network.rejected ?? 0);
+    if (nameEl) {
+      nameEl.textContent = user.name || user.email || "Admin";
+    }
+
+    if (roleEl) {
+      roleEl.textContent = formatRole(user.role);
+    }
+
+    if (avatarEl) {
+      avatarEl.textContent =
+        (user.name?.charAt(0) || user.email?.charAt(0) || "A")
+          .toUpperCase();
+    }
 
   } catch (err) {
 
-    console.error("Dashboard KPI error:", err);
-    Toast?.error("Failed to load dashboard stats");
-
-  } finally {
-
-    hideLoader();
+    console.warn("User hydration failed:", err);
+    forceLogout();
 
   }
+
+}
+
+function formatRole(role) {
+  if (!role) return "Administrator";
+  return role.replace(/_/g, " ")
+             .replace(/\b\w/g, c => c.toUpperCase());
 }
 
 /* =========================================================
-   HELPERS
+   LOGOUT (CENTRALIZED)
 ========================================================= */
 
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value ?? 0;
+function bindLogout() {
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (!logoutBtn) return;
+
+  logoutBtn.addEventListener("click", () => {
+    forceLogout();
+  });
+
 }
 
-function injectAdminUserInfo() {
+function forceLogout() {
 
-  const user = AuthManager.getCurrentUser();
-  if (!user) return;
+  try {
+    AuthManager.logout();
+  } catch (err) {
+    console.warn("Logout error:", err);
+  }
 
-  const nameEl = document.getElementById("adminName");
-  const roleEl = document.getElementById("adminRole");
+  window.location.href = "/login.html";
 
-  if (nameEl) nameEl.textContent = user.email || "Admin";
-  if (roleEl) roleEl.textContent = user.role || "Administrator";
-
-  document.getElementById("logoutBtn")
-    ?.addEventListener("click", () => AuthManager.logout());
 }
 
 /* =========================================================
-   GLOBAL LOADER (SAFE)
+   VIEW MAP
 ========================================================= */
 
-function showLoader() {
-  const loader = document.getElementById("globalLoader");
-  if (loader) loader.style.display = "flex";
-}
+const VIEW_TO_PAGE = {
+  dashboard: DashboardPage,
+  network: NetworkPage,
+  rfq: RFQPage,
+  users: UsersPage,
+  audit: AuditPage,
+  system: SystemPage
+};
 
-function hideLoader() {
-  const loader = document.getElementById("globalLoader");
-  if (loader) loader.style.display = "none";
+const VIEW_TITLES = {
+  dashboard: "Dashboard",
+  network: "Network Access",
+  rfq: "RFQs",
+  users: "Users",
+  audit: "Audit Logs",
+  system: "System Health"
+};
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function bindNavigation() {
+
+  const navItems = document.querySelectorAll(".nav-item");
+  if (!navItems.length) return;
+
+  navItems.forEach(btn => {
+
+    btn.addEventListener("click", async () => {
+
+      const view = btn.dataset?.view;
+      if (!view || !VIEW_TO_PAGE[view]) return;
+      if (__IS_LOADING_VIEW__) return;
+
+      __IS_LOADING_VIEW__ = true;
+
+      try {
+
+        document.querySelector(".nav-item.active")
+          ?.classList.remove("active");
+
+        btn.classList.add("active");
+
+        await loadView(view);
+        closeMobileSidebar();
+
+      } finally {
+
+        __IS_LOADING_VIEW__ = false;
+
+      }
+
+    });
+
+  });
+
 }
 
 /* =========================================================
-   START
+   VIEW LOADER
 ========================================================= */
-document.addEventListener("DOMContentLoaded", safeInitializeAdminDashboard);
+
+async function loadView(view) {
+
+  const content = document.getElementById("contentArea");
+  const title = document.getElementById("pageTitle");
+
+  if (!content) return;
+
+  const PageModule = VIEW_TO_PAGE[view] || DashboardPage;
+
+  if (title) {
+    title.textContent = VIEW_TITLES[view] || "Dashboard";
+  }
+
+  if (__ACTIVE_PAGE__) {
+    try {
+      __ACTIVE_PAGE__.destroy?.();
+    } catch (err) {
+      console.warn("Destroy error:", err);
+    }
+    __ACTIVE_PAGE__ = null;
+  }
+
+  content.innerHTML = "";
+  content.scrollTop = 0;
+
+  try {
+
+    await PageModule.init(content);
+    __ACTIVE_PAGE__ = PageModule;
+
+  } catch (err) {
+
+    console.error(`Failed to load ${view}:`, err);
+    Toast.error(`Failed to load ${view}`);
+
+    content.innerHTML = `
+      <div class="error-state">
+        <h3>Something went wrong</h3>
+        <p>Unable to load this section.</p>
+      </div>
+    `;
+  }
+
+}
+
+/* =========================================================
+   SIDEBAR SYSTEM
+========================================================= */
+
+function initializeSidebarSystem() {
+
+  const layout = document.querySelector(".layout");
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  const hamburger = document.getElementById("hamburgerBtn");
+  const toggleBtn = document.getElementById("sidebarToggle");
+
+  if (!layout || !sidebar) return;
+
+  /* ===== DESKTOP COLLAPSE ===== */
+
+  toggleBtn?.addEventListener("click", () => {
+
+    if (window.innerWidth <= 992) return;
+
+    layout.classList.toggle("collapsed");
+
+    toggleBtn.querySelector("svg")
+      ?.classList.toggle("rotated");
+
+  });
+
+  /* ===== MOBILE OPEN ===== */
+
+  hamburger?.addEventListener("click", () => {
+
+    sidebar.classList.add("open");
+    overlay?.classList.add("active");
+    document.body.style.overflow = "hidden";
+
+  });
+
+  /* ===== MOBILE CLOSE ===== */
+
+  overlay?.addEventListener("click", closeMobileSidebar);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMobileSidebar();
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 992) closeMobileSidebar();
+  });
+
+}
+
+/* =========================================================
+   MOBILE CLOSE
+========================================================= */
+
+function closeMobileSidebar() {
+
+  const sidebar = document.querySelector(".sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+
+  sidebar?.classList.remove("open");
+  overlay?.classList.remove("active");
+
+  document.body.style.overflow = "";
+
+}

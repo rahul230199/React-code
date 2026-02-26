@@ -1,65 +1,75 @@
 /* =========================================================
    AXO NETWORKS — ADMIN ROUTES (ENTERPRISE STRUCTURED)
+   Clean • Modular • Permission Driven • Production Ready
 ========================================================= */
 
 const express = require("express");
 const router = express.Router();
 
+/* ================= MIDDLEWARES ================= */
 const { authenticate } = require("../../middlewares/auth.middleware");
 const authorize = require("../../middlewares/authorize.middleware");
 const {
   validateRequiredFields,
 } = require("../../middlewares/validation.middleware");
 
+/* ================= CORE CONTROLLERS ================= */
 const adminController = require("./admin.controller");
 const poController = require("./admin.po.controller");
 const dashboardController = require("./admin.dashboard.controller");
 const analyticsController = require("./admin.analytics.controller");
-/**
- * @swagger
- * /api/admin/dashboard:
- *   get:
- *     summary: Get admin dashboard
- *     tags: [Admin]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Dashboard data
- */
+
+/* ================= SUB MODULE ROUTES ================= */
+const auditRoutes = require("./audit/admin.audit.routes");
+const systemRoutes = require("./system/admin.system.routes");
+const rfqRoutes = require("./rfq/admin.rfq.routes");
+const userRoutes = require("./users/admin.users.routes");
 
 /* =========================================================
-   GLOBAL ADMIN AUTHENTICATION
+   GLOBAL AUTHENTICATION (All Admin Routes Protected)
 ========================================================= */
 router.use(authenticate);
 
 /* =========================================================
-   USER MANAGEMENT
+   SUB-MODULES (Feature Isolated & Self-Contained)
 ========================================================= */
 
-router.get(
+router.use(
+  "/audit-logs",
+  authorize("VIEW_AUDIT_LOGS"),
+  auditRoutes
+);
+
+router.use(
+  "/system-health",
+  authorize("VIEW_SYSTEM_HEALTH"),
+  systemRoutes
+);
+
+router.use(
+  "/rfqs",
+  authorize("VIEW_RFQS"),
+  rfqRoutes
+);
+
+/* 🔥 USERS MODULE (ENTERPRISE ISOLATED) */
+router.use(
   "/users",
-  authorize("VIEW_USERS"),
-  adminController.getAllUsers
+  userRoutes
 );
 
-router.patch(
-  "/users/:id/status",
-  authorize("MANAGE_USERS"),
-  validateRequiredFields(["status"]),
-  adminController.updateUserStatus
-);
-
-router.post(
-  "/users/:id/reset-password",
-  authorize("MANAGE_USERS"),
-  adminController.resetUserPassword
+/* =========================================================
+   DASHBOARD
+========================================================= */
+router.get(
+  "/dashboard",
+  authorize("VIEW_DASHBOARD"),
+  dashboardController.getAdminDashboard
 );
 
 /* =========================================================
    PLATFORM STATS
 ========================================================= */
-
 router.get(
   "/stats",
   authorize("VIEW_STATS"),
@@ -69,7 +79,6 @@ router.get(
 /* =========================================================
    NETWORK ACCESS REQUESTS
 ========================================================= */
-
 router.get(
   "/network-access-requests",
   authorize("VIEW_NETWORK_REQUESTS"),
@@ -93,7 +102,6 @@ router.post(
 /* =========================================================
    DISPUTES
 ========================================================= */
-
 router.get(
   "/disputes",
   authorize("VIEW_DISPUTES"),
@@ -110,7 +118,6 @@ router.post(
 /* =========================================================
    PURCHASE ORDERS
 ========================================================= */
-
 router.get(
   "/purchase-orders",
   authorize("VIEW_PO"),
@@ -136,19 +143,8 @@ router.post(
 );
 
 /* =========================================================
-   DASHBOARD
-========================================================= */
-
-router.get(
-  "/dashboard",
-  authorize("VIEW_DASHBOARD"),
-  dashboardController.getAdminDashboard
-);
-
-/* =========================================================
    ANALYTICS
 ========================================================= */
-
 router.get(
   "/analytics/monthly-revenue",
   authorize("VIEW_ANALYTICS"),
@@ -171,6 +167,12 @@ router.get(
   "/analytics/dispute-ratio",
   authorize("VIEW_ANALYTICS"),
   analyticsController.getDisputeRatio
+);
+
+router.get(
+  "/suppliers/ranking",
+  authorize("VIEW_ANALYTICS"),
+  adminController.getSupplierRanking
 );
 
 module.exports = router;

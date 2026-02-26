@@ -34,7 +34,7 @@ export function renderDashboardLoading() {
 }
 
 /* =========================================================
-   MAIN EXECUTIVE DASHBOARD
+   MAIN EXECUTIVE DASHBOARD (INTELLIGENCE VERSION)
 ========================================================= */
 
 export function renderDashboardStats(data = {}) {
@@ -43,29 +43,17 @@ export function renderDashboardStats(data = {}) {
   if (!container) return;
 
   const {
-    total_spend = 0,
-    total_pos = 0,
-    active_pos = 0,
-    disputed_pos = 0,
-    total_paid = 0,
-    outstanding_balance = 0,
-    monthly_spend = [],
-    status_distribution = []
+    kpis = {},
+    payments_pending = 0,
+    on_time_delivery_percent = 0,
+    average_supplier_reliability = 0,
+    risk_summary = {},
+    capacity_summary = {}
   } = data;
 
-  const totalSpendNum = safeNumber(total_spend);
-  const totalPaidNum = safeNumber(total_paid);
-  const outstandingNum = safeNumber(outstanding_balance);
-
-  const paidPercentage =
-    totalSpendNum > 0
-      ? Math.min((totalPaidNum / totalSpendNum) * 100, 100)
-      : 0;
-
-  const outstandingPercentage =
-    totalSpendNum > 0
-      ? Math.min((outstandingNum / totalSpendNum) * 100, 100)
-      : 0;
+  const reliabilityBadge = getReliabilityBadge(
+    average_supplier_reliability
+  );
 
   container.innerHTML = `
     <!-- ===================================================== -->
@@ -73,18 +61,10 @@ export function renderDashboardStats(data = {}) {
     <!-- ===================================================== -->
     <div class="dashboard-header d-flex justify-between align-center">
       <div>
-        <h2>Executive Procurement Overview</h2>
+        <h2>Executive Procurement Intelligence</h2>
         <p class="dashboard-subtitle">
-          Organization-level financial & operational intelligence
+          Operational, reliability & risk visibility
         </p>
-      </div>
-
-      <div class="rfq-actions">
-        <select class="input-select" id="dashboardTimeFilter">
-          <option value="6m">Last 6 Months</option>
-          <option value="ytd">Year to Date</option>
-          <option value="all">All Time</option>
-        </select>
       </div>
     </div>
 
@@ -94,104 +74,74 @@ export function renderDashboardStats(data = {}) {
     <div class="kpi-grid">
 
       <div class="kpi-card">
-        <span>Total Procurement Spend</span>
-        <h3>${formatCurrency(totalSpendNum)}</h3>
-      </div>
-
-      <div class="kpi-card">
-        <span>Total Purchase Orders</span>
-        <h3>${safeNumber(total_pos)}</h3>
+        <span>Active RFQs</span>
+        <h3>${safeNumber(kpis.active_rfqs)}</h3>
       </div>
 
       <div class="kpi-card">
         <span>Active Orders</span>
-        <h3>${safeNumber(active_pos)}</h3>
+        <h3>${safeNumber(kpis.active_orders)}</h3>
       </div>
 
       <div class="kpi-card risk">
         <span>Disputed Orders</span>
-        <h3>${safeNumber(disputed_pos)}</h3>
+        <h3>${safeNumber(kpis.disputed_orders)}</h3>
       </div>
 
       <div class="kpi-card success">
-        <span>Total Paid</span>
-        <h3>${formatCurrency(totalPaidNum)}</h3>
+        <span>On-Time Delivery</span>
+        <h3>${safeNumber(on_time_delivery_percent)}%</h3>
+      </div>
+
+      <div class="kpi-card">
+        <span>Avg Supplier Reliability</span>
+        <h3>
+          ${safeNumber(average_supplier_reliability)}
+          <small style="font-size:14px;">${reliabilityBadge}</small>
+        </h3>
       </div>
 
       <div class="kpi-card warning">
-        <span>Outstanding Liability</span>
-        <h3>${formatCurrency(outstandingNum)}</h3>
+        <span>Payments Pending</span>
+        <h3>${formatCurrency(payments_pending)}</h3>
       </div>
 
     </div>
 
     <!-- ===================================================== -->
-    <!-- FINANCIAL COMPARISON BLOCK -->
-    <!-- ===================================================== -->
-    <div class="chart-card" style="height:auto;margin-bottom: var(--space-6);">
-      <h4>Financial Position — Paid vs Outstanding</h4>
-
-      <div style="margin-top: var(--space-4);">
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--gray-600); margin-bottom:6px;">
-          <span>Paid (${paidPercentage.toFixed(1)}%)</span>
-          <span>${formatCurrency(totalPaidNum)}</span>
-        </div>
-        <div style="height:8px; background:var(--gray-100); border-radius:8px; overflow:hidden;">
-          <div style="
-            width:${paidPercentage}%;
-            height:100%;
-            background:var(--green-500);
-            transition: width 0.4s ease;
-          "></div>
-        </div>
-      </div>
-
-      <div style="margin-top: var(--space-5);">
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--gray-600); margin-bottom:6px;">
-          <span>Outstanding (${outstandingPercentage.toFixed(1)}%)</span>
-          <span>${formatCurrency(outstandingNum)}</span>
-        </div>
-        <div style="height:8px; background:var(--gray-100); border-radius:8px; overflow:hidden;">
-          <div style="
-            width:${outstandingPercentage}%;
-            height:100%;
-            background:var(--yellow-500);
-            transition: width 0.4s ease;
-          "></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===================================================== -->
-    <!-- ANALYTICS CHARTS -->
+    <!-- RISK & CAPACITY SUMMARY -->
     <!-- ===================================================== -->
     <div class="chart-grid">
 
       <div class="chart-card">
-        <h4>Monthly Spend Trend</h4>
-        <canvas id="monthlySpendChart"></canvas>
+        <h4>Risk Overview</h4>
+        <div class="risk-summary">
+          <p>Overdue Milestones: <strong>${safeNumber(risk_summary.overdue_milestones)}</strong></p>
+          <p>Delayed Deliveries: <strong>${safeNumber(risk_summary.delayed_deliveries)}</strong></p>
+          <p>Active Disputes: <strong>${safeNumber(risk_summary.active_disputes)}</strong></p>
+          <p>Low Reliability Suppliers: <strong>${safeNumber(risk_summary.low_reliability_suppliers)}</strong></p>
+        </div>
       </div>
 
       <div class="chart-card">
-        <h4>PO Status Distribution</h4>
-        <canvas id="statusChart"></canvas>
+        <h4>Capacity Overview</h4>
+        <div class="risk-summary">
+          <p>Total Suppliers: <strong>${safeNumber(capacity_summary.total_suppliers)}</strong></p>
+          <p>Overloaded: <strong>${safeNumber(capacity_summary.overloaded_suppliers)}</strong></p>
+          <p>High Risk Capacity: <strong>${safeNumber(capacity_summary.high_risk_suppliers)}</strong></p>
+        </div>
       </div>
 
-    </div>
-
-    <!-- ===================================================== -->
-    <!-- TOP SUPPLIERS (FUTURE EXTENSION READY) -->
-    <!-- ===================================================== -->
-    <div class="chart-card" style="height:auto;">
-      <h4>Top Supplier Contribution</h4>
-      <div class="dashboard-empty" style="padding: var(--space-8);">
-        <p>Supplier analytics will appear here once supplier aggregation is enabled.</p>
-      </div>
     </div>
   `;
+}
 
-  renderMonthlyChart(monthly_spend);
-  renderStatusChart(status_distribution);
+function getReliabilityBadge(score = 0) {
+
+  if (score >= 85) return "🟢 Highly Reliable";
+  if (score >= 70) return "🟡 Reliable";
+  if (score >= 55) return "🟠 Moderate";
+  return "🔴 High Risk";
 }
 
 /* =========================================================
@@ -276,7 +226,17 @@ function renderStatusChart(statusData = []) {
 /* =========================================================
    EMPTY FALLBACK
 ========================================================= */
-
 export function renderDashboardEmpty() {
+
+  if (monthlyChartInstance) {
+    monthlyChartInstance.destroy();
+    monthlyChartInstance = null;
+  }
+
+  if (statusChartInstance) {
+    statusChartInstance.destroy();
+    statusChartInstance = null;
+  }
+
   renderDashboardStats({});
 }

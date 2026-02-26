@@ -9,7 +9,7 @@ import {
   renderOrdersEmpty,
   renderPODetailView,
   renderDisputeModal,
-  renderPaymentModal
+  renderPaymentModal,
 } from "./buyer-orders.render.js";
 import {
   showLoadingOverlay,
@@ -156,16 +156,32 @@ function attachPODetailEvents(poId, milestones, paymentData) {
     });
 
   document.getElementById("downloadPOBtn")
-    ?.addEventListener("click", async () => {
-      try {
-        showLoadingOverlay();
-        await BuyerOrdersAPI.downloadPOPDF(poId);
-      } catch (error) {
-        showError(error, "Unable to generate PDF");
-      } finally {
-        hideLoadingOverlay();
-      }
-    });
+  ?.addEventListener("click", async () => {
+
+    try {
+      showLoadingOverlay();
+
+      const blob = await BuyerOrdersAPI.downloadPOPackage(poId);
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `PO-${poId}-package.json`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      showError(error, "Unable to download enterprise package");
+    } finally {
+      hideLoadingOverlay();
+    }
+
+  });
 
   const invoiceMilestone = milestones.find(
     m => m.milestone_name === "INVOICE_RAISED" &&

@@ -1,17 +1,18 @@
 /* =========================================================
-   AXO NETWORKS — AUTH MANAGER (CLEAN ROUTING VERSION)
-   No .html | No Auto Redirects | Session Safe
-   ES Module Version (No Global Pollution)
+   AXO NETWORKS — AUTH MANAGER (ENTERPRISE HARDENED)
+   Clean Routing · Defensive Validation · Session Safe
 ========================================================= */
 
 import { ApiClient as Api } from "./apiClient.js";
 import { StorageManager as Storage } from "./storage.js";
 
 /* =======================================================
-   ROLE → DEFAULT ROUTE (CLEAN URLS)
+   ROLE → DEFAULT ROUTE
 ======================================================= */
 function getDefaultRouteByRole(role) {
+
   switch (role) {
+
     case "admin":
     case "super_admin":
       return "/admin-dashboard";
@@ -28,29 +29,48 @@ function getDefaultRouteByRole(role) {
 }
 
 /* =======================================================
-   LOGIN (NO AUTO REDIRECT)
+   LOGIN
 ======================================================= */
 async function login(email, password) {
+
+  if (!email || !password) {
+    throw new Error("Email and password are required");
+  }
 
   const response = await Api.post("/auth/login", {
     email,
     password,
   });
 
-  if (!response.success) {
-    throw new Error(response.message || "Login failed");
+  if (!response || response.success !== true || !response.data) {
+    throw new Error(
+      response?.message || "Login failed"
+    );
   }
 
-  const { token, must_change_password, user } = response.data;
+  const {
+    token,
+    must_change_password,
+    user
+  } = response.data;
 
-  // Save session
+  if (!token || !user) {
+    throw new Error("Invalid login response");
+  }
+
+  // Attach must_change_password to stored user
+  const safeUser = {
+    ...user,
+    must_change_password: !!must_change_password
+  };
+
   Storage.setToken(token);
-  Storage.setUser(user);
+  Storage.setUser(safeUser);
 
   return {
-    user,
-    mustChangePassword: must_change_password,
-    redirectUrl: getDefaultRouteByRole(user.role)
+    user: safeUser,
+    mustChangePassword: !!must_change_password,
+    redirectUrl: getDefaultRouteByRole(safeUser.role)
   };
 }
 
@@ -81,13 +101,17 @@ function getCurrentRole() {
    REQUIRE AUTH
 ======================================================= */
 function requireAuth() {
+
   if (!Storage.isAuthenticated()) {
     window.location.href = "/login";
+    return false;
   }
+
+  return true;
 }
 
 /* =======================================================
-   PUBLIC EXPORT
+   EXPORT
 ======================================================= */
 export const AuthManager = {
   login,

@@ -128,6 +128,42 @@ async downloadPOPDF(poId) {
   window.URL.revokeObjectURL(url);
 },
 
+
+/* =====================================================
+   DOWNLOAD ENTERPRISE PO PACKAGE (JSON EXPORT)
+===================================================== */
+async downloadPOPackage(poId) {
+
+  const token = localStorage.getItem("axo_access_token");
+
+  if (!token) {
+    throw new Error("Session expired. Please login again.");
+  }
+
+  const response = await fetch(
+    `${window.location.origin}/api/export/po/${poId}?ts=${Date.now()}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Cache-Control": "no-cache"
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Unable to download enterprise package.");
+  }
+
+  const blob = await response.blob();
+
+  if (!blob || blob.size === 0) {
+    throw new Error("Export package generation failed.");
+  }
+
+  return blob;
+},
+
   /* =====================================================
      REQUEST PAYMENT
   ====================================================== */

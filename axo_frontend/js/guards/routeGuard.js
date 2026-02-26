@@ -39,14 +39,18 @@ function requireAuth() {
 /* =========================================================
    REQUIRE ROLE
 ========================================================= */
-
 function requireRole(allowedRoles = []) {
 
   if (!requireAuth()) return false;
 
   const user = Auth.getCurrentUser();
+  if (!user) return false;
 
-  if (!user || !allowedRoles.includes(user.role)) {
+  const rolesArray = Array.isArray(allowedRoles)
+    ? allowedRoles
+    : [allowedRoles];
+
+  if (!rolesArray.includes(user.role)) {
     redirectToDashboard();
     return false;
   }
@@ -104,17 +108,33 @@ function redirectToDashboard() {
 
 function protect(options = {}) {
 
-  const { requireAuth: needAuth, role, permission } = options;
+  const {
+    requireAuth: needAuth,
+    role,
+    permission
+  } = options;
 
+  // Run auth only once
   if (needAuth && !requireAuth()) return false;
-  if (role && !requireRole(role)) return false;
-  if (permission && !requirePermission(permission)) return false;
+
+  if (role) {
+    const rolesArray = Array.isArray(role) ? role : [role];
+    const user = Auth.getCurrentUser();
+    if (!user || !rolesArray.includes(user.role)) {
+      redirectToDashboard();
+      return false;
+    }
+  }
+
+  if (permission && !Permission.has(permission)) {
+    redirectToDashboard();
+    return false;
+  }
 
   Permission.applyPermissionsToDOM();
 
   return true;
 }
-
 /* =========================================================
    EXPORT
 ========================================================= */

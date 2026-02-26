@@ -16,12 +16,20 @@ const {
 } = require("../../middlewares/validation.middleware");
 
 const buyerController = require("./buyer.controller");
+const dashboardRoutes = require("./dashboard/buyer.dashboard.routes");
+const timelineRoutes = require("./orders/buyer.order.timeline.routes");
+const compareRoutes = require("./quotes/buyer.quote.compare.routes");
+const paymentRoutes = require("./payments/buyer.payment.routes");
 
 /* =========================================================
    GLOBAL AUTHENTICATION
    - All buyer routes require valid JWT
 ========================================================= */
 router.use(authenticate);
+router.use("/dashboard", dashboardRoutes);
+router.use("/orders", timelineRoutes);
+router.use("/rfqs", compareRoutes);
+router.use("/orders", paymentRoutes);
 
 /* =========================================================
    DASHBOARD

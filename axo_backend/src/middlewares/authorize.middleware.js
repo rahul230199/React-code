@@ -1,20 +1,37 @@
 /**
- * AXO NETWORKS — AUTHORIZATION MIDDLEWARE
- * Enterprise RBAC (Permission Based)
+ * AXO NETWORKS — AUTHORIZATION MIDDLEWARE (HARDENED)
+ * Enterprise RBAC + Defensive Enforcement
  */
 
 const { ROLE_PERMISSIONS } = require("../config/roles.config");
 const AppError = require("../utils/AppError");
 
 const authorize = (requiredPermissions = []) => {
+
   const permissions = Array.isArray(requiredPermissions)
     ? requiredPermissions
     : [requiredPermissions];
 
-  return (req, res, next) => {
-    const user = req.user;
+  const normalizedPermissions = permissions.map(p =>
+    typeof p === "string" ? p.toUpperCase() : p
+  );
 
-    if (!user || !user.role) {
+  return (req, res, next) => {
+
+    /* =====================================================
+       ENSURE AUTHENTICATION EXISTS
+    ====================================================== */
+    if (!req.user) {
+      return next(
+        new AppError("Authentication required.", 401, {
+          errorCode: "AUTH_REQUIRED"
+        })
+      );
+    }
+
+    const { role } = req.user;
+
+    if (!role) {
       return next(
         new AppError("Access denied. Role missing.", 403, {
           errorCode: "AUTH_ROLE_MISSING",
@@ -22,8 +39,7 @@ const authorize = (requiredPermissions = []) => {
       );
     }
 
-    // Case-insensitive role handling
-    const roleKey = user.role.toLowerCase();
+    const roleKey = role.toLowerCase();
     const rolePermissions = ROLE_PERMISSIONS[roleKey];
 
     if (!rolePermissions) {
@@ -34,13 +50,18 @@ const authorize = (requiredPermissions = []) => {
       );
     }
 
-    // SUPER ADMIN wildcard access
+    /* =====================================================
+       SUPER ADMIN WILDCARD
+    ====================================================== */
     if (rolePermissions.includes("*")) {
       return next();
     }
 
-    const hasPermission = permissions.some((permission) =>
-      rolePermissions.includes(permission)
+    const normalizedRolePermissions =
+      rolePermissions.map(p => p.toUpperCase());
+
+    const hasPermission = normalizedPermissions.some(permission =>
+      normalizedRolePermissions.includes(permission)
     );
 
     if (!hasPermission) {
@@ -48,7 +69,7 @@ const authorize = (requiredPermissions = []) => {
         new AppError("Forbidden. Insufficient permissions.", 403, {
           errorCode: "AUTH_PERMISSION_DENIED",
           meta: {
-            requiredPermissions: permissions,
+            requiredPermissions: normalizedPermissions,
             userRole: roleKey,
           },
         })
@@ -60,4 +81,3 @@ const authorize = (requiredPermissions = []) => {
 };
 
 module.exports = authorize;
-

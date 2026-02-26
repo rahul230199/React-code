@@ -5,6 +5,16 @@
 const containerId = "pageContainer";
 
 /* =========================================================
+   RELIABILITY BADGE HELPER
+========================================================= */
+function getReliabilityBadge(score = 0) {
+  if (score >= 85) return "🟢 Highly Reliable";
+  if (score >= 70) return "🟡 Reliable";
+  if (score >= 55) return "🟠 Moderate";
+  return "🔴 High Risk";
+}
+
+/* =========================================================
    GLOBAL LOADING OVERLAY
 ========================================================= */
 
@@ -156,43 +166,69 @@ export function renderQuotesTable(quotes = [], rfqId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const rows = quotes.map(q => {
+ const rows = quotes.map(q => {
 
-    const normalizedStatus = (q.status || "").toLowerCase();
+  const normalizedStatus = (q.status || "").toLowerCase();
 
-    const canAct =
-      normalizedStatus === "submitted" ||
-      normalizedStatus === "pending";
+  const canAct =
+    normalizedStatus === "submitted" ||
+    normalizedStatus === "pending";
 
-    return `
-      <tr>
-        <td>${q.id}</td>
-        <td>${q.supplier_org_id}</td>
-        <td>₹ ${Number(q.price).toLocaleString()}</td>
-        <td>${q.timeline_days} days</td>
-        <td>
-          <span class="status-badge ${normalizedStatus}">
-            ${q.status}
-          </span>
-        </td>
-        <td>
-          ${canAct ? `
-            <button class="btn-primary accept-quote-btn"
-                    data-id="${q.id}">
-              Accept
-            </button>
-            <button class="btn-secondary reject-quote-btn"
-                    data-id="${q.id}">
-              Reject
-            </button>
-          ` : `
-            <span class="text-muted">—</span>
-          `}
-        </td>
-      </tr>
-    `;
+  let reliabilityScore = 0;
+  let reliabilityTier = "N/A";
 
-  }).join("");
+  try {
+    const snapshot =
+      typeof q.reliability_snapshot === "string"
+        ? JSON.parse(q.reliability_snapshot)
+        : q.reliability_snapshot;
+
+    reliabilityScore = snapshot?.score || 0;
+    reliabilityTier = getReliabilityBadge(reliabilityScore);
+
+  } catch {
+    reliabilityScore = 0;
+    reliabilityTier = "—";
+  }
+
+  return `
+    <tr>
+      <td>${q.id}</td>
+      <td>${q.supplier_org_id}</td>
+      <td>₹ ${Number(q.price).toLocaleString()}</td>
+      <td>${q.timeline_days} days</td>
+
+      <td>
+        <div class="reliability-block">
+          <strong>${reliabilityScore}</strong>
+          <small>${reliabilityTier}</small>
+        </div>
+      </td>
+
+      <td>
+        <span class="status-badge ${normalizedStatus}">
+          ${q.status}
+        </span>
+      </td>
+
+      <td>
+        ${canAct ? `
+          <button class="btn-primary accept-quote-btn"
+                  data-id="${q.id}">
+            Accept
+          </button>
+          <button class="btn-secondary reject-quote-btn"
+                  data-id="${q.id}">
+            Reject
+          </button>
+        ` : `
+          <span class="text-muted">—</span>
+        `}
+      </td>
+    </tr>
+  `;
+
+}).join("");
 
   container.innerHTML = `
     <div class="rfq-header">
@@ -205,14 +241,15 @@ export function renderQuotesTable(quotes = [], rfqId) {
     <div class="table-wrapper">
       <table class="data-table">
         <thead>
-          <tr>
-            <th>Quote ID</th>
-            <th>Supplier Org</th>
-            <th>Price</th>
-            <th>Timeline</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
+        <tr>
+  <th>Quote ID</th>
+  <th>Supplier Org</th>
+  <th>Price</th>
+  <th>Timeline</th>
+  <th>Reliability</th>
+  <th>Status</th>
+  <th>Action</th>
+</tr>
         </thead>
         <tbody>
           ${rows}

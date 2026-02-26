@@ -9,7 +9,8 @@ const { logPoEvent } = require("../../utils/auditLogger");
 const AppError = require("../../utils/AppError");
 const asyncHandler = require("../../utils/asyncHandler");
 const PDFDocument = require("pdfkit");
-const { createNotification } = require("../../utils/notificationService"); // adjust path if needed
+const { createNotification } = require("../../utils/notificationService");
+const { calculateSupplierScore } = require("../../utils/reliability.service"); // adjust path if needed
 
 /* =========================================================
    DASHBOARD STATS
@@ -62,10 +63,11 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
    - Logs audit event (future traceability)
    - Production-safe structured implementation
 ========================================================= */
+
 exports.createRFQ = asyncHandler(async (req, res) => {
+
   const organizationId = req.user.organization_id;
   const userId = req.user.id;
-  const role = req.user.role;
 
   if (!organizationId) {
     throw new AppError("Organization not found", 400);
@@ -76,18 +78,45 @@ exports.createRFQ = asyncHandler(async (req, res) => {
     part_description,
     quantity,
     ppap_level,
-    design_file_url
+    design_file_url,
+    visibility_type = "public",
+    priority = "normal",
+    assigned_supplier_org_id = null
   } = req.body;
 
-  /* -------------------------
-     Basic Input Validation
-  --------------------------*/
+  /* ------------------------------------------------------
+     BASIC VALIDATION
+  ------------------------------------------------------ */
+
   if (!part_name || typeof part_name !== "string") {
     throw new AppError("Part name is required", 400);
   }
 
   if (!quantity || isNaN(quantity) || Number(quantity) <= 0) {
     throw new AppError("Quantity must be a positive number", 400);
+  }
+
+  const allowedVisibility = ["public", "private", "invited"];
+  const allowedPriority = ["low", "normal", "high", "urgent"];
+
+  if (!allowedVisibility.includes(visibility_type)) {
+    throw new AppError("Invalid visibility type", 400);
+  }
+
+  if (!allowedPriority.includes(priority)) {
+    throw new AppError("Invalid priority value", 400);
+  }
+
+  /* ------------------------------------------------------
+     BUSINESS RULE
+     If private → supplier must be assigned
+  ------------------------------------------------------ */
+
+  if (visibility_type === "private" && !assigned_supplier_org_id) {
+    throw new AppError(
+      "Private RFQ must have assigned supplier",
+      400
+    );
   }
 
   // Trim & sanitize
@@ -102,41 +131,56 @@ exports.createRFQ = asyncHandler(async (req, res) => {
     await client.query("BEGIN");
 
     const result = await client.query(
-      `INSERT INTO rfqs
-       (buyer_org_id, part_name, part_description,
-        quantity, ppap_level, design_file_url)
-       VALUES ($1,$2,$3,$4,$5,$6)
-       RETURNING *`,
+      `
+      INSERT INTO rfqs
+      (buyer_org_id,
+       part_name,
+       part_description,
+       quantity,
+       ppap_level,
+       design_file_url,
+       visibility_type,
+       priority,
+       assigned_supplier_org_id,
+       status,
+       created_at,
+       updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open',NOW(),NOW())
+      RETURNING *
+      `,
       [
         organizationId,
         part_name,
         part_description,
         quantity,
         ppap_level || null,
-        design_file_url
+        design_file_url,
+        visibility_type,
+        priority,
+        assigned_supplier_org_id
       ]
     );
 
-    /* -------------------------
-       Optional: Future Audit Log
-       (You can later move this to centralized audit service)
-    --------------------------*/
     await client.query(
-  `INSERT INTO admin_audit_logs
-   (admin_user_id, action_type, target_table, target_id, metadata)
-   VALUES ($1,$2,$3,$4,$5)`,
-  [
-    userId,
-    "RFQ_CREATED",
-    "rfqs",
-    result.rows[0].id,
-    JSON.stringify({
-      part_name,
-      quantity,
-      organization_id: organizationId
-    })
-  ]
-);
+      `
+      INSERT INTO admin_audit_logs
+      (admin_user_id, action_type, target_table, target_id, metadata)
+      VALUES ($1,$2,$3,$4,$5)
+      `,
+      [
+        userId,
+        "RFQ_CREATED",
+        "rfqs",
+        result.rows[0].id,
+        JSON.stringify({
+          part_name,
+          quantity,
+          priority,
+          visibility_type,
+          assigned_supplier_org_id
+        })
+      ]
+    );
 
     await client.query("COMMIT");
 
@@ -152,6 +196,7 @@ exports.createRFQ = asyncHandler(async (req, res) => {
   } finally {
     client.release();
   }
+
 });
 
 /* =========================================================
@@ -208,25 +253,38 @@ exports.acceptQuote = asyncHandler(async (req, res) => {
 
     const poNumber = `PO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+    // ----------------------------------------------------
+// Calculate Promised Delivery Date (Reliability Engine Foundation)
+// ----------------------------------------------------
+let promisedDeliveryDate = null;
+
+if (quote.timeline_days && !isNaN(quote.timeline_days)) {
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate() + Number(quote.timeline_days));
+  promisedDeliveryDate = baseDate;
+}
+
     const poRes = await client.query(
-      `INSERT INTO purchase_orders
-       (po_number, rfq_id, quote_id,
-        buyer_org_id, supplier_org_id,
-        part_name, quantity, value,
-        status, accepted_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
-       RETURNING *`,
-      [
-        poNumber,
-        rfq.id,
-        quote.id,
-        rfq.buyer_org_id,
-        quote.supplier_org_id,
-        rfq.part_name,
-        rfq.quantity,
-        quote.price,
-        PO_STATUS.ISSUED
-      ]
+    ` INSERT INTO purchase_orders
+ (po_number, rfq_id, quote_id,
+  buyer_org_id, supplier_org_id,
+  part_name, quantity, value,
+  status, accepted_at,
+  promised_delivery_date)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),$10)
+RETURNING *`,
+[
+  poNumber,
+  rfq.id,
+  quote.id,
+  rfq.buyer_org_id,
+  quote.supplier_org_id,
+  rfq.part_name,
+  rfq.quantity,
+  quote.price,
+  PO_STATUS.ISSUED,
+  promisedDeliveryDate
+]
     );
     await createNotification(client, {
   organizationId: orgId,
@@ -677,12 +735,116 @@ const result = await pool.query(
   `,
   params
 );
+// --------------------------------------------
+// Collect unique supplier IDs
+// --------------------------------------------
+const supplierIds = [
+  ...new Set(result.rows.map(q => q.supplier_org_id))
+];
 
-  res.status(200).json({
-    success: true,
-    message: "Quotes fetched successfully",
-    data: result.rows
-  });
+// --------------------------------------------
+// Fetch reliability for all suppliers in ONE query
+// --------------------------------------------
+const reliabilityMap = {};
+
+if (supplierIds.length > 0) {
+  const reliabilityQuery = await pool.query(
+    `
+    SELECT
+      supplier_org_id,
+      COUNT(*) FILTER (WHERE status = 'completed') AS completed_orders,
+      COUNT(*) FILTER (
+        WHERE status = 'completed'
+        AND actual_delivery_date <= promised_delivery_date
+      ) AS on_time_orders,
+      COUNT(*) FILTER (WHERE dispute_flag = true) AS disputed_orders,
+      COUNT(*) AS total_orders
+    FROM purchase_orders
+    WHERE supplier_org_id = ANY($1)
+    GROUP BY supplier_org_id
+    `,
+    [supplierIds]
+  );
+
+  for (const row of reliabilityQuery.rows) {
+
+    const completed = Number(row.completed_orders);
+    const onTime = Number(row.on_time_orders);
+    const disputed = Number(row.disputed_orders);
+    const total = Number(row.total_orders);
+
+    let score = 0;
+
+    if (total > 0) {
+      const completionRate = completed / total;
+      const onTimeRate = completed > 0 ? onTime / completed : 0;
+      const disputeRate = disputed / total;
+
+      score =
+        (completionRate * 40) +
+        (onTimeRate * 40) +
+        ((1 - disputeRate) * 20);
+    }
+
+    reliabilityMap[row.supplier_org_id] = Math.round(score);
+  }
+}
+
+// --------------------------------------------
+// Attach scores
+// --------------------------------------------
+const enrichedQuotes = result.rows.map(quote => {
+
+  let snapshot = { score: 0, tier: "RISK" };
+
+  if (quote.reliability_snapshot) {
+    try {
+      snapshot = typeof quote.reliability_snapshot === "string"
+        ? JSON.parse(quote.reliability_snapshot)
+        : quote.reliability_snapshot;
+    } catch {}
+  }
+
+  return {
+    ...quote,
+    reliability_score: snapshot.score,
+    reliability_tier: snapshot.tier
+  };
+});
+const rfqPriorityRes = await pool.query(
+  `SELECT priority FROM rfqs WHERE id = $1`,
+  [rfqId]
+);
+
+const priority = rfqPriorityRes.rows[0]?.priority || "normal";
+// --------------------------------------------
+// Sort
+// --------------------------------------------
+enrichedQuotes.sort((a, b) => {
+
+  let weightA = 1;
+  let weightB = 1;
+
+  if (priority === "urgent") {
+    weightA = a.reliability_score >= 75 ? 1.2 : 1;
+    weightB = b.reliability_score >= 75 ? 1.2 : 1;
+  }
+
+  const adjustedA = a.reliability_score * weightA;
+  const adjustedB = b.reliability_score * weightB;
+
+  if (adjustedB !== adjustedA) {
+    return adjustedB - adjustedA;
+  }
+
+  return a.price - b.price;
+});
+
+res.status(200).json({
+  success: true,
+  message: "Quotes fetched successfully",
+  data: enrichedQuotes
+});
 });
 
 /* =========================================================
@@ -1065,12 +1227,11 @@ exports.generatePOPdf = asyncHandler(async (req, res) => {
     size: "A4"
   });
 
-  doc.on("error", (err) => {
-    console.error("PDF generation error:", err);
-    if (!res.headersSent) {
-      res.status(500).end();
-    }
-  });
+  doc.on("error", () => {
+  if (!res.headersSent) {
+    res.status(500).end();
+  }
+});
 
   doc.pipe(res);
 
@@ -1205,12 +1366,19 @@ exports.approvePaymentRequest = asyncHandler(async (req, res) => {
 
   const requestId = Number(req.params.id);
   const approverId = req.user.id;
+  const orgId = req.user.organization_id;
+
+  if (!requestId || isNaN(requestId))
+    throw new AppError("Invalid request id", 400);
 
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
+    /* ----------------------------------------------------
+       Lock Payment Request
+    ----------------------------------------------------- */
     const requestRes = await client.query(
       `SELECT * FROM payment_requests
        WHERE id = $1
@@ -1223,10 +1391,54 @@ exports.approvePaymentRequest = asyncHandler(async (req, res) => {
 
     const request = requestRes.rows[0];
 
+    /* ----------------------------------------------------
+       Organization Isolation (CRITICAL)
+    ----------------------------------------------------- */
+    if (request.organization_id !== orgId)
+      throw new AppError("Unauthorized", 403);
+
     if (request.status !== "PENDING")
       throw new AppError("Request already processed", 400);
 
-    /* Mark approved */
+    /* ----------------------------------------------------
+       Validate PO State
+    ----------------------------------------------------- */
+    const poRes = await client.query(
+      `SELECT status
+       FROM purchase_orders
+       WHERE id = $1
+       FOR UPDATE`,
+      [request.po_id]
+    );
+
+    if (!poRes.rowCount)
+      throw new AppError("Associated PO not found", 404);
+
+    const po = poRes.rows[0];
+
+    if ([PO_STATUS.COMPLETED, PO_STATUS.CANCELLED].includes(po.status))
+      throw new AppError("Cannot process payment for closed PO", 400);
+
+    if (po.status === PO_STATUS.DISPUTED)
+      throw new AppError("Cannot process payment for disputed PO", 400);
+
+    /* ----------------------------------------------------
+       Prevent Duplicate Payment
+    ----------------------------------------------------- */
+    const existingPayment = await client.query(
+      `SELECT id
+       FROM payments
+       WHERE milestone_id = $1
+       FOR UPDATE`,
+      [request.milestone_id]
+    );
+
+    if (existingPayment.rowCount > 0)
+      throw new AppError("Milestone already paid", 400);
+
+    /* ----------------------------------------------------
+       Mark Request Approved
+    ----------------------------------------------------- */
     await client.query(
       `UPDATE payment_requests
        SET status = 'APPROVED',
@@ -1236,7 +1448,9 @@ exports.approvePaymentRequest = asyncHandler(async (req, res) => {
       [approverId, requestId]
     );
 
-    /* Now execute real payment */
+    /* ----------------------------------------------------
+       Insert Payment Record
+    ----------------------------------------------------- */
     await client.query(
       `INSERT INTO payments
        (po_id, milestone_id, amount, status,
@@ -1252,6 +1466,9 @@ exports.approvePaymentRequest = asyncHandler(async (req, res) => {
       ]
     );
 
+    /* ----------------------------------------------------
+       Update PO Status
+    ----------------------------------------------------- */
     await client.query(
       `UPDATE purchase_orders
        SET status = $1
@@ -1303,15 +1520,25 @@ exports.getNotifications = asyncHandler(async (req, res) => {
 exports.markNotificationRead = asyncHandler(async (req, res) => {
 
   const id = Number(req.params.id);
+  const orgId = req.user.organization_id;
+  const userId = req.user.id;
+  const role = req.user.role;
 
-  await pool.query(
-    `UPDATE notifications SET is_read = true WHERE id = $1`,
-    [id]
+  const result = await pool.query(
+    `
+    UPDATE notifications
+    SET is_read = true
+    WHERE id = $1
+      AND organization_id = $2
+      AND (user_id = $3 OR role = $4)
+    `,
+    [id, orgId, userId, role]
   );
 
-  res.status(200).json({
-    success: true
-  });
+  if (!result.rowCount)
+    throw new AppError("Notification not found or unauthorized", 404);
+
+  res.status(200).json({ success: true });
 
 });
 

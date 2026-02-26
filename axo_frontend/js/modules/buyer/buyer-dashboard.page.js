@@ -8,7 +8,13 @@ import { AuthManager } from "../../core/authManager.js";
 
 import { loadRFQPage } from "./buyer-rfq.page.js";
 import { loadOrdersPage } from "./buyer-orders.page.js";
-// ❌ REMOVED loadProfilePage import (it was breaking module)
+
+import BuyerDashboardAPI from "./buyer-dashboard.api.js";
+import {
+  renderDashboardLoading,
+  renderDashboardStats,
+  renderDashboardEmpty
+} from "./buyer-dashboard.render.js";
 
 import BuyerNotificationAPI from "./buyer-notifications.api.js";
 import Toast from "../../core/toast.js";
@@ -18,6 +24,57 @@ import Toast from "../../core/toast.js";
 ========================================================= */
 
 let currentPage = "dashboard";
+
+/* =========================================================
+   DASHBOARD LOADER (ENTERPRISE INTELLIGENCE VERSION)
+========================================================= */
+async function loadDashboard() {
+
+  try {
+
+    renderDashboardLoading();
+
+    const [
+      executive,
+      risk,
+      capacity
+    ] = await Promise.all([
+      BuyerDashboardAPI.getExecutiveOverview(),
+      BuyerDashboardAPI.getRiskOverview(),
+      BuyerDashboardAPI.getCapacityOverview()
+    ]);
+
+    if (!executive) {
+      renderDashboardEmpty();
+      return;
+    }
+
+    /* -----------------------------------------------------
+       NORMALIZED DASHBOARD DATA STRUCTURE
+       (Single object for render layer)
+    ------------------------------------------------------ */
+    const dashboardData = {
+      kpis: executive.kpis || {},
+      payments_pending: executive.payments_pending || 0,
+      on_time_delivery_percent:
+        executive.on_time_delivery_percent || 0,
+      average_supplier_reliability:
+        executive.average_supplier_reliability || 0,
+      risk_summary: risk || {},
+      capacity_summary: capacity || {}
+    };
+
+    renderDashboardStats(dashboardData);
+
+  } catch (error) {
+
+    Toast.error(
+      error?.message || "Unable to load dashboard intelligence"
+    );
+
+    renderDashboardEmpty();
+  }
+}
 
 /* =========================================================
    PAGE ROUTER
@@ -35,12 +92,7 @@ async function loadPage(page) {
   switch (page) {
 
     case "dashboard":
-      container.innerHTML = `
-        <div style="padding:40px;">
-          <h2>Dashboard</h2>
-          <p>Executive overview will be available soon.</p>
-        </div>
-      `;
+      await loadDashboard();
       break;
 
     case "buy":
@@ -52,7 +104,6 @@ async function loadPage(page) {
       break;
 
     case "profile":
-      // Temporary safe placeholder
       container.innerHTML = `
         <div style="padding:40px;">
           <h2>Profile</h2>
@@ -168,32 +219,40 @@ async function initNotifications() {
 
   async function loadNotifications() {
 
-    const notifications =
-      await BuyerNotificationAPI.getNotifications();
+    try {
 
-    const unreadCount =
-      notifications.filter(n => !n.is_read).length;
+      const notifications =
+        await BuyerNotificationAPI.getNotifications();
 
-    if (unreadCount > 0) {
-      badge.innerText = unreadCount;
-      badge.classList.remove("hidden");
-    } else {
+      const unreadCount =
+        notifications.filter(n => !n.is_read).length;
+
+      if (unreadCount > 0) {
+        badge.innerText = unreadCount;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (!notifications.length) {
+        list.innerHTML =
+          `<div class="notification-empty">No notifications</div>`;
+        return;
+      }
+
+      list.innerHTML = notifications.map(n => `
+        <div class="notification-item ${!n.is_read ? "unread" : ""}"
+             data-id="${n.id}">
+          <div style="font-weight:600">${n.title}</div>
+          <div style="font-size:13px;color:#666">${n.message}</div>
+        </div>
+      `).join("");
+
+    } catch {
       badge.classList.add("hidden");
-    }
-
-    if (!notifications.length) {
       list.innerHTML =
-        `<div class="notification-empty">No notifications</div>`;
-      return;
+        `<div class="notification-empty">Unable to load notifications</div>`;
     }
-
-    list.innerHTML = notifications.map(n => `
-      <div class="notification-item ${!n.is_read ? "unread" : ""}"
-           data-id="${n.id}">
-        <div style="font-weight:600">${n.title}</div>
-        <div style="font-size:13px;color:#666">${n.message}</div>
-      </div>
-    `).join("");
   }
 
   bell.addEventListener("click", () => {
@@ -231,9 +290,54 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (allowed === false) return;
 
   initNavigation();
+     initSidebarToggle(); 
   populateCompanyHeader();
   setupLogout();
   await initNotifications();
 
+
   loadPage("dashboard");
 });
+
+function initSidebarToggle() {
+
+   const sidebar = document.querySelector(".sidebar");
+  const desktopToggle = document.querySelector(".menu-toggle");
+  const mobileToggle = document.querySelector(".mobile-menu-btn");
+
+  if (!sidebar) return;
+
+  // Desktop collapse
+  if (desktopToggle) {
+    desktopToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+      document.body.classList.toggle("sidebar-collapsed");
+    });
+  }
+  if (!sidebar || !mobileToggle) return;
+
+  // Toggle button
+  mobileToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    sidebar.classList.toggle("mobile-open");
+  });
+
+  // Close when clicking outside
+  document.addEventListener("click", (e) => {
+    if (
+      sidebar.classList.contains("mobile-open") &&
+      !sidebar.contains(e.target) &&
+      !mobileToggle.contains(e.target)
+    ) {
+      sidebar.classList.remove("mobile-open");
+    }
+  });
+
+  // Close when clicking menu item
+  document.querySelectorAll(".nav-menu li").forEach(item => {
+    item.addEventListener("click", () => {
+      sidebar.classList.remove("mobile-open");
+    });
+  });
+
+}

@@ -6,10 +6,18 @@ const express = require("express");
 const router = express.Router();
 
 const networkController = require("./network.controller");
+
 const {
   validateRequiredFields,
 } = require("../../middlewares/validation.middleware");
-const { networkLimiter } = require("../../middlewares/rateLimit.middleware");
+
+const {
+  networkLimiter
+} = require("../../middlewares/rateLimit.middleware");
+
+const {
+  authenticate
+} = require("../../middlewares/auth.middleware");
 
 /* =========================================================
    PUBLIC ACCESS REQUEST
@@ -31,6 +39,22 @@ router.post(
     "why_join_axo"
   ]),
   networkController.submitRequest
+);
+
+/* =========================================================
+   PROTECTED ROUTES
+========================================================= */
+
+router.get(
+  "/suppliers",
+  authenticate,
+  networkController.getNetworkSuppliers
+);
+
+router.get(
+  "/suppliers/:id",
+  authenticate,
+  networkController.getSupplierById
 );
 
 module.exports = router;
