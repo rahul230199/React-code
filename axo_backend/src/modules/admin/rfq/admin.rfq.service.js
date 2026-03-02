@@ -162,7 +162,8 @@ exports.getRFQById = async (rfqId) => {
    ASSIGN / EDIT SUPPLIERS WITH QUOTES (UPSERT SAFE)
 ========================================================= */
 
-exports.assignSuppliersWithQuotes = async (rfqId, quotes) => {
+exports.assignSuppliersWithQuotes = async (rfqId, quotes, adminContext) => {
+  const { adminId, role, ip } = adminContext;
   rfqId = parsePositiveNumber(rfqId, "RFQ ID");
 
   if (!Array.isArray(quotes) || !quotes.length) {
@@ -193,10 +194,18 @@ exports.assignSuppliersWithQuotes = async (rfqId, quotes) => {
       const supplierId = parsePositiveNumber(q.supplier_org_id, "Supplier ID");
       const price = parsePositiveNumber(q.price, "Price");
 
-      const timeline =
-        q.timeline_days !== undefined && q.timeline_days !== null
-          ? parsePositiveNumber(q.timeline_days, "Timeline")
-          : null;
+      let timeline = null;
+
+if (q.timeline_days !== undefined && q.timeline_days !== null) {
+
+  const raw = Number(q.timeline_days);
+
+  if (!Number.isFinite(raw) || raw <= 0) {
+    throw new AppError("Invalid Timeline", 400);
+  }
+
+  timeline = Math.floor(raw); // force integer
+}
 
       const supplierData = await client.query(
         `
@@ -253,14 +262,30 @@ exports.assignSuppliersWithQuotes = async (rfqId, quotes) => {
       savedCount++;
     }
 
-        await audit(client, {
-      actorId: adminId,
-      actorRole: role,
-      actionType: "RFQ_SUPPLIERS_ASSIGNED",
-      entityId: rfqId,
-      metadata: { suppliers_count: savedCount },
-      ipAddress: ip
-    });
+   await client.query(
+  `
+  INSERT INTO admin_audit_logs
+  (
+    admin_user_id,
+    action_type,
+    module,
+    entity_id,
+    metadata,
+    actor_role,
+    ip_address
+  )
+  VALUES ($1,$2,$3,$4,$5,$6,$7)
+  `,
+  [
+    adminId,
+    "RFQ_SUPPLIERS_ASSIGNED",
+    "RFQ",
+    rfqId,
+    JSON.stringify({ suppliers_count: savedCount }),
+    role || null,
+    ip || null
+  ]
+);
     await client.query("COMMIT");
 
     return {
@@ -352,14 +377,30 @@ exports.awardQuote = async (rfqId, quoteId) => {
       [rfqId]
     );
 
-      await audit(client, {
-      actorId: adminId,
-      actorRole: role,
-      actionType: "RFQ_AWARDED",
-      entityId: rfqId,
-      metadata: { awarded_quote: quoteId },
-      ipAddress: ip
-    });
+ await client.query(
+  `
+  INSERT INTO admin_audit_logs
+  (
+    admin_user_id,
+    action_type,
+    module,
+    entity_id,
+    metadata,
+    actor_role,
+    ip_address
+  )
+  VALUES ($1,$2,$3,$4,$5,$6,$7)
+  `,
+  [
+    adminId,
+    "RFQ_AWARDED",
+    "RFQ",
+    rfqId,
+    JSON.stringify({ awarded_quote: quoteId }),
+    role || null,
+    ip || null
+  ]
+);
 
     await client.query("COMMIT");
 

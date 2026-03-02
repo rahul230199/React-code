@@ -78,10 +78,15 @@ exports.assignSuppliersWithQuotes = asyncHandler(async (req, res) => {
     timeline_days: q.timeline_days ? Number(q.timeline_days) : null
   }));
 
-  const data = await rfqService.assignSuppliersWithQuotes(
-    rfqId,
-    normalizedQuotes
-  );
+const data = await rfqService.assignSuppliersWithQuotes(
+  rfqId,
+  normalizedQuotes,
+  {
+    adminId: req.user.id,
+    role: req.user.role,
+    ip: req.ip
+  }
+);
 
   res.status(200).json({
     success: true,
@@ -118,7 +123,15 @@ exports.awardQuote = asyncHandler(async (req, res) => {
   const rfqId = parseId(req.params.rfqId, "RFQ ID");
   const quoteId = parseId(req.body.quoteId, "Quote ID");
 
-  const data = await rfqService.awardQuote(rfqId, quoteId);
+const data = await rfqService.awardQuote(
+  rfqId,
+  quoteId,
+  {
+    adminId: req.user.id,
+    role: req.user.role,
+    ip: req.ip
+  }
+);
 
   res.status(200).json({
     success: true,

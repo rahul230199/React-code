@@ -3,93 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AXO Networks | Buyer Dashboard</title>
+  <title>AXO Networks — Buyer Dashboard</title>
+  <base href="/" />
+  <!-- Google Font --> <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-   <!-- Inter Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="/styles/buyer/base.css" />
+<link rel="stylesheet" href="/styles/buyer/buyer-layout.css" />
+<link rel="stylesheet" href="/styles/buyer/buyer-sidebar.css" />
+<link rel="stylesheet" href="/styles/buyer/buyer-topbar.css" />
+<link rel="stylesheet" href="/styles/buyer/buyer-dashboard.css" />
+<link rel="stylesheet" href="/styles/buyer/buyer-rfq.css" />
+<link rel="stylesheet" href="/styles/buyer/buyer-notifications.css" />
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <link rel="stylesheet" href="styles/buyer-dashboard.css" />
- 
+<script src="/js/vendor/lottie.min.js"></script>
 </head>
-<body>
 
-  <div class="app-layout">
+<body data-density="default" data-theme="light">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="logo">
-    <div class="logo-content">
-      <h2>AXO</h2>
-      <span>BUYER PANEL</span>
-    </div>
-    <button class="menu-toggle">←</button>
-  </div>
+  <div id="buyerApp" class="buyer-layout route-transition-root">
 
-      <nav class="nav-menu">
-        <ul>
-          <li data-page="dashboard" class="active">Dashboard</li>
-          <li data-page="buy">Buy</li>
-          <li data-page="orders">Orders</li>
-          <li data-page="profile">Profile</li>
-        </ul>
-      </nav>
-    </aside>
+    <aside id="buyerSidebar" class="buyer-sidebar"></aside>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-area">
+    <div class="buyer-main">
 
-      <!-- TOPBAR -->
-      <header class="topbar">
-          <div style="display: flex; align-items: center; gap: var(--space-4);">
-    <button class="mobile-menu-btn">☰</button>
-    <div class="company-info">
-      <h3 id="companyName">Organization ID: 4</h3>
-      <span id="companyScore">Reliability Score: --</span>
-    </div>
-  </div>
+      <header id="buyerTopbar" class="buyer-topbar"></header>
 
-       <div class="user-section">
-
-  <!-- Notification Bell -->
-  <div class="notification-wrapper">
-    <button id="notificationBell" class="notification-btn">
-      <i class="fa-solid fa-bell"></i>
-      <span id="notificationBadge" class="notification-badge hidden">0</span>
-    </button>
-
-    <div id="notificationDropdown" class="notification-dropdown hidden">
-      <div class="notification-header">
-        <h4>Notifications</h4>
-      </div>
-      <div id="notificationList" class="notification-list">
-        <div class="notification-empty">No notifications</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- User -->
-  <div class="user-info">
-    <span id="loggedUser">User</span>
-    <button id="logoutBtn">Logout</button>
-  </div>
-
-</div>
-      </header>
-
-      <!-- PAGE CONTENT -->
-      <main class="content" id="pageContainer">
-        <!-- Dynamic content will render here -->
-      </main>
+      <main id="pageContainer" class="buyer-page-container"></main>
 
     </div>
+
   </div>
 
- <script src="/js/vendor/chart.js"></script>
+  <div id="globalLoader" class="global-loader hidden">
+    <lottie-player
+      src="https://assets9.lottiefiles.com/packages/lf20_x62chJ.json"
+      background="transparent"
+      speed="1"
+      style="width: 180px; height: 180px;"
+      loop
+      autoplay>
+    </lottie-player>
+  </div>
 
-  <script type="module" src="js/modules/buyer/buyer-dashboard.page.js"></script>
+<script src="/js/vendor/chart.js"></script>
+<script src="./js/vendor/lucide.js"></script>
+<script src="./js/vendor/lottie.min.js"></script>
+<script type="module" src="/js/bootstrap/buyer-bootstrap.js"></script>
 
 </body>
 </html>

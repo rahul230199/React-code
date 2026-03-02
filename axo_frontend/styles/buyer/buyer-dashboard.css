@@ -1,0 +1,339 @@
+/* =========================================================
+   AXO NETWORKS — BUYER DASHBOARD
+   Refined C — Apple Ambient Premium
+========================================================= */
+
+/* =========================================================
+   DASHBOARD WRAPPER
+========================================================= */
+
+.buyer-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+
+  min-height: 100%;
+  max-width: 1380px;
+  margin: 0 auto;
+
+  padding: 48px 64px;
+
+  animation: fadeInDashboard 300ms var(--ease-standard);
+}
+
+@keyframes fadeInDashboard {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.dashboard-header h1 {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+
+.dashboard-header .subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-gray-500);
+  margin-top: 6px;
+}
+
+/* =========================================================
+   RISK BADGE (Glass Pill)
+========================================================= */
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 18px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255,255,255,0.6);
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+
+/* Risk States */
+
+.risk-normal {
+  color: #10B981;
+}
+
+.risk-elevated {
+  color: #F59E0B;
+}
+
+.risk-high {
+  color: #EF4444;
+}
+
+.risk-critical {
+  color: #7F1D1D;
+}
+
+/* =========================================================
+   KPI GRID
+========================================================= */
+
+.kpi-grid {
+  display: grid;
+  gap: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+/* =========================================================
+   KPI CARD (Floating Glass)
+========================================================= */
+
+.kpi-card {
+  position: relative;
+
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(22px);
+
+  border-radius: 26px;
+  padding: 30px;
+
+  border: 1px solid rgba(255,255,255,0.6);
+
+  box-shadow:
+    0 8px 30px rgba(0,0,0,0.05);
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  transition: all var(--motion-normal);
+}
+
+.kpi-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 14px 45px rgba(0,0,0,0.08);
+}
+
+/* KPI ICON */
+
+.kpi-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(70,95,255,0.18),
+    rgba(70,95,255,0.08)
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow:
+    0 6px 18px rgba(70,95,255,0.15);
+}
+
+.kpi-icon i {
+  width: 22px;
+  height: 22px;
+  color: var(--color-brand-600);
+}
+
+/* KPI TEXT */
+
+.kpi-card p {
+  font-size: var(--text-sm);
+  color: var(--color-gray-500);
+}
+
+.kpi-card h3 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-top: 6px;
+  letter-spacing: -0.6px;
+}
+
+/* =========================================================
+   RISK SECTION (Hero Glass Block)
+========================================================= */
+
+.risk-section {
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(26px);
+
+  border-radius: 32px;
+  padding: 40px;
+
+  border: 1px solid rgba(255,255,255,0.6);
+
+  box-shadow:
+    0 14px 50px rgba(0,0,0,0.06);
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.risk-score h2 {
+  font-size: clamp(48px, 6vw, 64px);
+  font-weight: 600;
+  letter-spacing: -1.4px;
+}
+
+.risk-score p {
+  font-size: var(--text-sm);
+  color: var(--color-gray-500);
+  margin-top: 8px;
+}
+
+/* Risk Metrics */
+
+.risk-metrics {
+  flex: 1;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.risk-metrics div {
+  background: rgba(255,255,255,0.6);
+  padding: 22px;
+  border-radius: 20px;
+
+  border: 1px solid rgba(255,255,255,0.5);
+
+  text-align: center;
+
+  transition: all var(--motion-normal);
+}
+
+.risk-metrics div:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.85);
+}
+
+.risk-metrics span {
+  font-size: 12px;
+  color: var(--color-gray-500);
+}
+
+.risk-metrics strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   CHART SECTION
+========================================================= */
+
+.chart-section {
+  display: grid;
+  gap: 36px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.chart-card {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(22px);
+
+  border-radius: 28px;
+  padding: 36px;
+
+  border: 1px solid rgba(255,255,255,0.6);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.05);
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  transition: transform var(--motion-normal);
+}
+
+.chart-card:hover {
+  transform: translateY(-4px);
+}
+
+.chart-card h3 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.chart-card canvas {
+  width: 100% !important;
+  height: 300px !important;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1024px) {
+
+  .risk-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chart-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .buyer-dashboard {
+    padding: 32px 20px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .kpi-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-card canvas {
+    height: 240px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .buyer-dashboard {
+    gap: 32px;
+  }
+}

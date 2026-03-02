@@ -31,7 +31,8 @@ const ROLE_PERMISSIONS = {
     "VIEW_RFQS",
     "MANAGE_RFQS",
     "VIEW_AUDIT_LOGS",
-    "VIEW_SYSTEM_HEALTH"
+    "VIEW_SYSTEM_HEALTH",
+    "MANAGE_DASHBOARD_CONFIG"
   ],
 
   buyer: [

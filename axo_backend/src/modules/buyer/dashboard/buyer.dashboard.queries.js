@@ -1,112 +1,188 @@
+/* =========================================================
+   AXO NETWORKS — BUYER DASHBOARD QUERIES (ENTERPRISE FINAL FIXED)
+   Schema Aligned
+   Strict Tenant Isolation
+   Aggregation Safe
+========================================================= */
+
 const pool = require("../../../config/db");
 
-const getCommittedSpend = async (orgId) => {
+/* =========================================================
+   FINANCIAL SUMMARY
+   - Prevents double counting
+   - Only counts PAID payments
+========================================================= */
+
+const getFinancialSummary = async (orgId) => {
   return pool.query(
     `
+    WITH payment_totals AS (
+      SELECT
+        po_id,
+        SUM(amount) FILTER (WHERE status = 'paid') AS total_paid
+      FROM payments
+      GROUP BY po_id
+    )
     SELECT
-      SUM(CASE WHEN accepted_at >= NOW() - INTERVAL '30 days' THEN value ELSE 0 END) AS last_30,
-      SUM(CASE WHEN accepted_at >= NOW() - INTERVAL '60 days' THEN value ELSE 0 END) AS last_60,
-      SUM(CASE WHEN accepted_at >= NOW() - INTERVAL '90 days' THEN value ELSE 0 END) AS last_90
-    FROM purchase_orders
-    WHERE buyer_org_id = $1
-    AND accepted_at IS NOT NULL
-    AND status IN ('accepted','in_progress','completed','disputed')
-    `,
-    [orgId]
-  );
-};
-
-const getActualSpend = async (orgId) => {
-  return pool.query(
-    `
-    SELECT
-      SUM(CASE WHEN paid_at >= NOW() - INTERVAL '30 days' THEN amount ELSE 0 END) AS last_30,
-      SUM(CASE WHEN paid_at >= NOW() - INTERVAL '60 days' THEN amount ELSE 0 END) AS last_60,
-      SUM(CASE WHEN paid_at >= NOW() - INTERVAL '90 days' THEN amount ELSE 0 END) AS last_90
-    FROM payments
-    WHERE organization_id = $1
-    AND status = 'paid'
-    `,
-    [orgId]
-  );
-};
-
-const getOrderCounts = async (orgId) => {
-  return pool.query(
-    `
-    SELECT
-      COUNT(*) FILTER (WHERE status IN ('issued','accepted','in_progress')) AS active,
-      COUNT(*) FILTER (WHERE status = 'completed') AS completed,
-      COUNT(*) FILTER (WHERE status = 'disputed') AS disputed
-    FROM purchase_orders
-    WHERE buyer_org_id = $1
-    `,
-    [orgId]
-  );
-};
-
-const getRFQCount = async (orgId) => {
-  return pool.query(
-    `
-    SELECT COUNT(*) AS open
-    FROM rfqs
-    WHERE buyer_id = $1
-    AND status = 'open'
-    `,
-    [orgId]
-  );
-};
-
-const getDisputeCount = async (orgId) => {
-  return pool.query(
-    `
-    SELECT COUNT(*) AS open
-    FROM podisputes
-    WHERE buyer_id = $1
-    AND status = 'open'
-    `,
-    [orgId]
-  );
-};
-
-const getAverageReliability = async (orgId) => {
-  return pool.query(
-    `
-    SELECT AVG(rs.final_score) AS avg_score
+      COALESCE(SUM(po.value),0) AS total_committed,
+      COALESCE(SUM(pt.total_paid),0) AS total_paid,
+      COALESCE(SUM(po.value) - SUM(COALESCE(pt.total_paid,0)),0) AS outstanding_balance
     FROM purchase_orders po
-    JOIN reliability_scores rs
-      ON po.supplier_org_id = rs.organization_id
+    LEFT JOIN payment_totals pt
+      ON pt.po_id = po.id
     WHERE po.buyer_org_id = $1
     `,
     [orgId]
   );
 };
+
+/* =========================================================
+   ORDER METRICS
+========================================================= */
+
+const getOrderMetrics = async (orgId) => {
+  return pool.query(
+    `
+    SELECT
+      COUNT(*) AS total_orders,
+
+      COUNT(*) FILTER (
+        WHERE status IN ('issued','accepted','in_progress')
+      ) AS active_orders,
+
+      COUNT(*) FILTER (
+        WHERE status = 'completed'
+      ) AS completed_orders,
+
+      COUNT(*) FILTER (
+        WHERE promised_delivery_date IS NOT NULL
+        AND promised_delivery_date < CURRENT_DATE
+        AND status NOT IN ('completed','cancelled')
+      ) AS delayed_orders
+
+    FROM purchase_orders
+    WHERE buyer_org_id = $1
+    `,
+    [orgId]
+  );
+};
+
+/* =========================================================
+   RFQ METRICS
+========================================================= */
+
+const getRFQMetrics = async (orgId) => {
+  return pool.query(
+    `
+    SELECT
+      COUNT(*) FILTER (WHERE r.status = 'open') AS active_rfqs,
+      COUNT(q.id) FILTER (WHERE r.status = 'open') AS quotes_pending
+    FROM rfqs r
+    LEFT JOIN quotes q
+      ON q.rfq_id = r.id
+    WHERE r.buyer_org_id = $1
+    `,
+    [orgId]
+  );
+};
+
+/* =========================================================
+   PAYMENTS PENDING
+========================================================= */
+
+const getPendingPayments = async (orgId) => {
+  return pool.query(
+    `
+    SELECT COUNT(*) AS payments_pending
+    FROM payments p
+    JOIN purchase_orders po
+      ON p.po_id = po.id
+    WHERE po.buyer_org_id = $1
+      AND p.status = 'initiated'
+    `,
+    [orgId]
+  );
+};
+
+/* =========================================================
+   OPEN DISPUTES
+========================================================= */
+
+const getOpenDisputes = async (orgId) => {
+  return pool.query(
+    `
+    SELECT COUNT(*) AS open_disputes
+    FROM po_disputes d
+    JOIN purchase_orders po
+      ON d.po_id = po.id
+    WHERE po.buyer_org_id = $1
+      AND d.status = 'open'
+    `,
+    [orgId]
+  );
+};
+
+/* =========================================================
+   RELIABILITY SNAPSHOT (Schema Correct)
+   Uses reliability_scores.final_score
+========================================================= */
+
+const getReliabilitySnapshot = async (orgId) => {
+  return pool.query(
+    `
+    SELECT
+      COALESCE(AVG(rs.final_score),0) AS avg_reliability,
+
+      COUNT(DISTINCT po.supplier_org_id)
+        FILTER (WHERE rs.final_score < 60)
+        AS low_reliability_suppliers
+
+    FROM purchase_orders po
+
+    LEFT JOIN reliability_scores rs
+      ON rs.organization_id = po.supplier_org_id
+
+    WHERE po.buyer_org_id = $1
+    `,
+    [orgId]
+  );
+};
+
+/* =========================================================
+   MONTHLY COMMITTED SPEND
+========================================================= */
 
 const getSpendTrend = async (orgId) => {
   return pool.query(
     `
     SELECT
       DATE_TRUNC('month', accepted_at) AS month,
-      SUM(value) AS committed_spend
+      COALESCE(SUM(value),0) AS committed_spend
     FROM purchase_orders
     WHERE buyer_org_id = $1
-    AND accepted_at IS NOT NULL
+      AND accepted_at IS NOT NULL
     GROUP BY month
     ORDER BY month ASC
     `,
     [orgId]
   );
 };
+
+/* =========================================================
+   MONTHLY ACTUAL SPEND
+========================================================= */
 
 const getPaymentTrend = async (orgId) => {
   return pool.query(
     `
     SELECT
       DATE_TRUNC('month', paid_at) AS month,
-      SUM(amount) AS actual_spend
-    FROM payments
-    WHERE organization_id = $1
-    AND status = 'paid'
+      COALESCE(SUM(amount),0) AS actual_spend
+    FROM payments p
+    JOIN purchase_orders po
+      ON p.po_id = po.id
+    WHERE po.buyer_org_id = $1
+      AND p.status = 'paid'
     GROUP BY month
     ORDER BY month ASC
     `,
@@ -114,53 +190,46 @@ const getPaymentTrend = async (orgId) => {
   );
 };
 
+/* =========================================================
+   SUPPLIER BREAKDOWN (FIXED: company_name + final_score)
+========================================================= */
+
 const getSupplierBreakdown = async (orgId) => {
   return pool.query(
     `
     SELECT
-      o.name,
+      o.id,
+      o.company_name AS name,
       COUNT(po.id) AS total_orders,
-      SUM(po.value) AS total_value,
-      AVG(rs.final_score) AS avg_reliability
+      COALESCE(SUM(po.value),0) AS total_value,
+      COALESCE(MAX(rs.final_score),0) AS reliability_score
+
     FROM purchase_orders po
+
     JOIN organizations o
       ON po.supplier_org_id = o.id
+      AND o.type = 'supplier'
+
     LEFT JOIN reliability_scores rs
       ON rs.organization_id = o.id
+
     WHERE po.buyer_org_id = $1
-    GROUP BY o.name
+
+    GROUP BY o.id, o.company_name
     ORDER BY total_value DESC
     `,
     [orgId]
   );
 };
 
-const getOrderStatusDistribution = async (orgId) => {
-  return pool.query(
-    `
-    SELECT
-      status,
-      COUNT(*) AS count
-    FROM purchase_orders
-    WHERE buyer_org_id = $1
-    GROUP BY status
-    `,
-    [orgId]
-  );
-};
-
-
-
 module.exports = {
-  getCommittedSpend,
-  getActualSpend,
-  getOrderCounts,
-  getRFQCount,
-  getDisputeCount,
-  getAverageReliability,
+  getFinancialSummary,
+  getOrderMetrics,
+  getRFQMetrics,
+  getPendingPayments,
+  getOpenDisputes,
+  getReliabilitySnapshot,
   getSpendTrend,
   getPaymentTrend,
-  getSupplierBreakdown,
-  getOrderStatusDistribution
+  getSupplierBreakdown
 };
-

@@ -24,6 +24,7 @@ require("dotenv").config({
 console.log("🌍 Environment:", process.env.NODE_ENV || "local");
 console.log("📄 Using ENV file:", envFile);
 
+
 /* =========================================================
    IMPORT DATABASE
 ========================================================= */
@@ -139,7 +140,7 @@ app.get("/supplier-dashboard", (req, res) => {
    API ROUTES
 ========================================================= */
 
-app.use(globalLimiter);
+app.use("/api", globalLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/network", networkRoutes);
@@ -194,10 +195,7 @@ app.use("/api", (req, res) => {
 });
 
 /* =========================================================
-   SAFE FRONTEND FALLBACK
-   - Allows static assets
-   - Allows API
-   - Only fallback for real page routes
+   SAFE SPA FALLBACK (FINAL CORRECT VERSION)
 ========================================================= */
 
 app.use((req, res, next) => {
@@ -207,15 +205,37 @@ app.use((req, res, next) => {
     return next();
   }
 
-  // Allow static files (js, css, images)
+  // Allow ALL static files first
   if (req.path.includes(".")) {
     return next();
   }
 
-  // Fallback to login page
-  return res.sendFile(path.join(frontendPath, "login.html"));
-});
+  // Buyer SPA routes ONLY (real pages)
+  if (req.path.startsWith("/buyer")) {
+    return res.sendFile(
+      path.join(frontendPath, "buyer-dashboard.html")
+    );
+  }
 
+  // Admin SPA
+  if (req.path.startsWith("/admin")) {
+    return res.sendFile(
+      path.join(frontendPath, "admin-dashboard.html")
+    );
+  }
+
+  // Supplier SPA
+  if (req.path.startsWith("/supplier")) {
+    return res.sendFile(
+      path.join(frontendPath, "supplier-dashboard.html")
+    );
+  }
+
+  // Default
+  return res.sendFile(
+    path.join(frontendPath, "login.html")
+  );
+});
 /* =========================================================
    GLOBAL ERROR HANDLER (MUST BE LAST)
 ========================================================= */

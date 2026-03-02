@@ -1,0 +1,1893 @@
+/* =========================================================
+RFQ ROOT LAYOUT
+========================================================= */
+
+.rfq-root {
+display: flex;
+flex-direction: column;
+gap: 40px;
+max-width: 1380px;
+margin: 0 auto;
+position: relative;
+}
+
+.rfq-body {
+display: flex;
+flex-direction: column;
+gap: 32px;
+}
+
+/* =========================================================
+TOOLBAR
+========================================================= */
+
+.rfq-toolbar {
+display: flex;
+flex-direction: column;
+gap: 20px;
+}
+
+.rfq-title {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.page-title {
+font-size: 22px;
+font-weight: 600;
+color: var(--color-gray-900);
+}
+
+.rfq-toolbar-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 24px;
+}
+
+.rfq-actions {
+display: flex;
+align-items: center;
+gap: 14px;
+}
+
+.rfq-actions .btn-primary,
+.rfq-actions .btn-secondary {
+height: 42px;
+padding: 0 18px;
+border-radius: 14px;
+}
+
+/* =========================================================
+FILTERS
+========================================================= */
+
+.rfq-filters {
+display: flex;
+align-items: center;
+gap: 16px;
+}
+
+.rfq-filters input,
+.rfq-filters select {
+height: 42px;
+padding: 0 14px;
+border-radius: 14px;
+border: 1px solid var(--color-gray-200);
+background: #ffffff;
+font-size: 14px;
+transition: all 0.2s ease;
+}
+
+.rfq-filters input {
+width: 320px;
+}
+
+.rfq-filters select {
+width: 160px;
+}
+
+.rfq-filters input:focus,
+.rfq-filters select:focus {
+outline: none;
+border-color: rgba(70,95,255,0.6);
+box-shadow: 0 0 0 3px rgba(70,95,255,0.15);
+}
+
+/* =========================================================
+KPI STRIP
+========================================================= */
+
+.rfq-kpi-strip {
+display: grid;
+gap: 24px;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.kpi-card {
+padding: 28px;
+border-radius: 24px;
+display: flex;
+align-items: center;
+gap: 18px;
+}
+
+.kpi-card h3 {
+font-size: 22px;
+font-weight: 600;
+margin: 0;
+}
+
+.kpi-card span {
+font-size: 13px;
+color: var(--color-gray-500);
+}
+
+/* =========================================================
+TABLE
+========================================================= */
+
+.rfq-table {
+padding: 28px 32px;
+border-radius: 26px;
+background: rgba(255,255,255,0.75);
+backdrop-filter: blur(18px);
+border: 1px solid rgba(255,255,255,0.6);
+overflow: hidden;
+}
+
+.table-header {
+margin-bottom: 20px;
+}
+
+.table-header h3 {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 18px;
+font-weight: 600;
+color: var(--color-gray-900);
+}
+
+.rfq-table table {
+width: 100%;
+border-collapse: collapse;
+font-size: 14px;
+}
+
+.rfq-table thead {
+background: rgba(0,0,0,0.02);
+}
+
+.rfq-table th {
+text-align: left;
+padding: 14px 16px;
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 0.6px;
+text-transform: uppercase;
+color: var(--color-gray-500);
+border-bottom: 1px solid var(--color-gray-200);
+}
+
+.rfq-table td {
+padding: 18px 16px;
+border-bottom: 1px solid var(--color-gray-100);
+vertical-align: middle;
+}
+
+.rfq-table tbody tr:last-child td {
+border-bottom: none;
+}
+
+.rfq-row {
+transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.rfq-row:hover {
+background: rgba(70,95,255,0.04);
+}
+
+.rfq-part {
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+
+.rfq-part strong {
+font-weight: 600;
+color: var(--color-gray-900);
+font-size: 14px;
+}
+
+.muted-text {
+font-size: 12px;
+color: var(--color-gray-400);
+}
+
+.status-badge,
+.priority-indicator {
+padding: 5px 12px;
+border-radius: 999px;
+font-size: 11px;
+font-weight: 500;
+display: inline-flex;
+align-items: center;
+}
+
+.badge-open {
+background: rgba(16,185,129,0.1);
+color: #059669;
+}
+
+.badge-closed {
+background: rgba(239,68,68,0.1);
+color: #dc2626;
+}
+
+.badge-awarded {
+background: rgba(59,130,246,0.1);
+color: #2563eb;
+}
+
+.priority-high {
+background: rgba(245,158,11,0.1);
+color: #d97706;
+}
+
+.priority-urgent {
+background: rgba(239,68,68,0.1);
+color: #dc2626;
+}
+
+.priority-normal {
+background: rgba(107,114,128,0.1);
+color: #6b7280;
+}
+
+.btn-ai {
+height: 36px;
+width: 36px;
+border-radius: 12px;
+border: none;
+background: rgba(70,95,255,0.08);
+display: inline-flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+transition: 0.2s ease;
+}
+
+.btn-ai:hover {
+background: rgba(70,95,255,0.18);
+transform: translateY(-2px);
+}
+
+.text-right {
+text-align: right;
+}
+
+.empty-state {
+padding: 60px 40px;
+text-align: center;
+display: flex;
+flex-direction: column;
+gap: 14px;
+align-items: center;
+}
+
+.empty-state p {
+color: var(--color-gray-500);
+font-size: 14px;
+}
+
+/* =========================================================
+INTELLIGENCE
+========================================================= */
+
+.rfq-intelligence-zone {
+position: relative;
+padding: 32px;
+border-radius: 28px;
+background: rgba(255,255,255,0.75);
+backdrop-filter: blur(20px);
+border: 1px solid rgba(255,255,255,0.6);
+}
+
+.intelligence-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 24px;
+}
+
+.intelligence-header h3 {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 18px;
+font-weight: 600;
+}
+
+.intelligence-header .filters {
+display: flex;
+gap: 12px;
+}
+
+.intelligence-header button {
+height: 36px;
+padding: 0 14px;
+border-radius: 12px;
+background: rgba(0,0,0,0.05);
+border: none;
+cursor: pointer;
+transition: all 0.2s ease;
+}
+
+.intelligence-header button:hover {
+background: rgba(70,95,255,0.12);
+}
+
+.quote-cards {
+display: grid;
+gap: 20px;
+grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+overflow: visible;
+}
+
+.quote-card {
+padding: 24px;
+border-radius: 20px;
+display: flex;
+flex-direction: column;
+gap: 16px;
+transition: all 0.2s ease;
+}
+
+.quote-card:hover {
+transform: translateY(-4px);
+}
+
+.quote-meta {
+display: flex;
+justify-content: space-between;
+font-size: 14px;
+color: var(--color-gray-600);
+}
+
+.quote-actions {
+display: flex;
+gap: 12px;
+}
+
+.quote-card.recommended {
+border: 2px solid rgba(16,185,129,0.3);
+}
+
+.quote-card.accepted-optimistic {
+border: 2px solid rgba(70,95,255,0.4);
+}
+
+.rfq-intelligence-modal {
+max-width: 1200px !important;
+width: 100%;
+max-height: 95vh;
+overflow-y: auto;
+}
+
+.intelligence-content {
+margin-top: 24px;
+}
+
+/* =========================================================
+TIMELINE
+========================================================= */
+
+.rfq-timeline {
+padding: 28px 32px;
+border-radius: 24px;
+background: rgba(255,255,255,0.75);
+backdrop-filter: blur(18px);
+border: 1px solid rgba(255,255,255,0.6);
+margin-bottom: 28px;
+}
+
+.rfq-timeline h4 {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 16px;
+font-weight: 600;
+margin-bottom: 24px;
+color: var(--color-gray-900);
+}
+
+.timeline-track {
+display: flex;
+align-items: center;
+justify-content: space-between;
+position: relative;
+overflow-x: auto;
+scrollbar-width: none;
+}
+
+.timeline-track::-webkit-scrollbar {
+display: none;
+}
+
+.timeline-track::before {
+content: "";
+position: absolute;
+top: 22px;
+left: 0;
+right: 0;
+height: 2px;
+background: var(--color-gray-200);
+z-index: 0;
+}
+
+.timeline-step {
+position: relative;
+z-index: 1;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 8px;
+flex: 1;
+text-align: center;
+}
+
+.timeline-icon {
+height: 44px;
+width: 44px;
+border-radius: 50%;
+background: white;
+border: 2px solid var(--color-gray-300);
+display: flex;
+align-items: center;
+justify-content: center;
+transition: 0.25s ease;
+}
+
+.timeline-step.completed .timeline-icon {
+background: rgba(70,95,255,0.08);
+border-color: rgba(70,95,255,0.5);
+animation: popIn 0.25s ease;
+}
+
+.timeline-step.active .timeline-icon {
+background: rgba(70,95,255,0.15);
+border-color: #465fff;
+box-shadow: 0 0 0 4px rgba(70,95,255,0.15);
+}
+
+.timeline-label {
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 0.6px;
+color: var(--color-gray-500);
+}
+
+.timeline-step.completed .timeline-label {
+color: var(--color-gray-800);
+}
+
+.timeline-step.active .timeline-label {
+color: #465fff;
+}
+
+.timeline-meta {
+font-size: 11px;
+color: var(--color-gray-400);
+}
+
+.timeline-step.dispute .timeline-icon {
+border-color: #ef4444;
+background: rgba(239,68,68,0.12);
+}
+
+.timeline-step.dispute .timeline-label {
+color: #ef4444;
+}
+
+.timeline-step:hover .timeline-icon {
+transform: scale(1.08);
+}
+
+@keyframes popIn {
+from {
+transform: scale(0.7);
+opacity: 0;
+}
+to {
+transform: scale(1);
+opacity: 1;
+}
+}
+
+/* =========================================================
+MODAL SYSTEM (GLOBAL)
+========================================================= */
+
+body.modal-open {
+overflow: hidden;
+}
+
+#rfqOverlayZone {
+position: fixed !important;
+inset: 0;
+z-index: 5000;
+pointer-events: none;
+}
+
+#rfqOverlayZone .overlay {
+position: fixed !important;
+inset: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+background: rgba(15, 23, 42, 0.45);
+backdrop-filter: blur(8px);
+pointer-events: all;
+overflow-y: auto;
+padding: 40px 20px;
+}
+
+#rfqOverlayZone .modal {
+width: 100%;
+max-width: 1000px;
+max-height: 95vh;
+overflow-y: auto;
+border-radius: 24px;
+padding: 40px;
+background: #ffffff;
+box-shadow: 0 25px 80px rgba(0,0,0,0.18), 0 5px 15px rgba(0,0,0,0.08);
+animation: modalFadeIn 0.25s ease-out;
+}
+
+@keyframes modalFadeIn {
+from {
+opacity: 0;
+transform: translateY(16px) scale(0.98);
+}
+to {
+opacity: 1;
+transform: translateY(0) scale(1);
+}
+}
+
+/* =========================================================
+COMPARE MODAL
+========================================================= */
+
+.rfq-compare-modal {
+max-width: 1200px !important;
+width: 100%;
+max-height: 95vh;
+overflow-y: auto;
+padding: 40px 48px;
+}
+
+.rfq-compare-modal .modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 32px;
+}
+
+.rfq-compare-modal .modal-header h3 {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 20px;
+font-weight: 600;
+color: var(--color-gray-900);
+}
+
+.rfq-compare-modal .modal-header button {
+height: 36px;
+width: 36px;
+border-radius: 10px;
+border: none;
+background: rgba(0,0,0,0.05);
+cursor: pointer;
+transition: 0.2s ease;
+}
+
+.rfq-compare-modal .modal-header button:hover {
+background: rgba(0,0,0,0.1);
+}
+
+.compare-grid {
+display: grid;
+gap: 28px;
+grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.compare-card {
+padding: 28px;
+border-radius: 22px;
+background: #ffffff;
+border: 1px solid var(--color-gray-200);
+display: flex;
+flex-direction: column;
+gap: 20px;
+transition: 0.25s ease;
+position: relative;
+}
+
+.compare-card:hover {
+transform: translateY(-6px);
+box-shadow: 0 18px 40px rgba(0,0,0,0.08);
+}
+
+.compare-card.recommended {
+border: 2px solid rgba(16,185,129,0.35);
+box-shadow: 0 10px 30px rgba(16,185,129,0.12);
+}
+
+.compare-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.compare-header h4 {
+font-size: 16px;
+font-weight: 600;
+margin: 0;
+}
+
+.tier {
+font-size: 12px;
+font-weight: 600;
+letter-spacing: 0.5px;
+}
+
+.compare-score {
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.compare-metrics {
+display: flex;
+flex-direction: column;
+gap: 18px;
+}
+
+.metric {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+
+.metric label {
+font-size: 11px;
+font-weight: 500;
+color: var(--color-gray-400);
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.metric strong {
+font-size: 15px;
+font-weight: 600;
+}
+
+.delta {
+font-size: 12px;
+margin-left: 6px;
+}
+
+.delta.positive {
+color: #16a34a;
+font-weight: 600;
+}
+
+.delta.negative {
+color: #ef4444;
+font-weight: 600;
+}
+
+.score-bar {
+width: 100%;
+height: 6px;
+background: rgba(0,0,0,0.06);
+border-radius: 999px;
+overflow: hidden;
+}
+
+.score-bar-fill {
+height: 100%;
+border-radius: 999px;
+transition: width 0.4s ease;
+}
+
+.compare-risks {
+display: flex;
+gap: 10px;
+flex-wrap: wrap;
+}
+
+.risk-badge {
+display: flex;
+align-items: center;
+gap: 6px;
+padding: 5px 10px;
+border-radius: 999px;
+font-size: 11px;
+font-weight: 500;
+}
+
+.risk-badge.dispute {
+background: rgba(239,68,68,0.1);
+color: #dc2626;
+}
+
+.risk-badge.delay {
+background: rgba(245,158,11,0.1);
+color: #d97706;
+}
+
+.recommend-box {
+background: rgba(16,185,129,0.08);
+padding: 14px;
+border-radius: 14px;
+font-size: 13px;
+display: flex;
+gap: 8px;
+align-items: flex-start;
+color: #065f46;
+}
+
+.compare-actions {
+margin-top: auto;
+}
+
+.compare-actions .btn-accept {
+width: 100%;
+height: 42px;
+border-radius: 14px;
+font-weight: 600;
+}
+
+/* =========================================================
+CREATE MODAL
+========================================================= */
+
+.rfq-create-modal {
+max-width: 720px !important;
+width: 100%;
+max-height: 95vh;
+overflow-y: auto;
+padding: 36px 42px;
+}
+
+.rfq-create-modal .modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 28px;
+}
+
+.rfq-create-modal .modal-header h3 {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 20px;
+font-weight: 600;
+color: var(--color-gray-900);
+}
+
+.rfq-create-modal .modal-close {
+height: 36px;
+width: 36px;
+border-radius: 10px;
+border: none;
+background: rgba(0,0,0,0.05);
+cursor: pointer;
+transition: 0.2s ease;
+}
+
+.rfq-create-modal .modal-close:hover {
+background: rgba(0,0,0,0.1);
+}
+
+.rfq-create-modal .modal-body {
+display: flex;
+flex-direction: column;
+gap: 22px;
+}
+
+.form-group {
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+.form-group label {
+font-size: 12px;
+font-weight: 600;
+color: var(--color-gray-600);
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+height: 44px;
+padding: 0 14px;
+border-radius: 14px;
+border: 1px solid var(--color-gray-200);
+background: #ffffff;
+font-size: 14px;
+transition: 0.2s ease;
+}
+
+.form-group textarea {
+height: auto;
+padding: 12px 14px;
+resize: vertical;
+min-height: 90px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+outline: none;
+border-color: rgba(70,95,255,0.6);
+box-shadow: 0 0 0 3px rgba(70,95,255,0.15);
+}
+
+.form-row {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 18px;
+}
+
+.file-upload-zone {
+position: relative;
+border: 1px dashed var(--color-gray-300);
+border-radius: 16px;
+padding: 20px;
+cursor: pointer;
+transition: 0.2s ease;
+background: rgba(0,0,0,0.02);
+}
+
+.file-upload-zone:hover {
+background: rgba(70,95,255,0.05);
+border-color: rgba(70,95,255,0.5);
+}
+
+.file-upload-zone input[type="file"] {
+position: absolute;
+inset: 0;
+opacity: 0;
+cursor: pointer;
+}
+
+.file-meta {
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 14px;
+color: var(--color-gray-500);
+}
+
+.modal-actions {
+margin-top: 10px;
+display: flex;
+justify-content: flex-end;
+gap: 14px;
+}
+
+.modal-actions .btn-secondary,
+.modal-actions .btn-primary {
+height: 42px;
+padding: 0 20px;
+border-radius: 14px;
+}
+
+/* =========================================================
+RESPONSIVE SECTION
+========================================================= */
+
+@media (max-width: 1200px) {
+.rfq-compare-modal {
+padding: 32px 32px;
+}
+.compare-grid {
+grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+}
+
+@media (max-width: 1024px) {
+/* Toolbar */
+.rfq-toolbar-row {
+flex-direction: column;
+align-items: stretch;
+}
+.rfq-filters {
+width: 100%;
+}
+.rfq-filters input {
+width: 100%;
+}
+.rfq-actions {
+justify-content: flex-start;
+}
+
+/* Compare modal */
+.rfq-compare-modal {
+width: 96%;
+max-height: 92vh;
+padding: 28px;
+}
+.compare-grid {
+grid-template-columns: 1fr 1fr;
+gap: 22px;
+}
+.compare-card {
+padding: 22px;
+}
+
+/* Create modal */
+.rfq-create-modal {
+padding: 32px;
+}
+.form-row {
+grid-template-columns: 1fr 1fr;
+}
+
+/* Table */
+.rfq-table {
+padding: 24px;
+overflow-x: auto;
+}
+.rfq-table table {
+min-width: 720px;
+}
+
+/* Timeline */
+.rfq-timeline {
+padding: 24px;
+}
+.timeline-icon {
+height: 40px;
+width: 40px;
+}
+}
+
+@media (max-width: 768px) {
+/* Compare modal */
+.rfq-compare-modal {
+width: 100%;
+height: 100%;
+max-height: 100vh;
+border-radius: 0;
+padding: 24px;
+}
+.rfq-compare-modal .modal-header {
+margin-bottom: 24px;
+}
+.rfq-compare-modal .modal-header h3 {
+font-size: 18px;
+}
+.compare-grid {
+grid-template-columns: 1fr;
+}
+.compare-card {
+padding: 20px;
+}
+.compare-header h4 {
+font-size: 15px;
+}
+.metric strong {
+font-size: 14px;
+}
+.score-ring {
+width: 60px;
+height: 60px;
+}
+
+/* Create modal */
+.rfq-create-modal {
+width: 100%;
+height: 100%;
+max-height: 100vh;
+border-radius: 0;
+padding: 24px;
+}
+.rfq-create-modal .modal-header {
+margin-bottom: 20px;
+}
+.form-row {
+grid-template-columns: 1fr;
+}
+.modal-actions {
+flex-direction: column;
+}
+.modal-actions button {
+width: 100%;
+}
+
+/* Table */
+.rfq-table table,
+.rfq-table thead {
+display: none;
+}
+.rfq-table {
+padding: 18px;
+}
+.rfq-table tbody {
+display: flex;
+flex-direction: column;
+gap: 18px;
+}
+.rfq-row {
+display: flex;
+flex-direction: column;
+gap: 12px;
+padding: 16px;
+border-radius: 18px;
+border: 1px solid var(--color-gray-200);
+background: #ffffff;
+}
+.rfq-row td {
+border: none;
+padding: 0;
+}
+.rfq-row td::before {
+content: attr(data-label);
+font-size: 11px;
+font-weight: 600;
+text-transform: uppercase;
+color: var(--color-gray-400);
+display: block;
+margin-bottom: 4px;
+}
+.text-right {
+text-align: left;
+}
+
+/* Timeline */
+.timeline-track {
+overflow-x: auto;
+padding-bottom: 10px;
+}
+.timeline-track::before {
+left: 20px;
+right: 20px;
+}
+.timeline-step {
+min-width: 120px;
+}
+
+/* Overlay mobile */
+#rfqOverlayZone .overlay {
+align-items: flex-end;
+padding: 0;
+}
+#rfqOverlayZone .modal {
+border-radius: 24px 24px 0 0;
+max-height: 100vh;
+height: 100vh;
+padding: 28px 24px;
+animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+from {
+transform: translateY(100%);
+}
+to {
+transform: translateY(0);
+}
+}
+}
+
+@media (max-width: 480px) {
+/* Compare modal */
+.rfq-compare-modal {
+padding: 20px;
+}
+.rfq-compare-modal .modal-header {
+flex-direction: column;
+align-items: flex-start;
+gap: 12px;
+}
+.rfq-compare-modal .modal-header button {
+align-self: flex-end;
+}
+.compare-card {
+padding: 18px;
+border-radius: 18px;
+}
+.compare-header {
+flex-direction: column;
+align-items: flex-start;
+gap: 6px;
+}
+.tier {
+font-size: 11px;
+}
+.compare-metrics {
+gap: 14px;
+}
+.recommend-box {
+font-size: 12px;
+}
+.compare-actions .btn-accept {
+height: 40px;
+}
+
+/* Create modal */
+.rfq-create-modal {
+padding: 20px;
+}
+.rfq-create-modal .modal-header {
+flex-direction: column;
+align-items: flex-start;
+gap: 10px;
+}
+.rfq-create-modal .modal-close {
+align-self: flex-end;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+height: 42px;
+font-size: 13px;
+}
+.file-upload-zone {
+padding: 16px;
+}
+
+/* Timeline */
+.timeline-track {
+flex-direction: column;
+align-items: flex-start;
+gap: 22px;
+}
+.timeline-track::before {
+display: none;
+}
+.timeline-step {
+flex-direction: row;
+align-items: center;
+gap: 14px;
+text-align: left;
+}
+.timeline-label {
+font-size: 12px;
+}
+.timeline-meta {
+font-size: 11px;
+}
+}
+/* =========================================================
+   GLOBAL MODAL SYSTEM — CLEAN PRODUCTION VERSION
+========================================================= */
+
+/* Lock background scroll */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Overlay container */
+#rfqOverlayZone {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Dark background + center alignment */
+#rfqOverlayZone .overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  pointer-events: all;
+  padding: 40px 24px;
+  overflow-y: auto;
+}
+
+/* Unified modal container */
+#rfqOverlayZone .modal {
+  width: 100%;
+  max-width: 760px; /* Create RFQ size */
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  border-radius: 24px;
+  padding: 40px;
+  background: #ffffff;
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.2),
+    0 6px 20px rgba(0,0,0,0.1);
+  animation: modalFadeIn 0.25s ease;
+}
+
+/* Intelligence modal wider */
+.rfq-intelligence-modal {
+  max-width: 1200px !important;
+}
+
+/* Compare modal wider */
+.rfq-compare-modal {
+  max-width: 1200px !important;
+}
+
+/* Scrollbar inside modal */
+#rfqOverlayZone .modal::-webkit-scrollbar {
+  width: 6px;
+}
+#rfqOverlayZone .modal::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 999px;
+}
+
+/* Animation */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile behaviour */
+@media (max-width: 768px) {
+
+  #rfqOverlayZone .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  #rfqOverlayZone .modal {
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px;
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+}
+
+/* =========================================================
+   RFQ COMPARE MODAL — ENTERPRISE SAAS STYLING
+========================================================= */
+
+.compare-body {
+  padding: 32px 40px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+/* GRID SYSTEM */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 28px;
+}
+
+/* CARD */
+.compare-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.06),
+    0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.25s ease;
+  position: relative;
+  min-height: 520px;
+}
+
+.compare-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,0.08),
+    0 4px 14px rgba(0,0,0,0.06);
+}
+
+/* RECOMMENDED HIGHLIGHT */
+.compare-card.recommended {
+  border: 2px solid #2563eb;
+}
+
+.compare-card.recommended::before {
+  content: "AI Recommended";
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* HEADER */
+.compare-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.supplier-info h4 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.tier {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* DIVIDER */
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 22px 0;
+}
+
+/* METRICS */
+.compare-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.metric-block label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.metric-block strong {
+  font-size: 18px;
+  font-weight: 600;
+  display: block;
+}
+
+.delta {
+  font-size: 13px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.delta.positive {
+  color: #16a34a;
+}
+
+.delta.negative {
+  color: #dc2626;
+}
+
+/* SCORE BAR */
+.score-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.8s ease;
+}
+
+/* SCORE RING */
+.score-ring-wrapper {
+  text-align: center;
+}
+
+.score-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  display: block;
+}
+
+/* RISK BADGES */
+.compare-risks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.risk-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.risk-badge.dispute {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.risk-badge.delay {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* RECOMMEND BOX */
+.recommend-box {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ACTIONS */
+.compare-actions {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.compare-actions .btn-accept {
+  width: 100%;
+  padding: 12px 14px;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+/* =========================================================
+   INTELLIGENCE MODAL — SAAS ALIGNMENT
+========================================================= */
+
+.intelligence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.rfq-status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.rfq-status-badge.open { background: #dbeafe; color: #1e40af; }
+.rfq-status-badge.awarded { background: #dcfce7; color: #166534; }
+.rfq-status-badge.closed { background: #f3f4f6; color: #374151; }
+
+.intelligence-body {
+  padding: 28px 36px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.intelligence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.intelligence-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.05),
+    0 4px 10px rgba(0,0,0,0.04);
+  transition: all 0.25s ease;
+}
+
+.intelligence-card:hover {
+  transform: translateY(-4px);
+}
+
+.intelligence-card.recommended {
+  border: 2px solid #2563eb;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.supplier-block h4 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tier-badge {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.score-pill {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.score-pill span {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.card-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-actions {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.status-indicator {
+  font-weight: 600;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* =========================================================
+   CREATE RFQ MODAL — SAAS ALIGNMENT
+========================================================= */
+
+.create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.modal-close:hover {
+  background: rgba(0,0,0,0.06);
+}
+
+.modal-close svg {
+  width: 20px;
+  height: 20px;
+  stroke: #374151;
+}
+
+.create-body {
+  padding: 28px 36px;
+}
+
+.form-group {
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.file-upload-zone {
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.file-upload-zone:hover {
+  background: #f9fafb;
+}
+
+.file-upload-zone input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #6b7280;
+}
+
+.create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+/* =========================================================
+   RFQ TABLE — PREMIUM SAAS STYLE
+========================================================= */
+
+.rfq-table-wrapper {
+  padding: 24px 28px;
+}
+
+.premium-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.premium-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.premium-table thead th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+  text-align: left;
+  padding: 10px 14px;
+}
+
+.premium-table tbody tr {
+  background: #ffffff;
+  box-shadow:
+    0 4px 12px rgba(0,0,0,0.04);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.premium-table tbody tr:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.06);
+}
+
+.premium-table tbody td {
+  padding: 16px 14px;
+  vertical-align: middle;
+}
+
+.rfq-part strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.priority-indicator {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.priority-normal { background: #e5e7eb; color: #374151; }
+.priority-high { background: #dbeafe; color: #1e40af; }
+.priority-urgent { background: #fee2e2; color: #b91c1c; }
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-open { background: #dbeafe; color: #1e40af; }
+.badge-awarded { background: #dcfce7; color: #166534; }
+.badge-closed { background: #f3f4f6; color: #374151; }
+.badge-cancelled { background: #fee2e2; color: #991b1b; }
+
+.btn-ai-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
+.btn-ai-action:hover {
+  background: #1d4ed8;
+}
+
+.premium-empty {
+  text-align: center;
+  padding: 60px 40px;
+}
+
+.premium-empty h4 {
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   RFQ TIMELINE — SAAS PREMIUM
+========================================================= */
+
+.rfq-timeline-premium {
+  padding: 24px 28px;
+  margin-bottom: 24px;
+}
+
+.timeline-header {
+  margin-bottom: 20px;
+}
+
+.timeline-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.timeline-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 140px;
+}
+
+.timeline-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  transition: all 0.25s ease;
+}
+
+.timeline-circle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.timeline-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.timeline-meta {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 2px;
+  color: #9ca3af;
+}
+
+/* Connecting line */
+.timeline-line {
+  height: 2px;
+  flex-grow: 1;
+  background: #e5e7eb;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+/* COMPLETED */
+.timeline-stage.completed .timeline-circle {
+  background: #2563eb;
+  color: #fff;
+}
+
+.timeline-stage.completed .timeline-text {
+  color: #111827;
+}
+
+/* ACTIVE */
+.timeline-stage.active .timeline-circle {
+  background: #111827;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.2);
+}
+
+.timeline-stage.active .timeline-text {
+  color: #111827;
+}
+
+/* DISPUTE */
+.timeline-stage.dispute .timeline-circle {
+  background: #fee2e2;
+  color: #b91c1c;
+}
