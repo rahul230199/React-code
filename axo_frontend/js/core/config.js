@@ -11,7 +11,7 @@ const isLocal =
 export const CONFIG = {
   API_BASE_URL: isLocal
     ? "http://localhost:5000/api"
-    : "https://www.axonetworks.com/api",
+    : "https://axonetworks.com/api",
 
   TOKEN_KEY: "axo_access_token",
   USER_KEY: "axo_user",

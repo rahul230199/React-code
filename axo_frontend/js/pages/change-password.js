@@ -1,7 +1,7 @@
 /* =========================================================
    AXO NETWORKS — CHANGE PASSWORD PAGE
    Enterprise Secure Version
-   Enforced Password Reset Flow
+   Fully Aligned With Backend (newPassword)
 ========================================================= */
 
 import { RouteGuard } from "../guards/routeGuard.js";
@@ -14,7 +14,6 @@ import { StorageManager } from "../core/storage.js";
 ========================================================= */
 function initializePage() {
 
-  // Must be authenticated
   const allowed = RouteGuard.protect({
     requireAuth: true
   });
@@ -28,9 +27,7 @@ function initializePage() {
     return;
   }
 
-  /* ======================================================
-     BLOCK ACCESS IF PASSWORD CHANGE NOT REQUIRED
-  ======================================================= */
+  // Block access if password change not required
   if (user.must_change_password !== true) {
     redirectByRole(user.role);
     return;
@@ -72,8 +69,9 @@ async function handleSubmit(e) {
 
   try {
 
+    // ✅ FIXED: Correct field name expected by backend
     const response = await ApiClient.post("/auth/change-password", {
-      new_password: newPassword
+      newPassword: newPassword
     });
 
     if (!response.success) {
@@ -85,10 +83,7 @@ async function handleSubmit(e) {
       "success"
     );
 
-    /* ======================================================
-       CLEAR SESSION COMPLETELY
-       (Old token must not survive)
-    ======================================================= */
+    // Clear session (old token invalid after password change)
     StorageManager.clearSession();
     sessionStorage.removeItem("force_password_change");
 
@@ -114,7 +109,7 @@ async function handleSubmit(e) {
 }
 
 /* =========================================================
-   ROLE REDIRECT (CLEAN ROUTES)
+   ROLE REDIRECT
 ========================================================= */
 function redirectByRole(role) {
 

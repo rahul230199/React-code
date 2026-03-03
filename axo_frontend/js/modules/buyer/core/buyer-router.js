@@ -9,9 +9,15 @@
 
 import { loadDashboardPage } from "../dashboard/dashboard.page.js";
 import { stopDashboardAutoRefresh } from "../dashboard/dashboard.events.js";
+
 import { loadRFQPage } from "../rfq/rfq.page.js";
 import { loadOrdersPage } from "../orders/orders.page.js";
+<<<<<<< HEAD
 import { loadOrderDetailPage } from "../orders/order-detail.page.js";
+=======
+import { loadPaymentsPage } from "../payments/payments.page.js";
+
+>>>>>>> 7c1fdd8a (updated code chnages on live)
 import { updateActiveSidebarLink } from "./buyer-sidebar.js";
 import { refreshLucideIcons } from "./buyer-icons.js";
 
@@ -32,10 +38,18 @@ const ROUTES = {
 
   "/buyer/orders": {
     load: loadOrdersPage
+
   }
 
 };
 
+  },
+
+
+  "/buyer/payments": {
+    load: loadPaymentsPage
+  }
+};
 
 let currentPath = null;
 let routerInitialized = false;
@@ -59,11 +73,12 @@ function cleanupPreviousRoute() {
   if (!currentPath) return;
 
   const route = ROUTES[currentPath];
+
   if (route?.cleanup) {
     try {
       route.cleanup();
-    } catch {
-      // Never crash router
+    } catch (err) {
+      console.error("Route cleanup failed:", err);
     }
   }
 }
@@ -88,17 +103,25 @@ if (!route && path.startsWith("/buyer/orders/")) {
   };
 }
 
+  // Fallback to dashboard if route not found
   if (!route) {
-    navigateTo("/buyer/dashboard");
+    currentPath = "/buyer/dashboard";
+    window.history.replaceState({}, "", "/buyer/dashboard");
+    await ROUTES["/buyer/dashboard"].load();
+    updateActiveSidebarLink();
+    refreshLucideIcons();
     return;
   }
 
   try {
     currentPath = path;
     await route.load();
-  } catch {
-    navigateTo("/buyer/dashboard");
-    return;
+  } catch (err) {
+    console.error("Route load failed:", err);
+
+    currentPath = "/buyer/dashboard";
+    window.history.replaceState({}, "", "/buyer/dashboard");
+    await ROUTES["/buyer/dashboard"].load();
   }
 
   updateActiveSidebarLink();
@@ -111,12 +134,10 @@ if (!route && path.startsWith("/buyer/orders/")) {
 
 function interceptLinks() {
   document.addEventListener("click", (e) => {
-
     const anchor = e.target.closest("a[data-route]");
     if (!anchor) return;
 
     const path = anchor.getAttribute("data-route");
-
     if (!path.startsWith("/buyer")) return;
 
     e.preventDefault();
@@ -136,7 +157,7 @@ export function initBuyerRouter() {
 
   interceptLinks();
 
-  // Default route
+  // Default handling
   if (!window.location.pathname.startsWith("/buyer")) {
     navigateTo("/buyer/dashboard");
   } else {

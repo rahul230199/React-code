@@ -1,6 +1,6 @@
 /* =========================================================
    AXO NETWORKS — ROUTE GUARD (ENTERPRISE SAFE)
-   Clean ES Module · No Global Leakage · No Illegal Returns
+   Fixed Password Reset Loop + Clean Role Handling
 ========================================================= */
 
 import { StorageManager as Storage } from "../core/storage.js";
@@ -12,7 +12,9 @@ import { AuthManager as Auth } from "../core/authManager.js";
 ========================================================= */
 
 function redirect(path) {
-  window.location.href = path;
+  if (window.location.pathname !== path) {
+    window.location.href = path;
+  }
 }
 
 /* =========================================================
@@ -21,14 +23,25 @@ function redirect(path) {
 
 function requireAuth() {
 
+  // Not logged in
   if (!Storage.isAuthenticated()) {
     redirect("/login");
     return false;
   }
 
   const user = Auth.getCurrentUser();
+  if (!user) {
+    redirect("/login");
+    return false;
+  }
 
-  if (user?.must_change_password === true) {
+  const currentPath = window.location.pathname;
+
+  // 🔐 Enforce password reset
+  if (
+    user.must_change_password === true &&
+    !currentPath.includes("change-password")
+  ) {
     redirect("/change-password");
     return false;
   }
@@ -39,6 +52,7 @@ function requireAuth() {
 /* =========================================================
    REQUIRE ROLE
 ========================================================= */
+
 function requireRole(allowedRoles = []) {
 
   if (!requireAuth()) return false;
@@ -114,12 +128,12 @@ function protect(options = {}) {
     permission
   } = options;
 
-  // Run auth only once
   if (needAuth && !requireAuth()) return false;
 
   if (role) {
     const rolesArray = Array.isArray(role) ? role : [role];
     const user = Auth.getCurrentUser();
+
     if (!user || !rolesArray.includes(user.role)) {
       redirectToDashboard();
       return false;
@@ -135,6 +149,7 @@ function protect(options = {}) {
 
   return true;
 }
+
 /* =========================================================
    EXPORT
 ========================================================= */
