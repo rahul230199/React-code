@@ -1,28 +1,25 @@
 /* =========================================================
-   AXO NETWORKS — BUYER ORDERS CONTROLLER
-   Enterprise Intelligence Layer Controller
-   - Guardrail Enforced
-   - Behavior Driven
-   - Reliability Integrated
+   AXO NETWORKS — ORDERS CONTROLLER (FINAL ENTERPRISE)
+   Role Aware | SLA Integrated | Milestone Driven
+   Fully Aligned With Service Layer
 ========================================================= */
 
 const asyncHandler = require("../../../utils/asyncHandler");
 const service = require("./buyer.orders.service");
 
 /* =========================================================
-   GET ALL BUYER ORDERS
+   LIST ORDERS (ROLE AWARE)
 ========================================================= */
-exports.getBuyerOrders = asyncHandler(async (req, res) => {
+exports.getOrders = asyncHandler(async (req, res) => {
 
-  const buyerOrgId = req.user.organization_id;
-
-  const orders = await service.getBuyerOrders(buyerOrgId);
+  const orders = await service.getOrders(req.user);
 
   res.status(200).json({
     success: true,
     count: orders.length,
     data: orders
   });
+
 });
 
 /* =========================================================
@@ -30,166 +27,169 @@ exports.getBuyerOrders = asyncHandler(async (req, res) => {
 ========================================================= */
 exports.getOrderThread = asyncHandler(async (req, res) => {
 
-  const buyerOrgId = req.user.organization_id;
   const { poId } = req.params;
 
   const data = await service.getFullOrderThread({
     poId,
-    buyerOrgId
+    user: req.user
   });
 
   res.status(200).json({
     success: true,
     data
   });
+
 });
 
 /* =========================================================
-   UPDATE PO STATUS (GUARDRAIL PROTECTED)
+   UPDATE PO STATUS
 ========================================================= */
 exports.updatePOStatus = asyncHandler(async (req, res) => {
 
-  const buyerOrgId = req.user.organization_id;
-  const userId = req.user.id;
   const { poId } = req.params;
   const { newStatus } = req.body;
 
   await service.updatePOStatus({
     poId,
-    buyerOrgId,
     newStatus,
-    userId
+    user: req.user
   });
 
   res.status(200).json({
     success: true,
     message: "PO status updated successfully."
   });
+
 });
 
 /* =========================================================
-   UPDATE MILESTONE (AUTO DISCIPLINE LOGGED)
+   COMPLETE MILESTONE (FULL CRUD + SLA LOGIC)
 ========================================================= */
-exports.updateMilestone = asyncHandler(async (req, res) => {
+exports.completeMilestone = asyncHandler(async (req, res) => {
 
-  const userId = req.user.id;
   const { poId } = req.params;
-  const { milestoneName } = req.body;
+  const { milestoneName, evidence_url, remarks } = req.body;
 
-  await service.updateMilestone({
+  await service.completeMilestone({
     poId,
     milestoneName,
-    userId
+    evidence_url,
+    remarks,
+    user: req.user
   });
 
   res.status(200).json({
     success: true,
-    message: "Milestone updated successfully."
+    message: "Milestone completed successfully."
   });
+
 });
 
 /* =========================================================
-   CONFIRM PAYMENT (TRANSACTION SAFE)
+   SEND MESSAGE (PO THREAD)
+========================================================= */
+exports.sendMessage = asyncHandler(async (req, res) => {
+
+  const { poId } = req.params;
+  const { message } = req.body;
+
+  await service.sendMessage({
+    poId,
+    message,
+    user: req.user
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Message sent successfully."
+  });
+
+});
+
+/* =========================================================
+   CONFIRM PAYMENT
 ========================================================= */
 exports.confirmPayment = asyncHandler(async (req, res) => {
 
-  const buyerOrgId = req.user.organization_id;
-  const userId = req.user.id;
   const { poId } = req.params;
   const { amount } = req.body;
 
   await service.confirmPayment({
     poId,
-    buyerOrgId,
-    userId,
-    amount
+    amount,
+    user: req.user
   });
 
   res.status(200).json({
     success: true,
     message: "Payment confirmed successfully."
   });
+
 });
 
 /* =========================================================
-   RAISE DISPUTE (AUTO EVENT + RELIABILITY)
+   RAISE DISPUTE (AUTO FLAG + SLA IMPACT)
 ========================================================= */
 exports.raiseDispute = asyncHandler(async (req, res) => {
 
-  const buyerOrgId = req.user.organization_id;
-  const userId = req.user.id;
   const { poId } = req.params;
   const { reason } = req.body;
 
   await service.raiseDispute({
     poId,
-    buyerOrgId,
-    userId,
-    reason
+    reason,
+    user: req.user
   });
 
   res.status(201).json({
     success: true,
     message: "Dispute raised successfully."
   });
+
 });
 
 /* =========================================================
-   OEM RELIABILITY MIRROR SCORE
+   SLA RISK — SINGLE PO
 ========================================================= */
-exports.getOEMReliability = asyncHandler(async (req, res) => {
+exports.getSLARisk = asyncHandler(async (req, res) => {
 
-  const buyerOrgId = req.user.organization_id;
+  const { poId } = req.params;
 
-  const result = await service.calculateOEMReliability(buyerOrgId);
+  const result = await service.calculateSLARisk(poId, req.user);
 
   res.status(200).json({
     success: true,
     data: result
   });
+
 });
 
 /* =========================================================
-   REAL-TIME RISK DASHBOARD
+   SLA DASHBOARD — ROLE AWARE
 ========================================================= */
-exports.getRiskDashboard = asyncHandler(async (req, res) => {
+exports.getSLADashboard = asyncHandler(async (req, res) => {
 
-  const buyerOrgId = req.user.organization_id;
-
-  const result = await service.aggregateRiskDashboard(buyerOrgId);
+  const result = await service.aggregateSLARisk(req.user);
 
   res.status(200).json({
     success: true,
     data: result
   });
+
 });
 
 /* =========================================================
-   ANOMALY DETECTION
-========================================================= */
-exports.getAnomalies = asyncHandler(async (req, res) => {
-
-  const buyerOrgId = req.user.organization_id;
-
-  const result = await service.detectAnomalies(buyerOrgId, "buyer");
-
-  res.status(200).json({
-    success: true,
-    data: result
-  });
-});
-
-/* =========================================================
-   GENERATE PO PDF (SAFE PLACEHOLDER)
+   GENERATE PO PDF DATA (FOR PDF ENGINE)
 ========================================================= */
 exports.generatePOPdf = asyncHandler(async (req, res) => {
 
   const { poId } = req.params;
 
-  const pdf = await service.generatePOPdf(poId);
+  const pdfData = await service.generatePOPdfData(poId, req.user);
 
   res.status(200).json({
     success: true,
-    data: pdf
+    data: pdfData
   });
+
 });

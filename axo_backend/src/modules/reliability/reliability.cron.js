@@ -9,8 +9,10 @@
    - Enterprise production ready
 ========================================================= */
 
-const pool = require("../../config/db");
+const cron = require("node-cron");
+const ordersService = require("../buyer/orders/buyer.orders.service");
 const { calculateSupplierScore } = require("../../utils/reliability.service");
+const pool = require("../../config/db");
 
 /* =========================================================
    RECALCULATE ALL SUPPLIERS
@@ -77,10 +79,37 @@ async function recalculateAllSupplierReliability() {
   }
 }
 
+
+const runSLANightly = async () => {
+  console.log("Running nightly SLA recalculation...");
+
+  await ordersService.checkOverdueMilestones();
+
+  const suppliers = await pool.query(`
+    SELECT DISTINCT supplier_org_id FROM purchase_orders
+  `);
+
+  for (const row of suppliers.rows) {
+    await calculateSupplierScore(row.supplier_org_id);
+  }
+
+  console.log("SLA nightly job completed.");
+};
+
+cron.schedule("0 2 * * *", async () => {
+  try {
+    await runSLANightly();
+  } catch (err) {
+    console.error("SLA cron failed:", err);
+  }
+});
+
+
 /* =========================================================
    EXPORT
 ========================================================= */
 
 module.exports = {
-  recalculateAllSupplierReliability
+  recalculateAllSupplierReliability,
+  runSLANightly
 };

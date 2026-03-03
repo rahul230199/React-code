@@ -1,10 +1,7 @@
 /* =========================================================
-   AXO NETWORKS — BUYER ORDERS ROUTES
-   Enterprise PO Intelligence Engine
-   - Guardrails
-   - Risk Engine
-   - Reliability Mirror
-   - Anomaly Detection
+   AXO NETWORKS — ORDERS ROUTES (FINAL ENTERPRISE)
+   SLA Integrated | Milestone Driven | Message Enabled
+   Fully Aligned With Controller + Service
 ========================================================= */
 
 const express = require("express");
@@ -16,48 +13,38 @@ const { validateRequiredFields } = require("../../../middlewares/validation.midd
 const controller = require("./buyer.orders.controller");
 
 /* =========================================================
-   LIST BUYER ORDERS
-   GET /api/buyer/orders
+   LIST ORDERS (ROLE AWARE)
+   GET /api/orders
 ========================================================= */
 router.get(
   "/",
   authorize("VIEW_ORDERS"),
-  controller.getBuyerOrders
+  controller.getOrders
 );
 
 /* =========================================================
-   OEM RELIABILITY MIRROR
-   GET /api/buyer/orders/oem/reliability
+   SLA DASHBOARD (ROLE AWARE)
+   GET /api/orders/sla/dashboard
 ========================================================= */
 router.get(
-  "/oem/reliability",
+  "/sla/dashboard",
   authorize("VIEW_ANALYTICS"),
-  controller.getOEMReliability
+  controller.getSLADashboard
 );
 
 /* =========================================================
-   RISK DASHBOARD AGGREGATION
-   GET /api/buyer/orders/dashboard/risk
+   SLA RISK — SINGLE PO
+   GET /api/orders/:poId/sla-risk
 ========================================================= */
 router.get(
-  "/dashboard/risk",
+  "/:poId/sla-risk",
   authorize("VIEW_ANALYTICS"),
-  controller.getRiskDashboard
+  controller.getSLARisk
 );
 
 /* =========================================================
-   ANOMALY DETECTION
-   GET /api/buyer/orders/anomalies
-========================================================= */
-router.get(
-  "/anomalies",
-  authorize("VIEW_ANALYTICS"),
-  controller.getAnomalies
-);
-
-/* =========================================================
-   UPDATE PO STATUS (GUARDRAIL PROTECTED)
-   POST /api/buyer/orders/:poId/status
+   UPDATE PO STATUS
+   POST /api/orders/:poId/status
 ========================================================= */
 router.post(
   "/:poId/status",
@@ -67,19 +54,30 @@ router.post(
 );
 
 /* =========================================================
-   UPDATE MILESTONE (AUTO DISCIPLINE LOGGED)
-   POST /api/buyer/orders/:poId/milestones
+   COMPLETE MILESTONE
+   POST /api/orders/:poId/milestones/complete
 ========================================================= */
 router.post(
-  "/:poId/milestones",
+  "/:poId/milestones/complete",
   authorize("UPDATE_MILESTONE"),
   validateRequiredFields(["milestoneName"]),
-  controller.updateMilestone
+  controller.completeMilestone
 );
 
 /* =========================================================
-   CONFIRM PAYMENT (TRANSACTION SAFE)
-   POST /api/buyer/orders/:poId/pay
+   SEND MESSAGE (PO THREAD)
+   POST /api/orders/:poId/messages
+========================================================= */
+router.post(
+  "/:poId/messages",
+  authorize("SEND_MESSAGE"),
+  validateRequiredFields(["message"]),
+  controller.sendMessage
+);
+
+/* =========================================================
+   CONFIRM PAYMENT
+   POST /api/orders/:poId/pay
 ========================================================= */
 router.post(
   "/:poId/pay",
@@ -90,7 +88,7 @@ router.post(
 
 /* =========================================================
    RAISE DISPUTE
-   POST /api/buyer/orders/:poId/dispute
+   POST /api/orders/:poId/dispute
 ========================================================= */
 router.post(
   "/:poId/dispute",
@@ -100,8 +98,8 @@ router.post(
 );
 
 /* =========================================================
-   GENERATE PO PDF
-   GET /api/buyer/orders/:poId/pdf
+   GENERATE PO PDF DATA
+   GET /api/orders/:poId/pdf
 ========================================================= */
 router.get(
   "/:poId/pdf",
@@ -111,7 +109,7 @@ router.get(
 
 /* =========================================================
    FULL PO THREAD (MUST BE LAST PARAM ROUTE)
-   GET /api/buyer/orders/:poId
+   GET /api/orders/:poId
 ========================================================= */
 router.get(
   "/:poId",

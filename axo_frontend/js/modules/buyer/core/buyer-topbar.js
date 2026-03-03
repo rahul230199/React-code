@@ -18,9 +18,11 @@ export function renderBuyerTopbar() {
     <div class="topbar-container">
 
       <div class="topbar-left">
-        <button id="menuToggle" class="menu-toggle">
-          <i data-lucide="menu"></i>
-        </button>
+        <button id="menuToggle" class="menu-toggle" aria-label="Open Menu">
+  <span class="menu-icon">
+    <i data-lucide="menu"></i>
+  </span>
+</button>
         <h2 id="pageTitle">Dashboard</h2>
       </div>
 

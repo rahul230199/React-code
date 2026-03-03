@@ -1,9 +1,7 @@
 /* =========================================================
-   AXO NETWORKS — BUYER ORDERS SERVICE (HARDENED)
-   - Transaction Safe
-   - Event Logged
-   - Reliability Triggered
-   - Notification Automated
+   AXO NETWORKS — ORDERS SERVICE (FINAL ENTERPRISE CORE)
+   Multi-Tenant | Milestone Driven | Communication Enabled
+   Production Ready | Transaction Safe | Reliability Aware
 ========================================================= */
 
 const pool = require("../../../config/db");
@@ -11,252 +9,76 @@ const AppError = require("../../../utils/AppError");
 const queries = require("./buyer.orders.queries");
 
 const {
+  logEvent,
   logDisputeRaised,
   logPaymentConfirmed
 } = require("../../../utils/eventLogger");
 
 const { createNotification } = require("../../../utils/notificationService");
-
 const { calculateSupplierScore } = require("../../../utils/reliability.service");
 
 /* =========================================================
-   GET BUYER ORDERS
+   ROLE VALIDATION
 ========================================================= */
-exports.getBuyerOrders = async (buyerOrgId) => {
-  return queries.getBuyerOrders(buyerOrgId);
+
+function validatePOAccess(po, user) {
+  if (!po) throw new AppError("Purchase Order not found.", 404);
+
+  const { role, organization_id } = user;
+
+  if (role === "admin" || role === "super_admin") return;
+
+  if (role === "buyer" && po.buyer_org_id === organization_id) return;
+
+  if (role === "supplier" && po.supplier_org_id === organization_id) return;
+
+  throw new AppError("Access denied.", 403);
+}
+
+/* =========================================================
+   GET ORDERS
+========================================================= */
+
+exports.getOrders = async (user) => {
+
+  if (user.role === "admin" || user.role === "super_admin")
+    return queries.getAllOrders();
+
+  if (user.role === "buyer")
+    return queries.getBuyerOrders(user.organization_id);
+
+  if (user.role === "supplier")
+    return queries.getSupplierOrders(user.organization_id);
+
+  return [];
 };
 
 /* =========================================================
-   GET FULL PO THREAD
+   GET FULL PO THREAD (DB-Driven Timeline)
 ========================================================= */
-exports.getFullOrderThread = async ({
-  poId,
-  buyerOrgId
-}) => {
+
+exports.getFullOrderThread = async ({ poId, user }) => {
 
   const po = await queries.getPOById(poId);
+  validatePOAccess(po, user);
 
-  if (!po)
-    throw new AppError("Purchase Order not found.", 404);
-
-  if (po.buyer_org_id !== buyerOrgId)
-    throw new AppError("Access denied.", 403);
-
+  const milestones = await queries.getMilestones(poId);
+  const messages = await queries.getMessages(poId);
   const events = await queries.getEvents(poId);
 
-  const timeline = buildTimeline(events);
+  const timeline = buildTimelineFromMilestones(milestones);
 
   return {
     po,
     timeline,
+    milestones,
+    messages,
     events
   };
 };
 
 /* =========================================================
-   RAISE DISPUTE (TRANSACTION SAFE)
-========================================================= */
-exports.raiseDispute = async ({
-  poId,
-  buyerOrgId,
-  userId,
-  reason
-}) => {
-
-  const client = await pool.connect();
-
-  try {
-
-    await client.query("BEGIN");
-
-    /* -------------------------
-       Validate Ownership
-    -------------------------- */
-    const po = await queries.getPOById(poId);
-
-    if (!po)
-      throw new AppError("PO not found.", 404);
-
-    if (po.buyer_org_id !== buyerOrgId)
-      throw new AppError("Access denied.", 403);
-
-    /* -------------------------
-       Insert Dispute
-    -------------------------- */
-    const disputeRes = await client.query(
-      `
-      INSERT INTO po_disputes (po_id, reason, raised_by, created_at)
-      VALUES ($1, $2, $3, NOW())
-      RETURNING id
-      `,
-      [poId, reason, userId]
-    );
-
-    const disputeId = disputeRes.rows[0].id;
-
-    /* -------------------------
-       Log Behavioral Event
-    -------------------------- */
-    await logDisputeRaised(poId, userId, disputeId, client);
-
-    /* -------------------------
-       Notify Supplier
-    -------------------------- */
-    await createNotification(client, {
-      organizationId: po.supplier_org_id,
-      title: "Dispute Raised",
-      message: `A dispute has been raised on PO #${poId}`,
-      type: "DISPUTE",
-      referenceType: "PO",
-      referenceId: poId
-    });
-
-    /* -------------------------
-       Recalculate Reliability
-    -------------------------- */
-    await calculateSupplierScore(po.supplier_org_id, client);
-
-    await client.query("COMMIT");
-
-  } catch (error) {
-
-    await client.query("ROLLBACK");
-    throw error;
-
-  } finally {
-
-    client.release();
-  }
-};
-
-/* =========================================================
-   CONFIRM PAYMENT (HARDENED FLOW)
-========================================================= */
-exports.confirmPayment = async ({
-  poId,
-  buyerOrgId,
-  userId,
-  amount
-}) => {
-
-  const client = await pool.connect();
-
-  try {
-
-    await client.query("BEGIN");
-
-    const po = await queries.getPOById(poId);
-
-    if (!po)
-      throw new AppError("PO not found.", 404);
-
-    if (po.buyer_org_id !== buyerOrgId)
-      throw new AppError("Access denied.", 403);
-
-    /* -------------------------
-       Insert Payment Record
-    -------------------------- */
-    await client.query(
-      `
-      INSERT INTO payments (po_id, amount, paid_by, created_at)
-      VALUES ($1,$2,$3,NOW())
-      `,
-      [poId, amount, userId]
-    );
-
-    /* -------------------------
-       Log Behavioral Event
-    -------------------------- */
-    await logPaymentConfirmed(poId, userId, amount, client);
-
-    /* -------------------------
-       Notify Supplier
-    -------------------------- */
-    await createNotification(client, {
-      organizationId: po.supplier_org_id,
-      title: "Payment Confirmed",
-      message: `Payment of ${amount} confirmed for PO #${poId}`,
-      type: "PAYMENT",
-      referenceType: "PO",
-      referenceId: poId
-    });
-
-    /* -------------------------
-       Recalculate Reliability
-    -------------------------- */
-    await calculateSupplierScore(po.supplier_org_id, client);
-
-    await client.query("COMMIT");
-
-  } catch (error) {
-
-    await client.query("ROLLBACK");
-    throw error;
-
-  } finally {
-
-    client.release();
-  }
-};
-
-/* =========================================================
-   PDF GENERATOR (PLACEHOLDER SAFE)
-========================================================= */
-exports.generatePOPdf = async (poId) => {
-  return {
-    poId,
-    status: "PDF generation placeholder"
-  };
-};
-
-/* =========================================================
-   TIMELINE BUILDER
-========================================================= */
-function buildTimeline(events) {
-
-  const stages = [
-    "PO_ACCEPTED",
-    "RAW_MATERIAL_ORDERED",
-    "PRODUCTION_STARTED",
-    "QC",
-    "DISPATCH",
-    "DELIVERED",
-    "INVOICE_RAISED",
-    "PAID"
-  ];
-
-  return stages.map(stage => {
-
-    const event = events.find(e => e.event_type === stage);
-
-    return {
-      stage,
-      completed: !!event,
-      completed_at: event ? event.created_at : null
-    };
-
-  });
-}/* =========================================================
-   AXO NETWORKS — BUYER ORDERS SERVICE (INTELLIGENCE LAYER)
-   - Transaction Safe
-   - Behavioral Logging
-   - Reliability Driven
-   - Guardrail Protected
-   - Auto Risk Scored
-========================================================= */
-
-
-
-
-const {
-  logMilestoneUpdate,
-  logEvent
-} = require("../../../utils/eventLogger");
-
-
-
-/* =========================================================
-   STATE TRANSITION GUARDRAIL MAP
+   STATUS TRANSITION MAP
 ========================================================= */
 
 const ALLOWED_TRANSITIONS = {
@@ -269,51 +91,31 @@ const ALLOWED_TRANSITIONS = {
 };
 
 /* =========================================================
-   GET BUYER ORDERS
+   UPDATE PO STATUS
 ========================================================= */
-exports.getBuyerOrders = async (buyerOrgId) => {
-  return queries.getBuyerOrders(buyerOrgId);
-};
 
-/* =========================================================
-   UPDATE PO STATUS (GUARDRAILED)
-========================================================= */
-exports.updatePOStatus = async ({
-  poId,
-  buyerOrgId,
-  newStatus,
-  userId
-}) => {
+exports.updatePOStatus = async ({ poId, newStatus, user }) => {
 
   const client = await pool.connect();
 
   try {
-
     await client.query("BEGIN");
 
-    const po = await queries.getPOById(poId);
-
-    if (!po)
-      throw new AppError("PO not found.", 404);
-
-    if (po.buyer_org_id !== buyerOrgId)
-      throw new AppError("Access denied.", 403);
+    const po = await queries.getPOById(poId, client);
+    validatePOAccess(po, user);
 
     const allowed = ALLOWED_TRANSITIONS[po.status] || [];
 
     if (!allowed.includes(newStatus))
       throw new AppError("Invalid state transition.", 400);
 
-    await client.query(
-      `UPDATE purchase_orders SET status = $1 WHERE id = $2`,
-      [newStatus, poId]
-    );
+    await queries.updatePOStatus(poId, newStatus, client);
 
     await logEvent({
       entityType: "PO",
       entityId: poId,
       eventType: "PO_STATUS_UPDATED",
-      actorId: userId,
+      actorId: user.id,
       metadata: { from: po.status, to: newStatus },
       client
     });
@@ -331,29 +133,117 @@ exports.updatePOStatus = async ({
 };
 
 /* =========================================================
-   AUTO MILESTONE DISCIPLINE LOGGER
+   COMPLETE MILESTONE (FULL CRUD)
 ========================================================= */
-exports.updateMilestone = async ({
+
+exports.completeMilestone = async ({
   poId,
   milestoneName,
-  userId
+  evidence_url,
+  remarks,
+  user
 }) => {
 
   const client = await pool.connect();
 
   try {
-
     await client.query("BEGIN");
 
-    await logMilestoneUpdate(poId, userId, milestoneName, client);
+    const po = await queries.getPOById(poId, client);
+    validatePOAccess(po, user);
 
-    /* Discipline logging for reliability */
+    await queries.completeMilestone(
+      poId,
+      milestoneName,
+      evidence_url,
+      remarks,
+      client
+    );
+
     await logEvent({
       entityType: "PO",
       entityId: poId,
-      eventType: "MILESTONE_DISCIPLINE_LOGGED",
-      actorId: userId,
+      eventType: "MILESTONE_COMPLETED",
+      actorId: user.id,
       metadata: { milestoneName },
+      client
+    });
+
+    /* Auto complete logic */
+    const milestones = await queries.getMilestones(poId, client);
+
+    const allCompleted = milestones.every(m => m.status === "completed");
+
+    if (allCompleted && po.status !== "completed") {
+
+      await queries.updatePOStatus(poId, "completed", client);
+      await queries.setActualDeliveryDate(poId, client);
+
+      await logEvent({
+        entityType: "PO",
+        entityId: poId,
+        eventType: "PO_AUTO_COMPLETED",
+        actorId: user.id,
+        metadata: {},
+        client
+      });
+    }
+
+    const milestone = milestones.find(m => m.milestone_name === milestoneName);
+
+if (milestone?.due_date && milestone.completed_at) {
+  const due = new Date(milestone.due_date);
+  const completed = new Date(milestone.completed_at);
+
+  if (completed > due) {
+    await client.query(`
+      INSERT INTO sla_breaches 
+      (po_id, milestone_id, supplier_org_id, breach_type, due_date, completed_at)
+      VALUES ($1,$2,$3,'LATE_COMPLETION',$4,$5)
+    `, [
+      poId,
+      milestone.id,
+      po.supplier_org_id,
+      milestone.due_date,
+      milestone.completed_at
+    ]);
+  }
+}
+
+    await calculateSupplierScore(po.supplier_org_id, client);
+
+    await client.query("COMMIT");
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+/* =========================================================
+   MESSAGE THREAD
+========================================================= */
+
+exports.sendMessage = async ({ poId, message, user }) => {
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const po = await queries.getPOById(poId, client);
+    validatePOAccess(po, user);
+
+    await queries.insertMessage(poId, user.id, message, client);
+
+    await logEvent({
+      entityType: "PO",
+      entityId: poId,
+      eventType: "MESSAGE_SENT",
+      actorId: user.id,
+      metadata: {},
       client
     });
 
@@ -368,68 +258,22 @@ exports.updateMilestone = async ({
 };
 
 /* =========================================================
-   RESPONSE TIME MEASUREMENT ENGINE
+   CONFIRM PAYMENT
 ========================================================= */
-exports.recordResponseTime = async ({
-  poId,
-  actorId,
-  hours
-}) => {
 
-  await logEvent({
-    entityType: "PO",
-    entityId: poId,
-    eventType: "RESPONSE_TIME_RECORDED",
-    actorId,
-    metadata: { response_time_hours: hours }
-  });
-};
-
-/* =========================================================
-   DISPUTE WITH AUTO RISK + RELIABILITY
-========================================================= */
-exports.raiseDispute = async ({
-  poId,
-  buyerOrgId,
-  userId,
-  reason
-}) => {
+exports.confirmPayment = async ({ poId, amount, user }) => {
 
   const client = await pool.connect();
 
   try {
-
     await client.query("BEGIN");
 
-    const po = await queries.getPOById(poId);
+    const po = await queries.getPOById(poId, client);
+    validatePOAccess(po, user);
 
-    if (!po)
-      throw new AppError("PO not found.", 404);
+    await queries.insertPayment(poId, amount, user.id, client);
 
-    if (po.buyer_org_id !== buyerOrgId)
-      throw new AppError("Access denied.", 403);
-
-    const disputeRes = await client.query(
-      `
-      INSERT INTO po_disputes (po_id, reason, raised_by, created_at)
-      VALUES ($1,$2,$3,NOW())
-      RETURNING id
-      `,
-      [poId, reason, userId]
-    );
-
-    const disputeId = disputeRes.rows[0].id;
-
-    await logDisputeRaised(poId, userId, disputeId, client);
-
-    await createNotification(client, {
-      organizationId: po.supplier_org_id,
-      title: "Dispute Raised",
-      message: `Dispute raised on PO #${poId}`,
-      type: "DISPUTE",
-      referenceType: "PO",
-      referenceId: poId
-    });
+    await logPaymentConfirmed(poId, user.id, amount, client);
 
     await calculateSupplierScore(po.supplier_org_id, client);
 
@@ -444,45 +288,29 @@ exports.raiseDispute = async ({
 };
 
 /* =========================================================
-   PAYMENT CONFIRMATION WITH RISK + RELIABILITY
+   RAISE DISPUTE (AUTO FLAG)
 ========================================================= */
-exports.confirmPayment = async ({
-  poId,
-  buyerOrgId,
-  userId,
-  amount
-}) => {
+
+exports.raiseDispute = async ({ poId, reason, user }) => {
 
   const client = await pool.connect();
 
   try {
-
     await client.query("BEGIN");
 
-    const po = await queries.getPOById(poId);
+    const po = await queries.getPOById(poId, client);
+    validatePOAccess(po, user);
 
-    if (!po)
-      throw new AppError("PO not found.", 404);
-
-    if (po.buyer_org_id !== buyerOrgId)
-      throw new AppError("Access denied.", 403);
-
-    await client.query(
-      `INSERT INTO payments (po_id, amount, paid_by, created_at)
-       VALUES ($1,$2,$3,NOW())`,
-      [poId, amount, userId]
+    const disputeId = await queries.insertDispute(
+      poId,
+      reason,
+      user.id,
+      client
     );
 
-    await logPaymentConfirmed(poId, userId, amount, client);
+    await queries.setDisputeFlag(poId, client);
 
-    await createNotification(client, {
-      organizationId: po.supplier_org_id,
-      title: "Payment Confirmed",
-      message: `Payment of ${amount} confirmed.`,
-      type: "PAYMENT",
-      referenceType: "PO",
-      referenceId: poId
-    });
+    await logDisputeRaised(poId, user.id, disputeId, client);
 
     await calculateSupplierScore(po.supplier_org_id, client);
 
@@ -497,134 +325,147 @@ exports.confirmPayment = async ({
 };
 
 /* =========================================================
-   AUTOMATIC RISK SCORING
+   PDF DATA AGGREGATION
 ========================================================= */
-exports.calculateRiskLevel = (po, events) => {
 
-  let flags = [];
+exports.generatePOPdfData = async (poId, user) => {
 
-  const delivered = events.find(e => e.event_type === "DELIVERY_CONFIRMED");
+  const po = await queries.getPOById(poId);
+  validatePOAccess(po, user);
 
-  if (!delivered && po.promised_delivery_date) {
-    if (new Date() > new Date(po.promised_delivery_date)) {
-      flags.push("DELIVERY_OVERDUE");
+  return await queries.getFullPOPackage(poId);
+};
+
+/* =========================================================
+   TIMELINE FROM MILESTONES
+========================================================= */
+
+function buildTimelineFromMilestones(milestones) {
+
+  return milestones.map(m => ({
+    stage: m.milestone_name,
+    status: m.status,
+    due_date: m.due_date,
+    completed_at: m.completed_at,
+    is_overdue:
+      m.status !== "completed" &&
+      m.due_date &&
+      new Date(m.due_date) < new Date()
+  }));
+}
+
+/* =========================================================
+   SLA RISK ENGINE
+========================================================= */
+
+exports.calculateSLARisk = async (poId, user) => {
+
+  const po = await queries.getPOById(poId);
+  validatePOAccess(po, user);
+
+  const milestones = await queries.getMilestones(poId);
+
+  const today = new Date();
+
+  let high = 0;
+  let warning = 0;
+  let breaches = 0;
+
+  for (const m of milestones) {
+
+    if (!m.due_date) continue;
+
+    const due = new Date(m.due_date);
+
+    if (m.status !== "completed" && due < today) {
+      high++;
+    }
+
+    if (m.status !== "completed") {
+      const diffDays = (due - today) / (1000 * 60 * 60 * 24);
+      if (diffDays > 0 && diffDays <= 2) {
+        warning++;
+      }
+    }
+
+    if (m.completed_at && due < new Date(m.completed_at)) {
+      breaches++;
     }
   }
 
-  if (events.some(e => e.event_type === "DISPUTE_RAISED")) {
-    flags.push("DISPUTE_ACTIVE");
-  }
+  let riskLevel = "SAFE";
+
+  if (high >= 2) riskLevel = "CRITICAL";
+  else if (high >= 1) riskLevel = "HIGH";
+  else if (warning >= 1) riskLevel = "WATCH";
 
   return {
-    level: flags.length ? "HIGH" : "NORMAL",
-    flags
+    po_id: poId,
+    risk_level: riskLevel,
+    overdue_milestones: high,
+    warning_milestones: warning,
+    sla_breaches: breaches
   };
 };
 
 /* =========================================================
-   REAL-TIME RISK DASHBOARD AGGREGATION
+   GLOBAL SLA DASHBOARD
 ========================================================= */
 
-exports.aggregateRiskDashboard = async (buyerOrgId) => {
+exports.aggregateSLARisk = async (user) => {
 
-  const poRes = await pool.query(
-    `
-    SELECT id, promised_delivery_date, status
-    FROM purchase_orders
-    WHERE buyer_org_id = $1
-    `,
-    [buyerOrgId]
-  );
+  const orders = await exports.getOrders(user);
 
-  const now = new Date();
+  const results = [];
 
-  let overdue = 0;
-  let disputed = 0;
-  let active = 0;
-
-  for (const po of poRes.rows) {
-
-    if (po.status === "in_progress")
-      active++;
-
-    if (po.status === "disputed")
-      disputed++;
-
-    if (
-      po.promised_delivery_date &&
-      new Date(po.promised_delivery_date) < now &&
-      po.status !== "completed"
-    ) {
-      overdue++;
-    }
+  for (const po of orders) {
+    const risk = await exports.calculateSLARisk(po.id, user);
+    results.push(risk);
   }
 
+  const critical = results.filter(r => r.risk_level === "CRITICAL").length;
+  const high = results.filter(r => r.risk_level === "HIGH").length;
+  const watch = results.filter(r => r.risk_level === "WATCH").length;
+
   return {
-    total_pos: poRes.rows.length,
-    active_pos: active,
-    overdue_pos: overdue,
-    disputed_pos: disputed,
-    risk_level:
-      overdue > 3 || disputed > 2
-        ? "HIGH"
-        : "NORMAL"
+    total_pos: results.length,
+    critical,
+    high,
+    watch
   };
 };
 
-/* =========================================================
-   ANOMALY DETECTION ENGINE
-========================================================= */
+exports.checkOverdueMilestones = async () => {
 
-exports.detectAnomalies = async (organizationId, roleType) => {
+  const res = await pool.query(`
+    SELECT m.*, po.supplier_org_id
+    FROM po_milestones m
+    JOIN purchase_orders po ON po.id = m.po_id
+    WHERE m.status != 'completed'
+      AND m.due_date < CURRENT_DATE
+  `);
 
-  const poRes = await pool.query(
-    `
-    SELECT id
-    FROM purchase_orders
-    WHERE ${roleType === "supplier"
-      ? "supplier_org_id"
-      : "buyer_org_id"} = $1
-    `,
-    [organizationId]
-  );
+  for (const row of res.rows) {
 
-  const poIds = poRes.rows.map(p => p.id);
+    await createNotification(pool, {
+      organizationId: row.supplier_org_id,
+      title: "Milestone Overdue",
+      message: `Milestone ${row.milestone_name} is overdue.`,
+      type: "SLA_OVERDUE",
+      referenceType: "PO",
+      referenceId: row.po_id
+    });
 
-  if (!poIds.length)
-    return { anomalies: [] };
-
-  const eventRes = await pool.query(
-    `
-    SELECT event_type
-    FROM po_events
-    WHERE entity_id = ANY($1)
-    `,
-    [poIds]
-  );
-
-  const events = eventRes.rows;
-
-  let disputeCount = 0;
-  let cancellations = 0;
-
-  for (const e of events) {
-
-    if (e.event_type === "DISPUTE_RAISED")
-      disputeCount++;
-
-    if (e.event_type === "PO_CANCELLED")
-      cancellations++;
+    await pool.query(`
+      INSERT INTO sla_breaches 
+      (po_id, milestone_id, supplier_org_id, breach_type, due_date)
+      VALUES ($1,$2,$3,'OVERDUE',$4)
+      ON CONFLICT DO NOTHING
+    `, [
+      row.po_id,
+      row.id,
+      row.supplier_org_id,
+      row.due_date
+    ]);
   }
-
-  const anomalies = [];
-
-  if (disputeCount > 5)
-    anomalies.push("HIGH_DISPUTE_FREQUENCY");
-
-  if (cancellations > 3)
-    anomalies.push("EXCESSIVE_CANCELLATIONS");
-
-  return {
-    anomalies
-  };
 };

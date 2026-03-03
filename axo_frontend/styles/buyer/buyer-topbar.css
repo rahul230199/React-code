@@ -1,36 +1,37 @@
 /* =========================================================
    AXO NETWORKS — BUYER TOPBAR
-   Refined C — Apple Ambient Premium Header
+   Enterprise SaaS Responsive Header System
 ========================================================= */
 
 /* =========================================================
-   TOPBAR WRAPPER
+   WRAPPER
 ========================================================= */
 
 .buyer-topbar {
   position: sticky;
   top: 0;
-  z-index: 900;
+  z-index: 1000;
 
   height: 72px;
-
-  /* True glass (no heavy gradient) */
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+  width: 100%;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 0 44px;
+  padding: 0 clamp(16px, 4vw, 48px);
 
-  transition: background var(--motion-normal);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+
+  transition: background 300ms ease;
 }
 
-/* Subtle inner light layer */
+/* Soft light overlay */
+
 .buyer-topbar::after {
   content: "";
   position: absolute;
@@ -58,24 +59,25 @@
 }
 
 /* =========================================================
-   LEFT SIDE
+   LEFT SECTION
 ========================================================= */
 
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: clamp(12px, 2vw, 22px);
 }
 
 .topbar-left h2 {
-  font-size: 20px;
+  font-size: clamp(16px, 2vw, 20px);
   font-weight: 600;
   letter-spacing: -0.3px;
   color: var(--color-gray-900);
+  margin: 0;
 }
 
 /* =========================================================
-   MENU TOGGLE
+   HAMBURGER MENU
 ========================================================= */
 
 .menu-toggle {
@@ -90,13 +92,25 @@
   align-items: center;
   justify-content: center;
 
-  transition: all var(--motion-normal);
+  transition: all 220ms ease;
+}
+
+.menu-toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
 }
 
 .menu-toggle:hover {
-  background: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.45);
   transform: scale(1.05);
 }
+
+.menu-toggle:active {
+  transform: scale(0.96);
+}
+
+/* Show hamburger on tablet + mobile */
 
 @media (max-width: 1024px) {
   .menu-toggle {
@@ -105,13 +119,13 @@
 }
 
 /* =========================================================
-   RIGHT SIDE
+   RIGHT SECTION
 ========================================================= */
 
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 26px;
+  gap: clamp(14px, 2vw, 26px);
 }
 
 /* =========================================================
@@ -130,13 +144,20 @@
 
   cursor: pointer;
 
-  transition: all var(--motion-normal);
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .topbar-icon:hover {
   background: rgba(255,255,255,0.45);
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.topbar-icon:active {
+  transform: scale(0.96);
 }
 
 .topbar-icon svg {
@@ -146,7 +167,7 @@
 }
 
 /* =========================================================
-   NOTIFICATION BADGE (Refined)
+   NOTIFICATION BADGE
 ========================================================= */
 
 .badge {
@@ -158,13 +179,8 @@
   height: 18px;
   padding: 0 6px;
 
-  background: linear-gradient(
-    135deg,
-    #ef4444,
-    #dc2626
-  );
-
-  color: white;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
 
   font-size: 10px;
   font-weight: 600;
@@ -175,8 +191,7 @@
 
   border-radius: 999px;
 
-  box-shadow:
-    0 4px 12px rgba(239,68,68,0.35);
+  box-shadow: 0 4px 12px rgba(239,68,68,0.35);
 
   animation: pulseBadge 1.8s infinite;
 }
@@ -200,8 +215,7 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
-
-  transition: transform var(--motion-normal);
+  transition: transform 200ms ease;
 }
 
 .topbar-user:hover {
@@ -223,8 +237,7 @@
   align-items: center;
   justify-content: center;
 
-  box-shadow:
-    0 6px 20px rgba(70,95,255,0.18);
+  box-shadow: 0 6px 20px rgba(70,95,255,0.18);
 }
 
 .avatar svg {
@@ -237,7 +250,7 @@
   width: 16px;
   height: 16px;
   color: var(--color-gray-500);
-  transition: transform var(--motion-fast);
+  transition: transform 200ms ease;
 }
 
 .topbar-user:hover .chevron {
@@ -245,28 +258,27 @@
 }
 
 /* =========================================================
-   DROPDOWN (Premium Glass)
+   DROPDOWN MENU
 ========================================================= */
 
 .user-dropdown {
   position: absolute;
-  top: 78px;
-  right: 44px;
+  top: 80px;
+  right: clamp(16px, 4vw, 48px);
 
-  min-width: 210px;
+  min-width: 220px;
 
-  background: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.88);
   backdrop-filter: blur(26px);
 
-  border-radius: 22px;
+  border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.6);
 
-  box-shadow:
-    0 16px 50px rgba(0,0,0,0.08);
+  box-shadow: 0 16px 50px rgba(0,0,0,0.08);
 
-  padding: 10px 0;
+  padding: 8px 0;
 
-  animation: fadeInDropdown 200ms var(--ease-standard);
+  animation: fadeInDropdown 200ms ease;
 }
 
 .user-dropdown.hidden {
@@ -280,10 +292,11 @@
 
   padding: 12px 20px;
   font-size: 14px;
-
   cursor: pointer;
 
-  transition: all var(--motion-fast);
+  transition:
+    background 200ms ease,
+    transform 200ms ease;
 }
 
 .dropdown-item:hover {
@@ -292,42 +305,128 @@
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE ADJUSTMENTS
 ========================================================= */
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
 
   .buyer-topbar {
-    padding: 0 24px;
+    height: 64px;
   }
-
-  .user-dropdown {
-    right: 24px;
-  }
-}
-
-@media (max-width: 768px) {
 
   .topbar-left h2 {
     font-size: 16px;
   }
 
   .topbar-right {
-    gap: 18px;
+    gap: 16px;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .user-dropdown {
+    top: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .buyer-topbar {
+    padding: 0 16px;
+  }
+
+  .topbar-left h2 {
+    font-size: 15px;
+  }
+
+  .topbar-icon,
+  .menu-toggle {
+    width: 38px;
+    height: 38px;
   }
 }
 
 /* =========================================================
-   ANIMATION
+   ANIMATIONS
 ========================================================= */
 
 @keyframes fadeInDropdown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   IMPROVED HAMBURGER
+========================================================= */
+
+.menu-toggle {
+  display: none;
+
+  width: 44px;
+  height: 44px;
+
+  border-radius: 14px;
+  border: none;
+
+  background: rgba(255,255,255,0.85);
+  box-shadow:
+    0 4px 12px rgba(0,0,0,0.05);
+
+  cursor: pointer;
+
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon svg {
+  width: 22px;
+  height: 22px;
+
+  stroke: #111827; /* darker for visibility */
+  stroke-width: 2.6; /* thicker lines */
+
+  transition: transform 200ms ease;
+}
+
+.menu-toggle:hover {
+  background: rgba(70,95,255,0.12);
+  transform: scale(1.05);
+  box-shadow:
+    0 8px 20px rgba(70,95,255,0.15);
+}
+
+.menu-toggle:hover svg {
+  stroke: var(--color-brand-600);
+}
+
+.menu-toggle:active {
+  transform: scale(0.96);
+}
+
+/* Show on mobile */
+
+@media (max-width: 1024px) {
+  .menu-toggle {
+    display: flex;
   }
 }

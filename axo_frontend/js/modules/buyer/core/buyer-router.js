@@ -10,7 +10,8 @@
 import { loadDashboardPage } from "../dashboard/dashboard.page.js";
 import { stopDashboardAutoRefresh } from "../dashboard/dashboard.events.js";
 import { loadRFQPage } from "../rfq/rfq.page.js";
-//import { loadOrdersPage } from "../orders/orders.page.js";
+import { loadOrdersPage } from "../orders/orders.page.js";
+import { loadOrderDetailPage } from "../orders/order-detail.page.js";
 import { updateActiveSidebarLink } from "./buyer-sidebar.js";
 import { refreshLucideIcons } from "./buyer-icons.js";
 
@@ -19,6 +20,7 @@ import { refreshLucideIcons } from "./buyer-icons.js";
 ========================================================= */
 
 const ROUTES = {
+
   "/buyer/dashboard": {
     load: loadDashboardPage,
     cleanup: stopDashboardAutoRefresh
@@ -28,7 +30,10 @@ const ROUTES = {
     load: loadRFQPage
   },
 
- 
+  "/buyer/orders": {
+    load: loadOrdersPage
+  }
+
 };
 
 
@@ -74,7 +79,14 @@ async function loadRoute() {
 
   cleanupPreviousRoute();
 
-  const route = ROUTES[path];
+let route = ROUTES[path];
+
+if (!route && path.startsWith("/buyer/orders/")) {
+  const poId = path.split("/").pop();
+  route = {
+    load: () => loadOrderDetailPage(poId)
+  };
+}
 
   if (!route) {
     navigateTo("/buyer/dashboard");

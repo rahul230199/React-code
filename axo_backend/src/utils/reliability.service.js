@@ -111,6 +111,19 @@ async function calculateSupplierScore(supplierOrgId, client = pool) {
     }
   }
 
+  const breachRes = await client.query(`
+  SELECT COUNT(*) 
+  FROM sla_breaches
+  WHERE supplier_org_id = $1
+`, [supplierOrgId]);
+
+const breachCount = parseInt(breachRes.rows[0].count, 10);
+
+const breachPenalty = Math.min(breachCount * 2, 15); 
+// max 15 point penalty
+
+score -= breachPenalty;
+
   /* =========================================================
      SCORING WEIGHTS (PRD ALIGNED)
   ========================================================= */

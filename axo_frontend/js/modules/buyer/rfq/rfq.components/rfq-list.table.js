@@ -130,7 +130,7 @@ export const RFQListTable = {
                     <button class="btn-ai-action"
                             data-view="${r.id}">
                       <i data-lucide="sparkles"></i>
-                      View AI
+                      View Quotes
                     </button>
                   </td>
 
