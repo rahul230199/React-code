@@ -18,6 +18,7 @@ const adminController = require("./admin.controller");
 const poController = require("./admin.po.controller");
 const dashboardController = require("./admin.dashboard.controller");
 const analyticsController = require("./admin.analytics.controller");
+const ordersRoutes = require("./orders/admin.orders.routes");
 
 /* ================= SUB MODULE ROUTES ================= */
 const auditRoutes = require("./audit/admin.audit.routes");
@@ -56,6 +57,15 @@ router.use(
 router.use(
   "/users",
   userRoutes
+);
+
+/* =========================================================
+   ORDERS MODULE
+========================================================= */
+
+router.use(
+  "/orders",
+  ordersRoutes
 );
 
 /* =========================================================
@@ -115,64 +125,5 @@ router.post(
   adminController.resolveDispute
 );
 
-/* =========================================================
-   PURCHASE ORDERS
-========================================================= */
-router.get(
-  "/purchase-orders",
-  authorize("VIEW_PO"),
-  poController.getAllPurchaseOrders
-);
-
-router.get(
-  "/purchase-orders/:poId",
-  authorize("VIEW_PO"),
-  poController.getPurchaseOrderDetails
-);
-
-router.post(
-  "/purchase-orders/:poId/force-cancel",
-  authorize("FORCE_PO_ACTION"),
-  poController.forceCancelPurchaseOrder
-);
-
-router.post(
-  "/purchase-orders/:poId/force-close",
-  authorize("FORCE_PO_ACTION"),
-  poController.forceClosePurchaseOrder
-);
-
-/* =========================================================
-   ANALYTICS
-========================================================= */
-router.get(
-  "/analytics/monthly-revenue",
-  authorize("VIEW_ANALYTICS"),
-  analyticsController.getMonthlyRevenue
-);
-
-router.get(
-  "/analytics/top-suppliers",
-  authorize("VIEW_ANALYTICS"),
-  analyticsController.getTopSuppliers
-);
-
-router.get(
-  "/analytics/conversion-rate",
-  authorize("VIEW_ANALYTICS"),
-  analyticsController.getConversionRate
-);
-
-router.get(
-  "/analytics/dispute-ratio",
-  authorize("VIEW_ANALYTICS"),
-  analyticsController.getDisputeRatio
-);
-
-router.get(
-  "/suppliers/ranking",
-  authorize("VIEW_ANALYTICS"),
-  adminController.getSupplierRanking
-);
 
 module.exports = router;

@@ -1,16 +1,10 @@
 /* =========================================================
-   AXO DESIGN SYSTEM — BASE.CSS
-   Foundation Layer
-   - Reset
-   - Design Tokens
-   - Typography
-   - Utilities
-   - Animations
-   - Scrollbar
+AXO DESIGN SYSTEM — BASE.CSS
+Foundation Layer
 ========================================================= */
 
 /* =========================
-   1. CSS RESET
+1. CSS RESET
 ========================= */
 
 *,
@@ -32,13 +26,19 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Prevent scroll when modal open */
+body.modal-open {
+  overflow: hidden;
+}
+
 /* =========================
-   2. DESIGN TOKENS
+2. DESIGN TOKENS
 ========================= */
 
 :root {
 
   /* Colors */
+
   --color-white: #ffffff;
   --color-black: #101828;
 
@@ -61,6 +61,7 @@ body {
   --color-warning-500: #f79009;
 
   /* Typography */
+
   --font-primary: "Outfit", sans-serif;
 
   --text-xs: 12px;
@@ -77,23 +78,27 @@ body {
   --font-bold: 700;
 
   /* Radius */
+
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 18px;
 
   /* Shadow */
+
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
   --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
   --shadow-lg: 0 12px 24px rgba(16, 24, 40, 0.12);
 
   /* Transition */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  --transition-fast: 150ms cubic-bezier(0.4,0,0.2,1);
+  --transition-normal: 250ms cubic-bezier(0.4,0,0.2,1);
+
 }
 
 /* =========================
-   3. BASE TYPOGRAPHY
+3. BASE TYPOGRAPHY
 ========================= */
 
 body {
@@ -109,15 +114,23 @@ h2 { font-size: var(--text-2xl); font-weight: var(--font-semibold); }
 h3 { font-size: var(--text-xl); font-weight: var(--font-semibold); }
 h4 { font-size: var(--text-lg); font-weight: var(--font-medium); }
 
-p { color: var(--color-gray-600); }
+p {
+  color: var(--color-gray-600);
+}
 
 a {
   text-decoration: none;
   color: inherit;
 }
 
+.glass-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
 /* =========================
-   4. LAYOUT UTILITIES
+4. LAYOUT UTILITIES
 ========================= */
 
 .flex { display: flex; }
@@ -142,7 +155,7 @@ a {
 .h-full { height: 100%; }
 
 /* =========================
-   5. SPACING UTILITIES
+5. SPACING UTILITIES
 ========================= */
 
 .p-1 { padding: 4px; }
@@ -157,13 +170,14 @@ a {
 .m-4 { margin: 16px; }
 
 /* =========================
-   6. BUTTON BASE
+6. BUTTON BASE
 ========================= */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 10px 16px;
   border-radius: var(--radius-md);
   font-weight: var(--font-medium);
@@ -191,8 +205,12 @@ a {
   color: white;
 }
 
+.btn:hover {
+  transform: translateY(-1px);
+}
+
 /* =========================
-   7. CARD BASE
+7. CARD BASE
 ========================= */
 
 .card {
@@ -208,7 +226,7 @@ a {
 }
 
 /* =========================
-   8. INPUT BASE
+8. INPUT BASE
 ========================= */
 
 .input {
@@ -223,11 +241,34 @@ a {
 .input:focus {
   outline: none;
   border-color: var(--color-brand-500);
-  box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(70,95,255,0.15);
 }
 
 /* =========================
-   9. SCROLLBAR
+9. TABLE BASE
+========================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-gray-500);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+/* =========================
+10. SCROLLBAR
 ========================= */
 
 ::-webkit-scrollbar {
@@ -242,6 +283,10 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gray-400);
 }
+
+/* =========================
+11. LOGOUT BUTTON
+========================= */
 
 .logout-btn {
   display: flex;
@@ -258,8 +303,8 @@ a {
 }
 
 .logout-btn:hover {
-  background: rgba(255, 0, 0, 0.05);
-  border-color: rgba(255, 0, 0, 0.2);
+  background: rgba(255,0,0,0.05);
+  border-color: rgba(255,0,0,0.2);
   color: #e5484d;
 }
 

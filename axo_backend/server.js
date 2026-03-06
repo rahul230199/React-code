@@ -7,6 +7,8 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const setupSwagger = require("./src/config/swagger");
+const http = require("http");
+const { Server } = require("socket.io");
 
 /* =========================================================
    LOAD ENV BASED ON NODE_ENV
@@ -251,14 +253,79 @@ cron.schedule("0 2 * * *", async () => {
   await recalculateAllSupplierReliability();
 });
 
+
+
+/* =========================================================
+   CREATE HTTP SERVER FOR SOCKET.IO
+========================================================= */
+
+const server = http.createServer(app);
+
+/* =========================================================
+   SOCKET.IO INITIALIZATION
+========================================================= */
+
+const io = new Server(server, {
+  cors: {
+    origin: "*"
+  }
+});
+
+global.io = io;
+
+io.on("connection", (socket) => {
+
+  console.log("🔌 User connected:", socket.id);
+
+  /* =========================================
+     JOIN PO ROOM
+  ========================================= */
+
+  socket.on("join_po_room", (poId) => {
+
+    if (!poId) return;
+
+    const room = `po_${poId}`;
+
+    socket.join(room);
+
+    console.log(`📡 Socket joined room: ${room}`);
+  });
+
+  /* =========================================
+   TYPING INDICATOR RELAY
+========================================= */
+
+socket.on("typing", (data) => {
+
+  if (!data?.po_id) return;
+
+  const room = `po_${data.po_id}`;
+
+  socket.to(room).emit("typing", {
+    po_id: data.po_id,
+    role: data.role || "user"
+  });
+
+});
+
+  /* =========================================
+     DISCONNECT
+  ========================================= */
+
+  socket.on("disconnect", () => {
+    console.log("🔌 User disconnected:", socket.id);
+  });
+
+});
+
 /* =========================================================
    START SERVER
 ========================================================= */
 
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
-
 /* =========================================================
    GRACEFUL SHUTDOWN
 ========================================================= */

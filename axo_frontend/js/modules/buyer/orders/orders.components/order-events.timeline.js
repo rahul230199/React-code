@@ -9,6 +9,7 @@
 
 const formatDateTime = (date) => {
   if (!date) return "-";
+
   return new Date(date).toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -18,36 +19,79 @@ const formatDateTime = (date) => {
   });
 };
 
+
+/* =========================================================
+   SAFE TEXT (PREVENT HTML INJECTION)
+========================================================= */
+
+function escapeHTML(text) {
+  if (!text) return "";
+
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+
 /* =========================================================
    EVENT TYPE MAP
 ========================================================= */
 
 const EVENT_MAP = {
+
+  PO_ACCEPTED: {
+    icon: "check-circle",
+    label: "Purchase Order Accepted"
+  },
+
+  PO_CANCELLED: {
+    icon: "x-circle",
+    label: "Purchase Order Cancelled"
+  },
+
   PO_STATUS_UPDATED: {
     icon: "refresh-cw",
     label: "Status Updated"
   },
+
   PO_AUTO_COMPLETED: {
     icon: "check-circle",
     label: "PO Auto Completed"
   },
-  MILESTONE_COMPLETED: {
+
+  MILESTONE_UPDATED: {
     icon: "flag",
-    label: "Milestone Completed"
+    label: "Milestone Updated"
   },
-  MESSAGE_SENT: {
-    icon: "message-circle",
-    label: "Message Sent"
+
+  DELIVERY_CONFIRMED: {
+    icon: "truck",
+    label: "Delivery Confirmed"
   },
+
   PAYMENT_CONFIRMED: {
     icon: "credit-card",
     label: "Payment Confirmed"
   },
+
   DISPUTE_RAISED: {
     icon: "alert-triangle",
     label: "Dispute Raised"
+  },
+
+  PO_THREAD_MESSAGE_SENT: {
+    icon: "message-circle",
+    label: "Message Sent"
+  },
+
+  PO_THREAD_RESPONSE_TIME_RECORDED: {
+    icon: "clock",
+    label: "Response Time Recorded"
   }
+
 };
+
 
 /* =========================================================
    RENDER METADATA
@@ -57,27 +101,89 @@ function renderMetadata(event) {
 
   if (!event.metadata) return "";
 
-  const meta = event.metadata;
+  let meta;
+
+  try {
+    meta =
+      typeof event.metadata === "string"
+        ? JSON.parse(event.metadata)
+        : event.metadata;
+  } catch {
+    return "";
+  }
+
+  if (!meta) return "";
+
+
+  /* ================= STATUS CHANGE ================= */
 
   if (event.event_type === "PO_STATUS_UPDATED") {
+
     return `
       <div class="event-meta-detail">
-        From <strong>${meta.from}</strong> 
-        to <strong>${meta.to}</strong>
+        From <strong>${escapeHTML(meta.from)}</strong>
+        to <strong>${escapeHTML(meta.to)}</strong>
       </div>
     `;
+
   }
 
-  if (event.event_type === "MILESTONE_COMPLETED") {
+
+  /* ================= MILESTONE ================= */
+
+  if (event.event_type === "MILESTONE_UPDATED") {
+
     return `
       <div class="event-meta-detail">
-        Milestone: <strong>${meta.milestoneName}</strong>
+        Milestone: <strong>${escapeHTML(meta.milestoneName)}</strong>
       </div>
     `;
+
   }
+
+
+  /* ================= PAYMENT ================= */
+
+  if (event.event_type === "PAYMENT_CONFIRMED") {
+
+    return `
+      <div class="event-meta-detail">
+        Amount: ₹${escapeHTML(meta.amount)}
+      </div>
+    `;
+
+  }
+
+
+  /* ================= DISPUTE ================= */
+
+  if (event.event_type === "DISPUTE_RAISED") {
+
+    return `
+      <div class="event-meta-detail">
+        Dispute ID: <strong>${escapeHTML(meta.disputeId)}</strong>
+      </div>
+    `;
+
+  }
+
+
+  /* ================= RESPONSE TIME ================= */
+
+  if (event.event_type === "PO_THREAD_RESPONSE_TIME_RECORDED") {
+
+    return `
+      <div class="event-meta-detail">
+        Response Time: <strong>${meta.response_time_hours.toFixed(2)} hrs</strong>
+      </div>
+    `;
+
+  }
+
 
   return "";
 }
+
 
 /* =========================================================
    SINGLE EVENT
@@ -102,6 +208,7 @@ function renderEventItem(event) {
 
         <div class="event-header">
           <strong>${config.label}</strong>
+
           <span class="event-time">
             ${formatDateTime(event.created_at)}
           </span>
@@ -115,6 +222,7 @@ function renderEventItem(event) {
   `;
 }
 
+
 /* =========================================================
    EXPORT COMPONENT
 ========================================================= */
@@ -126,6 +234,7 @@ export const OrderEventsTimeline = {
     const { events } = data;
 
     if (!events || !events.length) {
+
       return `
         <div class="events-empty glass-card">
           <i data-lucide="activity"></i>
@@ -133,6 +242,7 @@ export const OrderEventsTimeline = {
           <p>System activity will appear here.</p>
         </div>
       `;
+
     }
 
     return `
@@ -142,6 +252,7 @@ export const OrderEventsTimeline = {
 
       </div>
     `;
+
   }
 
 };

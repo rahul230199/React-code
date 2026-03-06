@@ -161,29 +161,5 @@ export async function loadOrdersPage() {
 
   isMounted = true;
 }
-=======
-const containerId = "pageContainer";
 
-export async function loadOrdersPage() {
-
-  let container = document.getElementById(containerId);
-
-  // Wait for shell to mount if needed
-  if (!container) {
-    await new Promise(resolve => setTimeout(resolve, 50));
-    container = document.getElementById(containerId);
-  }
-
-  if (!container) {
-    console.error("pageContainer not found");
-    return;
-  }
-
-  container.innerHTML = `
-    <div class="buyer-orders">
-      <h1>Orders</h1>
-      <p>Orders page loaded successfully.</p>
-    </div>
-  `;
-}
 

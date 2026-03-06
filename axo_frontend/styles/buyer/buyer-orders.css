@@ -1293,7 +1293,7 @@
     var(--color-brand-500),
     var(--color-brand-600)
   );
-  color: #ffffff;
+  color: #000000;
   border-bottom-right-radius: 6px;
 }
 
@@ -1345,7 +1345,7 @@
 /* Buyer meta text white */
 
 .message-buyer .message-meta {
-  color: rgba(255,255,255,0.85);
+  color: rgba(2, 2, 2, 0.85);
 }
 
 /* =========================================================
@@ -2609,4 +2609,164 @@ textarea:focus:not(:focus-visible) {
   .orders-root {
     padding: 14px;
   }
+}
+
+/* =========================================================
+   CHAT ENHANCEMENTS (REALTIME UX)
+========================================================= */
+
+/* Smooth message slide animation */
+
+.message-animate {
+  animation: messageSlideIn 220ms var(--ease-standard);
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =========================================================
+   MESSAGE GROUPING (Slack style)
+========================================================= */
+
+.message-grouped {
+  margin-top: -10px;
+}
+
+.message-grouped .message-role {
+  display: none;
+}
+
+/* =========================================================
+   DELIVERY TICK
+========================================================= */
+
+.message-tick {
+  font-size: 11px;
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.message-buyer .message-tick {
+  color: rgba(255,255,255,0.9);
+}
+
+.message-supplier .message-tick,
+.message-admin .message-tick {
+  color: var(--color-gray-500);
+}
+
+/* =========================================================
+   TYPING INDICATOR
+========================================================= */
+
+.typing-indicator {
+  font-size: 12px;
+  color: var(--color-gray-500);
+  padding: 6px 12px;
+  border-radius: 999px;
+
+  background: rgba(0,0,0,0.04);
+
+  align-self: flex-start;
+
+  animation: typingFade 400ms ease;
+}
+
+@keyframes typingFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   MESSAGE INPUT FOCUS ENHANCEMENT
+========================================================= */
+
+#orderMessageInput:focus {
+  box-shadow: 0 0 0 3px rgba(70,95,255,0.15);
+}
+
+/* =========================================================
+   MOBILE CHAT IMPROVEMENTS
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .messages-list {
+    gap: 14px;
+  }
+
+  .message-bubble {
+    max-width: 92%;
+  }
+
+}
+.messages-thread-container{
+display:flex;
+flex-direction:column;
+height:420px;
+}
+
+.messages-list{
+flex:1;
+overflow-y:auto;
+padding:12px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.message-item{
+display:flex;
+}
+
+.message-bubble{
+background:#f3f4f6;
+padding:10px 14px;
+border-radius:10px;
+max-width:70%;
+}
+
+.message-buyer .message-bubble{
+background:#e0f2fe;
+}
+
+.message-supplier .message-bubble{
+background:#ede9fe;
+}
+
+.message-admin .message-bubble{
+background:#fef3c7;
+}
+
+.message-input-bar{
+display:flex;
+gap:10px;
+padding:10px;
+border-top:1px solid #e5e7eb;
+}
+
+.message-input-bar input{
+flex:1;
+padding:10px;
+border-radius:8px;
+border:1px solid #e5e7eb;
+}
+
+.typing-indicator{
+font-size:12px;
+opacity:0.7;
 }

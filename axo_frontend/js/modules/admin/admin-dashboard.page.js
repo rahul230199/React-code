@@ -13,6 +13,7 @@ import { UsersPage } from "./users/users.page.js";
 import { AuditPage } from "./audit/audit.page.js";
 import { SystemPage } from "./system/system.page.js";
 import { RFQPage } from "./rfq/rfq.page.js";
+import * as OrdersPage from "./orders/orders.page.js";
 
 /* =========================================================
    INTERNAL STATE
@@ -45,6 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
 });
+
 
 /* =========================================================
    MAIN INIT
@@ -151,15 +153,16 @@ const VIEW_TO_PAGE = {
   dashboard: DashboardPage,
   network: NetworkPage,
   rfq: RFQPage,
+  orders: OrdersPage,
   users: UsersPage,
   audit: AuditPage,
   system: SystemPage
 };
-
 const VIEW_TITLES = {
   dashboard: "Dashboard",
   network: "Network Access",
   rfq: "RFQs",
+  orders: "Purchase Orders",
   users: "Users",
   audit: "Audit Logs",
   system: "System Health"

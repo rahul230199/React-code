@@ -80,26 +80,79 @@ export const OrdersEvents = {
         return;
       }
 
-      /* =====================================================
-         SEND MESSAGE
-      ===================================================== */
-      if (target.dataset.sendMessage !== undefined) {
+ /* =====================================================
+   SEND MESSAGE
+===================================================== */
 
-        const input =
-          document.getElementById("orderMessageInput");
+if (target.dataset.sendMessage !== undefined) {
 
-        if (!input || !input.value.trim()) return;
+  const input = document.getElementById("orderMessageInput");
 
-        const message = input.value.trim();
-        input.value = "";
+  if (!input) return;
 
-        await OrdersService.sendMessage(message);
+  const message = input.value.trim();
 
-        OrdersRender.renderThread();
+  if (!message) return;
 
-        return;
-      }
+  const button = target;
 
+  try {
+
+    button.disabled = true;
+
+    await OrdersService.sendMessage(message);
+
+    input.value = "";
+
+  } catch (err) {
+
+    console.error("Message send failed", err);
+
+  } finally {
+
+    button.disabled = false;
+
+  }
+
+  return;
+
+}
+
+/* =========================================================
+   MESSAGE ENTER SEND
+========================================================= */
+
+document.addEventListener("keydown", async (e) => {
+
+  const input = document.getElementById("orderMessageInput");
+
+  if (!input) return;
+
+  if (document.activeElement !== input) return;
+
+  if (e.key === "Enter") {
+
+    e.preventDefault();
+
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    try {
+
+      await OrdersService.sendMessage(message);
+
+      input.value = "";
+
+    } catch (err) {
+
+      console.error("Message send failed", err);
+
+    }
+
+  }
+
+});
       /* =====================================================
          CONFIRM PAYMENT
       ===================================================== */

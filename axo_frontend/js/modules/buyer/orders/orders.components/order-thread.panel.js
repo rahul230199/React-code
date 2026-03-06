@@ -22,6 +22,7 @@ const formatCurrency = (value) =>
 
 const formatDate = (date) => {
   if (!date) return "-";
+
   return new Date(date).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -34,6 +35,64 @@ const renderStatusBadge = (status) => `
     ${status?.replace("_", " ").toUpperCase()}
   </span>
 `;
+
+/* =========================================================
+   REALTIME SOCKET HANDLER
+========================================================= */
+
+let socketInitialized = false;
+
+function initRealtime(data) {
+
+  if (socketInitialized) return;
+  if (!window.socket) return;
+
+  const { po } = data;
+
+  socketInitialized = true;
+
+  /* JOIN ROOM */
+
+  window.socket.emit("join_po_room", po.id);
+
+  /* RECEIVE MESSAGE */
+
+  window.socket.on("po_message", (message) => {
+
+    if (message.po_id !== po.id) return;
+
+    data.messages = data.messages || [];
+
+    /* PREVENT DUPLICATES */
+
+    const exists = data.messages.some(m => m.id === message.id);
+    if (exists) return;
+
+    data.messages.push(message);
+
+    const container = document.querySelector(".thread-content");
+    if (!container) return;
+
+    if (data.activeTab === "messages") {
+
+      container.innerHTML = OrderMessagesThread.render(data);
+
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+
+      /* AUTO SCROLL */
+
+      const messagesBox = container.querySelector(".messages-thread");
+      if (messagesBox) {
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+      }
+
+    }
+
+  });
+
+}
 
 /* =========================================================
    HEADER
@@ -62,7 +121,9 @@ function renderHeader(data, mobile = false) {
         </div>
 
         <div class="header-right">
+
           <div class="header-meta">
+
             <div>
               <span>Value</span>
               <strong>${formatCurrency(po.value)}</strong>
@@ -77,7 +138,9 @@ function renderHeader(data, mobile = false) {
               <span>Created</span>
               <strong>${formatDate(po.created_at)}</strong>
             </div>
+
           </div>
+
         </div>
 
       </div>
@@ -104,6 +167,7 @@ function renderTabs(activeTab) {
 
   return `
     <div class="thread-tabs">
+
       ${tabs.map(tab => `
         <button class="thread-tab ${activeTab === tab.key ? "active" : ""}"
                 data-thread-tab="${tab.key}">
@@ -111,6 +175,7 @@ function renderTabs(activeTab) {
           ${tab.label}
         </button>
       `).join("")}
+
     </div>
   `;
 }
@@ -147,6 +212,10 @@ export const OrderThreadPanel = {
   render(data, options = {}) {
 
     const mobile = options.mobile || false;
+
+    /* INIT REALTIME ENGINE */
+
+    initRealtime(data);
 
     return `
       <div class="order-thread-container ${mobile ? "mobile" : ""}">

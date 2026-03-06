@@ -1,12 +1,11 @@
 /* =========================================================
    AXO NETWORKS — ORDERS API LAYER
-   Enterprise Hardened | SLA Integrated | Thread Driven
-   Cancel Safe | Timeout Safe | Backend Aligned
 ========================================================= */
 
 import { ApiClient } from "../../../core/apiClient.js";
 
 const BASE = "/buyer/orders";
+const THREAD_BASE = "/po-thread";
 
 /* =========================================================
    INTERNAL CONTROLLER TRACKING
@@ -80,8 +79,8 @@ export const OrdersApi = {
 
   /* =====================================================
      LIST ORDERS
-     GET /orders
   ===================================================== */
+
   async list() {
 
     const key = "orders-list";
@@ -102,8 +101,8 @@ export const OrdersApi = {
 
   /* =====================================================
      GET FULL ORDER THREAD
-     GET /orders/:poId
   ===================================================== */
+
   async getThread(poId) {
 
     const id = validateId(poId);
@@ -123,17 +122,73 @@ export const OrdersApi = {
     }
   },
 
+
   /* =====================================================
-     UPDATE PO STATUS
-     POST /orders/:poId/status
+     LOAD MESSAGE HISTORY
+     GET /po-thread/:poId/messages
   ===================================================== */
-  async updateStatus(poId, newStatus) {
+
+  async getMessages(poId) {
+
+    const id = validateId(poId);
+    const key = `messages-${id}`;
+    createController(key);
+
+    try {
+
+      const res = await withTimeout(
+        ApiClient.get(`${THREAD_BASE}/${id}/messages`)
+      );
+
+      return normalizeResponse(res);
+
+    } finally {
+      activeControllers.delete(key);
+    }
+
+  },
+
+
+  /* =====================================================
+     SEND MESSAGE
+     POST /po-thread/:poId/messages
+  ===================================================== */
+
+  async sendMessage(poId, message) {
 
     const id = validateId(poId);
 
-    if (!newStatus) {
-      throw new Error("New status required");
+    if (!message) {
+      throw new Error("Message required");
     }
+
+    const key = `message-${id}`;
+    createController(key);
+
+    try {
+
+      const res = await withTimeout(
+        ApiClient.post(
+          `${THREAD_BASE}/${id}/messages`,
+          { message }
+        )
+      );
+
+      return normalizeResponse(res);
+
+    } finally {
+      activeControllers.delete(key);
+    }
+  },
+
+
+  /* =====================================================
+     UPDATE PO STATUS
+  ===================================================== */
+
+  async updateStatus(poId, newStatus) {
+
+    const id = validateId(poId);
 
     const key = `status-${id}`;
     createController(key);
@@ -153,17 +208,14 @@ export const OrdersApi = {
     }
   },
 
+
   /* =====================================================
      COMPLETE MILESTONE
-     POST /orders/:poId/milestones/complete
   ===================================================== */
+
   async completeMilestone(poId, payload) {
 
     const id = validateId(poId);
-
-    if (!payload?.milestoneName) {
-      throw new Error("Milestone name required");
-    }
 
     const key = `milestone-${id}`;
     createController(key);
@@ -184,48 +236,14 @@ export const OrdersApi = {
     }
   },
 
-  /* =====================================================
-     SEND MESSAGE
-     POST /orders/:poId/messages
-  ===================================================== */
-  async sendMessage(poId, message) {
-
-    const id = validateId(poId);
-
-    if (!message) {
-      throw new Error("Message required");
-    }
-
-    const key = `message-${id}`;
-    createController(key);
-
-    try {
-
-      const res = await withTimeout(
-        ApiClient.post(
-          `${BASE}/${id}/messages`,
-          { message }
-        )
-      );
-
-      return normalizeResponse(res);
-
-    } finally {
-      activeControllers.delete(key);
-    }
-  },
 
   /* =====================================================
      CONFIRM PAYMENT
-     POST /orders/:poId/pay
   ===================================================== */
+
   async confirmPayment(poId, amount) {
 
     const id = validateId(poId);
-
-    if (!amount) {
-      throw new Error("Amount required");
-    }
 
     const key = `payment-${id}`;
     createController(key);
@@ -246,17 +264,14 @@ export const OrdersApi = {
     }
   },
 
+
   /* =====================================================
      RAISE DISPUTE
-     POST /orders/:poId/dispute
   ===================================================== */
+
   async raiseDispute(poId, reason) {
 
     const id = validateId(poId);
-
-    if (!reason) {
-      throw new Error("Reason required");
-    }
 
     const key = `dispute-${id}`;
     createController(key);
@@ -277,10 +292,11 @@ export const OrdersApi = {
     }
   },
 
+
   /* =====================================================
-     GET SLA RISK (Single PO)
-     GET /orders/:poId/sla-risk
+     SLA RISK
   ===================================================== */
+
   async getSLARisk(poId) {
 
     const id = validateId(poId);
@@ -300,10 +316,11 @@ export const OrdersApi = {
     }
   },
 
+
   /* =====================================================
-     SLA DASHBOARD (Aggregate)
-     GET /orders/sla/dashboard
+     SLA DASHBOARD
   ===================================================== */
+
   async getSLADashboard() {
 
     const key = "sla-dashboard";
@@ -322,10 +339,11 @@ export const OrdersApi = {
     }
   },
 
+
   /* =====================================================
-     GET PDF DATA
-     GET /orders/:poId/pdf
+     PDF DATA
   ===================================================== */
+
   async getPDFData(poId) {
 
     const id = validateId(poId);
@@ -345,9 +363,11 @@ export const OrdersApi = {
     }
   },
 
+
   /* =====================================================
-     GLOBAL CANCEL (Route Safety)
+     CANCEL ALL REQUESTS
   ===================================================== */
+
   cancelAll() {
     activeControllers.forEach(controller => controller.abort());
     activeControllers.clear();

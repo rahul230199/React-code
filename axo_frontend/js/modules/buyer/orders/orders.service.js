@@ -1,7 +1,6 @@
 /* =========================================================
    AXO NETWORKS — ORDERS SERVICE
    Enterprise Orchestrator | SLA Driven | Thread Safe
-   Optimistic Ready | Route Safe | Backend Aligned
 ========================================================= */
 
 import { OrdersApi } from "./orders.api.js";
@@ -9,7 +8,7 @@ import { OrdersState } from "./orders.state.js";
 import Toast from "../../../core/toast.js";
 
 /* =========================================================
-   INTERNAL ERROR NORMALIZER
+   ERROR NORMALIZER
 ========================================================= */
 
 function normalizeError(err, fallback) {
@@ -26,8 +25,9 @@ function normalizeError(err, fallback) {
 export const OrdersService = {
 
   /* =====================================================
-     BOOTSTRAP ORDERS LIST + SLA DASHBOARD
+     BOOTSTRAP ORDERS LIST
   ===================================================== */
+
   async bootstrap() {
 
     try {
@@ -52,20 +52,22 @@ export const OrdersService = {
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Failed to load orders")
-      );
+      Toast.error(normalizeError(err, "Failed to load orders"));
 
     } finally {
 
       OrdersState.setLoading("list", false);
       OrdersState.setLoading("slaDashboard", false);
+
     }
+
   },
 
+
   /* =====================================================
-     LOAD FULL ORDER THREAD
+     LOAD FULL ORDER THREAD (INCLUDING OLD MESSAGES)
   ===================================================== */
+
   async loadThread(poId) {
 
     if (!poId) return;
@@ -75,36 +77,48 @@ export const OrdersService = {
       OrdersState.setLoading("thread", true);
       OrdersState.setSelectedOrder(poId);
 
-      const [threadRes, riskRes] = await Promise.all([
+      const [
+        threadRes,
+        messagesRes,
+        riskRes
+      ] = await Promise.all([
         OrdersApi.getThread(poId),
+        OrdersApi.getMessages(poId),
         OrdersApi.getSLARisk(poId)
       ]);
 
       if (!threadRes.success) {
-        throw new Error(threadRes.message || "Failed to load thread");
+        throw new Error(threadRes.message || "Failed to load order thread");
       }
 
-      OrdersState.setOrderThread(threadRes.data);
+      const threadData = threadRes.data || {};
 
-      if (riskRes.success) {
+      /* Attach messages to thread */
+      threadData.messages = messagesRes?.data || [];
+
+      OrdersState.setOrderThread(threadData);
+
+      if (riskRes?.success) {
         OrdersState.setSLARisk(riskRes.data);
       }
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Failed to load order details")
-      );
+      Toast.error(normalizeError(err, "Failed to load order thread"));
 
     } finally {
 
       OrdersState.setLoading("thread", false);
+
     }
+
   },
 
+
   /* =====================================================
-     UPDATE STATUS (TRANSITION SAFE)
+     UPDATE STATUS
   ===================================================== */
+
   async updateStatus(newStatus) {
 
     const poId = OrdersState.selectedOrderId;
@@ -114,10 +128,7 @@ export const OrdersService = {
 
       OrdersState.setOptimisticStatus(true);
 
-      const res = await OrdersApi.updateStatus(
-        poId,
-        newStatus
-      );
+      const res = await OrdersApi.updateStatus(poId, newStatus);
 
       if (!res.success) {
         throw new Error(res.message || "Status update failed");
@@ -130,19 +141,21 @@ export const OrdersService = {
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Status update failed")
-      );
+      Toast.error(normalizeError(err, "Status update failed"));
 
     } finally {
 
       OrdersState.setOptimisticStatus(false);
+
     }
+
   },
+
 
   /* =====================================================
      COMPLETE MILESTONE
   ===================================================== */
+
   async completeMilestone(payload) {
 
     const poId = OrdersState.selectedOrderId;
@@ -152,10 +165,7 @@ export const OrdersService = {
 
       OrdersState.setOptimisticMilestone(payload.milestoneName);
 
-      const res = await OrdersApi.completeMilestone(
-        poId,
-        payload
-      );
+      const res = await OrdersApi.completeMilestone(poId, payload);
 
       if (!res.success) {
         throw new Error(res.message || "Milestone failed");
@@ -168,19 +178,21 @@ export const OrdersService = {
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Milestone completion failed")
-      );
+      Toast.error(normalizeError(err, "Milestone completion failed"));
 
     } finally {
 
       OrdersState.clearOptimistic();
+
     }
+
   },
+
 
   /* =====================================================
      SEND MESSAGE
   ===================================================== */
+
   async sendMessage(message) {
 
     const poId = OrdersState.selectedOrderId;
@@ -190,32 +202,32 @@ export const OrdersService = {
 
       OrdersState.optimistic.sendingMessage = true;
 
-      const res = await OrdersApi.sendMessage(
-        poId,
-        message
-      );
+      const res = await OrdersApi.sendMessage(poId, message);
 
       if (!res.success) {
         throw new Error(res.message || "Message failed");
       }
 
+      /* reload messages */
       await this.loadThread(poId);
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Failed to send message")
-      );
+      Toast.error(normalizeError(err, "Failed to send message"));
 
     } finally {
 
       OrdersState.optimistic.sendingMessage = false;
+
     }
+
   },
+
 
   /* =====================================================
      CONFIRM PAYMENT
   ===================================================== */
+
   async confirmPayment(amount) {
 
     const poId = OrdersState.selectedOrderId;
@@ -225,10 +237,7 @@ export const OrdersService = {
 
       OrdersState.setLoading("action", true);
 
-      const res = await OrdersApi.confirmPayment(
-        poId,
-        amount
-      );
+      const res = await OrdersApi.confirmPayment(poId, amount);
 
       if (!res.success) {
         throw new Error(res.message || "Payment failed");
@@ -241,19 +250,21 @@ export const OrdersService = {
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Payment confirmation failed")
-      );
+      Toast.error(normalizeError(err, "Payment confirmation failed"));
 
     } finally {
 
       OrdersState.setLoading("action", false);
+
     }
+
   },
+
 
   /* =====================================================
      RAISE DISPUTE
   ===================================================== */
+
   async raiseDispute(reason) {
 
     const poId = OrdersState.selectedOrderId;
@@ -263,10 +274,7 @@ export const OrdersService = {
 
       OrdersState.setLoading("action", true);
 
-      const res = await OrdersApi.raiseDispute(
-        poId,
-        reason
-      );
+      const res = await OrdersApi.raiseDispute(poId, reason);
 
       if (!res.success) {
         throw new Error(res.message || "Dispute failed");
@@ -279,19 +287,21 @@ export const OrdersService = {
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Failed to raise dispute")
-      );
+      Toast.error(normalizeError(err, "Failed to raise dispute"));
 
     } finally {
 
       OrdersState.setLoading("action", false);
+
     }
+
   },
 
+
   /* =====================================================
-     LOAD SLA DASHBOARD ONLY
+     SLA DASHBOARD
   ===================================================== */
+
   async refreshSLADashboard() {
 
     try {
@@ -304,16 +314,19 @@ export const OrdersService = {
         OrdersState.setSLADashboard(res.data);
       }
 
-    } catch {
-      // silent
     } finally {
+
       OrdersState.setLoading("slaDashboard", false);
+
     }
+
   },
 
+
   /* =====================================================
-     LOAD PDF DATA
+     PDF
   ===================================================== */
+
   async loadPDFData() {
 
     const poId = OrdersState.selectedOrderId;
@@ -331,17 +344,18 @@ export const OrdersService = {
 
     } catch (err) {
 
-      Toast.error(
-        normalizeError(err, "Failed to generate PDF")
-      );
-
+      Toast.error(normalizeError(err, "Failed to generate PDF"));
       return null;
+
     }
+
   },
 
+
   /* =====================================================
-     CLEANUP (ROUTE SAFE)
+     CLEANUP
   ===================================================== */
+
   cleanup() {
     OrdersApi.cancelAll();
     OrdersState.reset();

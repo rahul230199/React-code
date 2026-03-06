@@ -12,12 +12,7 @@ import { stopDashboardAutoRefresh } from "../dashboard/dashboard.events.js";
 
 import { loadRFQPage } from "../rfq/rfq.page.js";
 import { loadOrdersPage } from "../orders/orders.page.js";
-<<<<<<< HEAD
 import { loadOrderDetailPage } from "../orders/order-detail.page.js";
-=======
-import { loadPaymentsPage } from "../payments/payments.page.js";
-
->>>>>>> 7c1fdd8a (updated code chnages on live)
 import { updateActiveSidebarLink } from "./buyer-sidebar.js";
 import { refreshLucideIcons } from "./buyer-icons.js";
 
@@ -39,17 +34,11 @@ const ROUTES = {
   "/buyer/orders": {
     load: loadOrdersPage
 
-  }
-
-};
-
   },
+    
 
-
-  "/buyer/payments": {
-    load: loadPaymentsPage
-  }
 };
+
 
 let currentPath = null;
 let routerInitialized = false;
