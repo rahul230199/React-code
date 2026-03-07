@@ -48,7 +48,6 @@ exports.getAllRFQs = async () => {
 
 };
 
-
 /* =========================================================
    GET RFQ DETAILS
 ========================================================= */
@@ -76,7 +75,6 @@ exports.getRFQById = async (rfqId) => {
 
 };
 
-
 /* =========================================================
    GET SUPPLIERS
 ========================================================= */
@@ -97,7 +95,6 @@ exports.getSuppliers = async () => {
   return result.rows;
 
 };
-
 
 /* =========================================================
    ASSIGN SUPPLIERS WITH QUOTES
@@ -180,7 +177,6 @@ exports.assignSuppliersWithQuotes = async (rfqId, quotes) => {
 
 };
 
-
 /* =========================================================
    GET QUOTES FOR RFQ
 ========================================================= */
@@ -214,14 +210,11 @@ exports.getRFQQuotes = async (rfqId) => {
 
 };
 
-
 /* =========================================================
-   AWARD QUOTE + CREATE PURCHASE ORDER
+   AWARD QUOTE
 ========================================================= */
 
 exports.awardQuote = async (rfqId, quoteId) => {
-
-  console.log("AWARD CALLED:", rfqId, quoteId);
 
   rfqId = parsePositiveNumber(rfqId, "RFQ ID");
   quoteId = parsePositiveNumber(quoteId, "Quote ID");
@@ -232,109 +225,47 @@ exports.awardQuote = async (rfqId, quoteId) => {
 
     await client.query("BEGIN");
 
-    const quoteResult = await client.query(
-      `
-      SELECT
-        q.id,
-        q.price,
-        q.supplier_org_id,
-        r.part_name,
-        r.quantity,
-        r.buyer_org_id
-      FROM quotes q
-      JOIN rfqs r
-        ON r.id = q.rfq_id
-      WHERE q.id = $1
-      `,
-      [quoteId]
+    const rfqCheck = await client.query(
+      `SELECT status FROM rfqs WHERE id=$1 FOR UPDATE`,
+      [rfqId]
     );
 
-    if (!quoteResult.rowCount) {
-      throw new AppError("Quote not found", 404);
+    if (!rfqCheck.rowCount) {
+      throw new AppError("RFQ not found", 404);
     }
-
-    const quote = quoteResult.rows[0];
-
-    /* ACCEPT SELECTED QUOTE */
 
     await client.query(
       `UPDATE quotes SET status='accepted' WHERE id=$1`,
       [quoteId]
     );
 
-    /* REJECT OTHER QUOTES */
-
     await client.query(
       `
       UPDATE quotes
       SET status='rejected'
-      WHERE rfq_id=$1 AND id != $2
+      WHERE rfq_id=$1
+      AND id != $2
       `,
       [rfqId, quoteId]
     );
 
-    /* UPDATE RFQ STATUS */
-
     await client.query(
-      `UPDATE rfqs SET status='awarded' WHERE id=$1`,
-      [rfqId]
-    );
-
-    /* GENERATE PO NUMBER */
-
-    const poNumber = `AXO-PO-${Date.now()}`;
-
-    const totalValue = quote.price * quote.quantity;
-
-    /* INSERT PURCHASE ORDER */
-
-    const poResult = await client.query(
       `
-      INSERT INTO purchase_orders
-      (
-        po_number,
-        rfq_id,
-        buyer_org_id,
-        supplier_org_id,
-        assigned_supplier_org_id,
-        part_name,
-        quantity,
-        total_amount,
-        quote_id,
-        value,
-        status,
-        created_at,
-        updated_at
-      )
-      VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'created',NOW(),NOW())
-      RETURNING id
+      UPDATE rfqs
+      SET status='awarded'
+      WHERE id=$1
       `,
-      [
-        poNumber,
-        rfqId,
-        quote.buyer_org_id,
-        quote.supplier_org_id,
-        quote.supplier_org_id,
-        quote.part_name,
-        quote.quantity,
-        totalValue,
-        quoteId,
-        totalValue
-      ]
+      [rfqId]
     );
 
     await client.query("COMMIT");
 
     return {
       rfq_id: rfqId,
-      awarded_quote: quoteId,
-      po_id: poResult.rows[0].id
+      awarded_quote: quoteId
     };
 
   } catch (err) {
-
-    console.error("AWARD ERROR:", err);
 
     await client.query("ROLLBACK");
     throw err;
@@ -346,7 +277,6 @@ exports.awardQuote = async (rfqId, quoteId) => {
   }
 
 };
-
 
 /* =========================================================
    GET SUPPLIERS ASSIGNED TO RFQ

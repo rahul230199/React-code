@@ -16,34 +16,131 @@ function normalizeError(err, fallback) {
 
 export const RFQService = {
 
+  /* =========================================================
+     DASHBOARD BOOTSTRAP
+  ========================================================= */
+
   async bootstrapDashboard() {
     try {
+
       RFQState.setLoading("dashboard", true);
 
       const res = await RFQApi.list();
 
-      RFQState.setRFQs(res.data || []);
+      const rfqs = res?.data || [];
+
+      RFQState.setRFQs(rfqs);
+
       RFQRender.renderKPI(RFQState.rfqs);
       RFQRender.renderRFQList(RFQState.rfqs);
 
     } catch (err) {
-      Toast.error(normalizeError(err, "Failed to load RFQs"));
-    } finally {
-      RFQState.setLoading("dashboard", false);
-    }
-  },
 
-  async createRFQ(payload) {
-    try {
-      const res = await RFQApi.create(payload);
-      return res.data;
-    } catch (err) {
-      throw new Error(normalizeError(err, "RFQ creation failed"));
+      Toast.error(
+        normalizeError(err, "Failed to load RFQs")
+      );
+
+    } finally {
+
+      RFQState.setLoading("dashboard", false);
+
     }
   },
 
   /* =========================================================
-     ✅ UPLOAD DESIGN FILE
+     CREATE RFQ
+  ========================================================= */
+
+  async createRFQ(payload) {
+    try {
+
+      const res = await RFQApi.create(payload);
+
+      return res.data;
+
+    } catch (err) {
+
+      throw new Error(
+        normalizeError(err, "RFQ creation failed")
+      );
+
+    }
+  },
+
+  /* =========================================================
+     LOAD QUOTES
+  ========================================================= */
+
+  async loadQuotes(rfqId) {
+
+    if (!rfqId) {
+      Toast.error("RFQ ID missing");
+      return;
+    }
+
+    try {
+
+      RFQState.setLoading("quotes", true);
+
+      const res = await RFQApi.getQuotes(rfqId);
+
+      const quotes = res?.data?.quotes || [];
+
+      RFQState.setQuotes(quotes);
+
+      RFQRender.renderIntelligence();
+
+      return quotes;
+
+    } catch (err) {
+
+      Toast.error(
+        normalizeError(err, "Failed to load quotes")
+      );
+
+      RFQState.setQuotes([]);
+
+    } finally {
+
+      RFQState.setLoading("quotes", false);
+
+    }
+
+  },
+
+  /* =========================================================
+     ACCEPT QUOTE (NEW FUNCTION)
+  ========================================================= */
+
+  async acceptQuote(rfqId, quoteId) {
+
+    if (!rfqId || !quoteId) {
+      throw new Error("Invalid RFQ or Quote");
+    }
+
+    try {
+
+      const res = await RFQApi.acceptQuote(
+        rfqId,
+        quoteId
+      );
+
+      Toast.success("Supplier accepted successfully");
+
+      return res?.data;
+
+    } catch (err) {
+
+      throw new Error(
+        normalizeError(err, "Failed to accept supplier")
+      );
+
+    }
+
+  },
+
+  /* =========================================================
+     UPLOAD DESIGN FILE
   ========================================================= */
 
   async uploadDesignFile(file) {
@@ -68,7 +165,9 @@ export const RFQService = {
       );
 
       throw err;
+
     }
+
   }
 
 };

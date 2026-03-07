@@ -44,6 +44,7 @@ export async function loadRFQPage() {
   /* ---------------------------------------------------------
      CLEAN PREVIOUS INSTANCE (Route Switch Safe)
   --------------------------------------------------------- */
+
   if (isMounted) {
     cleanupRFQ();
     RFQService.cleanup();
@@ -53,14 +54,16 @@ export async function loadRFQPage() {
   /* ---------------------------------------------------------
      ENSURE GLOBAL OVERLAY
   --------------------------------------------------------- */
+
   ensureGlobalOverlay();
 
   setPageTitle("RFQ Intelligence");
 
   /* ---------------------------------------------------------
-     LAYOUT INJECTION (NO OVERLAY HERE)
+     LAYOUT INJECTION
   --------------------------------------------------------- */
-container.innerHTML = `
+
+  container.innerHTML = `
   <div class="rfq-root glass-layer">
 
     <div class="rfq-toolbar">
@@ -73,10 +76,10 @@ container.innerHTML = `
       <div class="rfq-toolbar-row">
 
         <div class="rfq-filters">
-          <input 
-            type="text" 
+          <input
+            type="text"
             id="rfqSearchInput"
-            placeholder="Search RFQs..." 
+            placeholder="Search RFQs..."
           />
 
           <select id="rfqStatusFilter">
@@ -114,23 +117,28 @@ container.innerHTML = `
   /* ---------------------------------------------------------
      ICON INITIALIZATION
   --------------------------------------------------------- */
+
   initializeLucide();
 
   /* ---------------------------------------------------------
      BOOTSTRAP DATA
   --------------------------------------------------------- */
+
   await RFQService.bootstrapDashboard();
 
   /* ---------------------------------------------------------
      INITIAL RENDER
   --------------------------------------------------------- */
+
   RFQRender.renderKPI();
   RFQRender.renderRFQList();
 
   /* ---------------------------------------------------------
      BIND EVENTS
   --------------------------------------------------------- */
+
   RFQEvents.init();
 
   isMounted = true;
+
 }

@@ -1,10 +1,5 @@
 /* =========================================================
    AXO NETWORKS — RFQ RENDER (ENTERPRISE HARDENED)
-   - RFQ status-aware rendering
-   - Award-safe
-   - Optimistic-safe
-   - No duplicate actions
-   - SaaS clean
 ========================================================= */
 
 import { RFQState } from "./rfq.state.js";
@@ -29,9 +24,6 @@ function renderOverlay(content, modalClass = "") {
 
 export const RFQRender = {
 
-  /* =========================================================
-     LOADER
-  ========================================================= */
   showLoader() {
     const zone = document.getElementById("rfqOverlayZone");
     if (!zone) return;
@@ -46,9 +38,6 @@ export const RFQRender = {
     `;
   },
 
-  /* =========================================================
-     KPI STRIP
-  ========================================================= */
   renderKPI() {
 
     const rfqs = RFQState.rfqs || [];
@@ -68,14 +57,17 @@ export const RFQRender = {
         <i data-lucide="layers"></i>
         <div><h3>${total}</h3><span>Total RFQs</span></div>
       </div>
+
       <div class="kpi-card glass-card">
         <i data-lucide="clock"></i>
         <div><h3>${open}</h3><span>Open</span></div>
       </div>
+
       <div class="kpi-card glass-card">
         <i data-lucide="award"></i>
         <div><h3>${awarded}</h3><span>Awarded</span></div>
       </div>
+
       <div class="kpi-card glass-card">
         <i data-lucide="check-circle"></i>
         <div><h3>${closed}</h3><span>Closed</span></div>
@@ -85,9 +77,6 @@ export const RFQRender = {
     refreshLucideIcons();
   },
 
-  /* =========================================================
-     RFQ LIST
-  ========================================================= */
   renderRFQList() {
 
     const container =
@@ -101,80 +90,83 @@ export const RFQRender = {
     refreshLucideIcons();
   },
 
-  /* =========================================================
-     INTELLIGENCE MODAL
-  ========================================================= */
-/* =========================================================
-   INTELLIGENCE MODAL — SAAS PREMIUM VERSION
-========================================================= */
-renderIntelligence() {
+  renderIntelligence() {
 
-  const zone =
-    document.getElementById("rfqOverlayZone");
+    const zone =
+      document.getElementById("rfqOverlayZone");
 
-  if (!zone) return;
+    if (!zone) return;
 
-const allQuotes = RFQState.quotes;
-const quotes = RFQState.getFilteredQuotes();
-const matrix = RFQState.getSortedMatrix();
+    const allQuotes = RFQState.quotes || [];
+    const quotes = RFQState.getFilteredQuotes() || [];
+    const matrix = RFQState.getSortedMatrix() || [];
 
-  const selectedRFQ =
-    RFQState.rfqs.find(
-      r => r.id === RFQState.selectedRFQ
-    );
+    const selectedRFQ =
+      RFQState.rfqs.find(
+        r => r.id === RFQState.selectedRFQ
+      );
 
-  const rfqStatus = selectedRFQ?.status;
+    const rfqStatus =
+      selectedRFQ?.status ||
+      RFQState.rfq_status ||
+      "created";
 
-  const content = `
-    <div class="modal-header intelligence-header">
-      <div class="header-left">
-        <h3>
-          <i data-lucide="sparkles"></i>
-          AI Quote Intelligence
-        </h3>
-        <span class="rfq-status-badge ${rfqStatus}">
-          ${rfqStatus?.toUpperCase()}
-        </span>
-      </div>
+    const content = `
+      <div class="modal-header intelligence-header">
 
-      <div class="header-actions">
-        ${
-          allQuotes.length > 1
-            ? `
+        <div class="header-left">
+          <h3>
+            <i data-lucide="sparkles"></i>
+            AI Quote Intelligence
+          </h3>
+
+          <span class="rfq-status-badge ${rfqStatus}">
+            ${rfqStatus?.toUpperCase()}
+          </span>
+        </div>
+
+        <div class="header-actions">
+
+          ${
+            allQuotes.length > 1
+              ? `
               <button class="btn-secondary"
                       data-compare>
                 <i data-lucide="bar-chart-3"></i>
                 Compare
               </button>
             `
-            : ""
-        }
-        <button class="modal-close"
-                data-close>
-          ✕
-        </button>
+              : ""
+          }
+
+          <button class="modal-close"
+                  data-close>
+            ✕
+          </button>
+
+        </div>
+
       </div>
-    </div>
 
-    <div class="modal-body intelligence-body">
+      <div class="modal-body intelligence-body">
 
-      ${RFQTimeline.render({
-        status: rfqStatus,
-        quotesCount: allQuotes.length,
-        hasRanking: matrix.length > 0,
-        hasPO: rfqStatus === "awarded",
-        hasDispute: false
-      })}
+        ${RFQTimeline.render({
+          status: rfqStatus,
+          quotesCount: allQuotes.length,
+          hasRanking: matrix.length > 0,
+          hasPO: rfqStatus === "awarded",
+          hasDispute: false
+        })}
 
-      ${
-        quotes.length === 0
-          ? `
+        ${
+          quotes.length === 0
+            ? `
             <div class="empty-state glass-card">
               <i data-lucide="inbox"></i>
               <p>No quotes received yet</p>
             </div>
           `
-          : `
+            : `
             <div class="intelligence-grid">
 
               ${quotes.map(q => {
@@ -183,7 +175,8 @@ const matrix = RFQState.getSortedMatrix();
                   q.status === "accepted";
 
                 const canAccept =
-                  rfqStatus === "open" &&
+                  rfqStatus !== "awarded" &&
+                  rfqStatus !== "closed" &&
                   !isAccepted;
 
                 return `
@@ -194,14 +187,19 @@ const matrix = RFQState.getSortedMatrix();
                     <div class="card-header">
 
                       <div class="supplier-block">
-                        <h4>${q.supplier?.name || "Supplier"}</h4>
+
+                        <h4>
+                          ${q.supplier_name || q.company_name || "Supplier"}
+                        </h4>
+
                         <span class="tier-badge ${q.reliability_tier}">
-                          ${q.reliability_tier}
+                          ${q.reliability_tier || ""}
                         </span>
+
                       </div>
 
                       <div class="score-pill">
-                        ${q.reliability_score}
+                        ${Math.round(q.reliability_score || 0)}
                         <span>Score</span>
                       </div>
 
@@ -213,22 +211,30 @@ const matrix = RFQState.getSortedMatrix();
 
                       <div class="metric">
                         <label>Price</label>
-                        <strong>₹${Number(q.price).toLocaleString()}</strong>
+                        <strong>
+                          ₹${Number(q.price || 0).toLocaleString()}
+                        </strong>
                       </div>
 
                       <div class="metric">
                         <label>Timeline</label>
-                        <strong>${q.timeline_days} days</strong>
+                        <strong>
+                          ${safe(q.timeline_days)} days
+                        </strong>
                       </div>
 
                       <div class="metric">
                         <label>Confidence</label>
-                        <strong>${q.confidence_index}%</strong>
+                        <strong>
+                          ${safe(q.confidence_index)}%
+                        </strong>
                       </div>
 
                       <div class="metric">
                         <label>Value Index</label>
-                        <strong>${q.value_index}</strong>
+                        <strong>
+                          ${safe(q.value_index)}
+                        </strong>
                       </div>
 
                     </div>
@@ -236,35 +242,37 @@ const matrix = RFQState.getSortedMatrix();
                     ${
                       q.is_recommended
                         ? `
-                          <div class="recommend-box">
-                            <i data-lucide="sparkles"></i>
-                            ${q.recommendation_reason}
-                          </div>
-                        `
+                        <div class="recommend-box">
+                          <i data-lucide="sparkles"></i>
+                          ${safe(q.recommendation_reason)}
+                        </div>
+                      `
                         : ""
                     }
 
                     <div class="card-actions">
+
                       ${
                         canAccept
                           ? `
-                            <button class="btn-primary"
-                                    data-accept="${q.id}">
-                              Accept Supplier
-                            </button>
-                          `
+                          <button class="btn-primary"
+                                  data-accept="${q.id}">
+                            Accept Supplier
+                          </button>
+                        `
                           : `
-                            <span class="status-indicator">
-                              ${
-                                isAccepted
-                                  ? "Accepted"
-                                  : rfqStatus === "awarded"
-                                    ? "Awarded"
-                                    : "Closed"
-                              }
-                            </span>
-                          `
+                          <span class="status-indicator">
+                            ${
+                              isAccepted
+                                ? "Accepted"
+                                : rfqStatus === "awarded"
+                                  ? "Awarded"
+                                  : "Open"
+                            }
+                          </span>
+                        `
                       }
+
                     </div>
 
                   </div>
@@ -273,20 +281,17 @@ const matrix = RFQState.getSortedMatrix();
 
             </div>
           `
-      }
+        }
 
-    </div>
-  `;
+      </div>
+    `;
 
-  zone.innerHTML =
-    renderOverlay(content, "rfq-intelligence-modal");
+    zone.innerHTML =
+      renderOverlay(content, "rfq-intelligence-modal");
 
-  refreshLucideIcons();
-},
+    refreshLucideIcons();
+  },
 
-  /* =========================================================
-     CREATE MODAL
-  ========================================================= */
   openCreateModal() {
 
     const zone =
@@ -305,9 +310,6 @@ const matrix = RFQState.getSortedMatrix();
     refreshLucideIcons();
   },
 
-  /* =========================================================
-     COMPARE MODAL
-  ========================================================= */
   openCompareModal() {
 
     const zone =
@@ -326,9 +328,6 @@ const matrix = RFQState.getSortedMatrix();
     refreshLucideIcons();
   },
 
-  /* =========================================================
-     PO CONFIRMATION
-  ========================================================= */
   renderPOConfirmation(po) {
 
     const zone =
